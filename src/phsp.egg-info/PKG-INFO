@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: phsp
+Version: 0.0.1
+Summary: Python tools for GATE phase-space (PHSP) management
+Home-page: https://github.com/dsarrut/phsp
+Author: David Sarrut
+Author-email: david.sarrut@creatis.insa-lyon.fr
+License: UNKNOWN
+Description-Content-Type: text/markdown
+Description: FIXME 
+        
+        
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent

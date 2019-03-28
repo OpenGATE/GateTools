@@ -1,0 +1,6 @@
+bin/phsp_info
+src/phsp.egg-info/PKG-INFO
+src/phsp.egg-info/SOURCES.txt
+src/phsp.egg-info/dependency_links.txt
+src/phsp.egg-info/requires.txt
+src/phsp.egg-info/top_level.txt

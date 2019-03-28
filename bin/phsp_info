@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
+import numpy as np
+import phsp
+import click
+import os
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('filename')
+@click.option('-n', default=int(-1), help='Use -1 to read all data')
+def phsp_info(filename, n):
+    '''
+    \b
+    Print information about the given PHSP phase-space file
+
+    \b
+    <FILENAME> : input PHSP root/npy file
+    '''
+
+    data, keys, m = phsp.load(filename, n)
+
+    # print info
+    print('File:       ', filename)
+    b, extension = os.path.splitext(filename)
+    if (extension == '.root'):
+        t = 'root'
+    if (extension == '.npy'):
+        t = 'npy'
+    print('Type:       ', t)
+    print('Nb values:   {0} ({0:.2e})'.format(m))
+    n = len(data)
+    print('Read values: {0} ({0:.2e})'.format(n))
+    print('Nb of keys: ', len(keys))
+    print('Keys:       ', *keys)
+
+    # stats info per key
+    print('{:<10} {:>10} {:>10} {:>10} {:>10}'.format('key', 'min', 'max', 'mean', 'std'))
+    i=0
+    for k in keys:
+        x = data[:,i]
+        print('{:10} {:10.3f} {:10.3f} {:10.3f} {:10.3f}'.format(k, np.amin(x), np.amax(x), np.mean(x), np.std(x)))
+        i = i+1
+
+
+# --------------------------------------------------------------------------
+if __name__ == '__main__':
+    phsp_info()
+

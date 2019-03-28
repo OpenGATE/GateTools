@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
+import numpy as np
+import gategan as gg
+#import psf_helpers as h
+import phsp_helpers as h
+import fig_helpers as fh
+import click
+import matplotlib.pyplot as plt
+import os
+from itertools import combinations
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('filenames', nargs=-1)
+@click.option('--n', '-n',
+              default=1e6,
+              help='Number of samples to generate')
+@click.option('--nb_bins', '-b',
+              default=int(100),
+              help='Number of bins')
+@click.option('--radius', '-r',
+              default=300.0,
+              help='Cylindrical radius in mm')
+@click.option('--mode', '-m', multiple=True,
+              #default='cylinder_1',
+              type=click.Choice(['cylinder_1', 'cylinder_2', 'plane', 'cartesian']),
+              help='Spherical coord parameters mode')
+@click.option('--z_plane', '-z',
+              default=272.1,
+              help='Plane position z in mm')
+def phsp_plot(filenames, nb_bins, n, mode, radius, z_plane):
+    '''
+    \b
+    Compare a TODO
+
+    \b
+    <FILENAME> : input PHSP root/raw file
+
+    '''
+
+    # associate file/mode
+    modes = mode
+    if len(filenames) != len(modes):
+        print('Error, should be as many filename as -m', filenames, modes)
+        exit(0)
+
+    names1 = ['E', 'x', 'dy', 'dz', 'dx']
+    names2 = ['y', 'y', 'y', 'x', 'y']
+
+    # FIXME fig size
+    n = int(n)
+    f, ax = plt.subplots(5, 4, figsize=(15,12))
+
+    # loop on filenames
+    fn=1
+    s=''
+    ranges = {}
+    for filename, mode in zip(filenames,modes):
+        print(filename, mode)
+        value = radius
+        if mode == 'plane' or mode == 'cartesian':
+            value = z_plane
+        print('value', value)
+        f, file_extension = os.path.splitext(filename)
+        names = ['E', 'x', 'y', 'z', 'dx', 'dy', 'dz']
+        if file_extension == '.npy':
+            data_sph, names_sph = h.read_phsp_npy(filename)
+            print(names_sph)
+            m = len(data_sph)
+            data_sph = data_sph[:n]
+            data = h.spherical_to_cartesian(data_sph, value, mode)
+        else:
+            data = h.read_phsp(filename)
+            m = len(data)
+            names_sph = ['E', 'psi', 'z', 'theta', 'phi']
+            if mode == 'plane':
+                names_sph = ['E', 'x', 'y', 'theta', 'phi']
+            if mode == 'cartesian':
+                names_sph = ['E', 'x', 'y', 'dx', 'dy', 'dz']
+            data = data[:n]
+            data_sph = h.cartesian_to_spherical(data, mode)
+        print(names)
+        print(names_sph)
+        print('Number of values:', m, '-> using',n)
+
+        # 1D plot2D
+        i=0
+        for dim in range(len(names)):
+            a = fh.get_sub_fig(ax, i)
+            fh.phsp_plot_histo1D(a, data[:,dim], nb_bins, 'g', str(fn), names[dim])
+            i += 1
+
+        for dim in range(len(names_sph)):
+            na = names_sph[dim]
+            if na in names:
+                print('skip', na)
+            else:
+                a = fh.get_sub_fig(ax, i)
+                fh.phsp_plot_histo1D(a, data_sph[:,dim], nb_bins, 'r', str(fn), names_sph[dim])
+                i += 1
+
+
+        # 2D plot
+        i = i+(len(names1)*(fn-1))
+        for n1, n2 in zip(names1, names2):
+            d1 = data
+            d2 = data
+            i1 = names.index(n1) if n1 in names else None
+            i2 = names.index(n2) if n2 in names else None
+            if i1 == None:
+                i1 = names_sph.index(n1) if n1 in names_sph else None
+                d1 = data_sph
+            if i2 == None:
+                i2 = names_sph.index(n2) if n2 in names_sph else None
+                d2 = data_sph
+            cmap=plt.cm.Reds
+            if i1 == None or i2 == None:
+                print('Error, cannot find ', i1, i2)
+                break
+            a = fh.get_sub_fig(ax, i)
+            nr = n1+n2
+            if nr in ranges:
+                r = ranges[nr]
+            else:
+                r = ''
+            xmin, xmax, ymin, ymax = fh.phsp_plot_histo2D(a, d1, d2, i1, i2, nb_bins, cmap, n1, n2, r)
+            if nr not in ranges:
+                ranges[nr] = [[xmin,xmax],[ymin,ymax]]
+            a.set_title(filename)
+            i += 1
+
+
+        # end loop
+        s += str(fn)+'='+filename+'   '
+        fn = fn+1
+
+    s += '   n='+str(n)
+    plt.suptitle(s)
+    plt.tight_layout()
+    plt.show()
+
+# --------------------------------------------------------------------------
+if __name__ == '__main__':
+    phsp_plot()
+
