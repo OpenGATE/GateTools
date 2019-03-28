@@ -8,3 +8,4 @@
 /src/__pycache__/
 src/pygan.egg-info/
 src/phsp.egg-info/
+*~

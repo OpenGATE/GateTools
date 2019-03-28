@@ -12,7 +12,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('input_filename')
 @click.option('-n', default=float(-1), help='Use -1 to read all data')
 @click.option('--output', '-o', default='AUTO', help='If AUTO, use input_filename.npy')
-#@click.option('--keys', '-k', multiple=True, help='Only keep the keys given')
 @click.option('--rm_keys', '-k', multiple=True, help='Remove the given keys')
 @click.option('--overwrite', '-f', is_flag=True, default=False, help='Overwrite file if already exist')
 def phsp_convert(input_filename, output, rm_keys, n, overwrite):
@@ -29,36 +28,26 @@ def phsp_convert(input_filename, output, rm_keys, n, overwrite):
         output = b+'.npy'
 
     if not overwrite and os.path.isfile(output):
-        print('Error output file already exist', output)
+        print('Error output file already exist:', output)
         exit(0)
         
     if os.path.isdir(output):
-        print('Error output already exist (its a dir)', output)
+        print('Error output already exist (its a dir):', output)
         exit(0)
 
     b, extension = os.path.splitext(output)
     if extension != '.npy':
-        print('Error output extension must by .npy', output)
+        print('Error output extension must by .npy:', output)
         exit(0)
 
+    # load data
     data, read_keys, m = phsp.load(input_filename, n)
 
-    # build list of index to remove
-    cols = np.arange(len(read_keys))
-    index = []
-    if len(rm_keys) != 0:
-        for k in rm_keys:
-            if k not in read_keys:
-                print('Error the key', k, 'does not exist in', read_keys)
-                exit(0)
-            i = read_keys.index(k)
-            cols = np.delete(cols, i)
-            index.append(i)
-        for c in index:
-            read_keys.pop(c)
-        data = data[:, cols]
-    
-    phsp.save_npy(output, data, read_keys)
+    # remove keys if needed 
+    data, keys = phsp.remove_keys(data, read_keys, rm_keys)
+
+    # write 
+    phsp.save_npy(output, data, keys)
 
 
 # --------------------------------------------------------------------------

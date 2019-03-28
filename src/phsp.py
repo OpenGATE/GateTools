@@ -127,3 +127,24 @@ def save_npy(filename, data, keys):
         i = i+1
 
     np.save(filename, r)
+
+
+''' ---------------------------------------------------------------------------
+Remove som keys
+'''
+def remove_keys(data, keys, rm_keys):
+
+    cols = np.arange(len(keys))
+    index = []
+    if len(rm_keys) != 0:
+        for k in rm_keys:
+            if k not in keys:
+                print('Error the key', k, 'does not exist in', keys)
+                exit(0)
+            i = keys.index(k)
+            cols = np.delete(cols, i)
+            index.append(i)
+        for c in index:
+            keys.pop(c)
+        data = data[:, cols]
+    return data, keys
