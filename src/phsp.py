@@ -73,6 +73,7 @@ def load_root(filename, nmax=-1):
 
     # Concat arrays
     d = np.column_stack( a[k] for k in psf.keys())
+    #d = np.float64(d) # long
     
     return d, names, n
 
@@ -89,11 +90,10 @@ def load_npy(filename, nmax=-1):
 
     x = np.load(filename, mmap_mode='r')
     n = len(x)
-    print(nmax, n)
     if nmax > 0:
         x = x[:nmax]
     data = x.view(np.float32).reshape(x.shape + (-1,))
-    #data = np.float64(data)
+    #data = np.float64(data) # long
     return data, x.dtype.names, n
 
 

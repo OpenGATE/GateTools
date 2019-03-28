@@ -10,7 +10,7 @@ import os
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename')
-@click.option('-n', default=int(-1), help='Use -1 to read all data')
+@click.option('-n', default=float(-1), help='Use -1 to read all data')
 def phsp_info(filename, n):
     '''
     \b
@@ -29,7 +29,7 @@ def phsp_info(filename, n):
         t = 'root'
     if (extension == '.npy'):
         t = 'npy'
-    print('Type:       ', t)
+    print('Type:       ', t, data.dtype)
     print('Nb values:   {0} ({0:.2e})'.format(m))
     n = len(data)
     print('Read values: {0} ({0:.2e})'.format(n))
@@ -43,7 +43,6 @@ def phsp_info(filename, n):
         x = data[:,i]
         print('{:10} {:10.3f} {:10.3f} {:10.3f} {:10.3f}'.format(k, np.amin(x), np.amax(x), np.mean(x), np.std(x)))
         i = i+1
-
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
