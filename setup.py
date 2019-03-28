@@ -24,7 +24,7 @@ setuptools.setup(
         'uproot',
       ],
     scripts=[
-        #'bin/phsp_convert',
+        'bin/phsp_convert',
         'bin/phsp_info',
     ]
 )

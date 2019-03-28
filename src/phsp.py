@@ -109,3 +109,21 @@ def humansize(nbytes):
         i += 1
     f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
     return '%s %s' % (f, suffixes[i])
+
+
+''' ---------------------------------------------------------------------------
+Write a PHSP (Phase-Space) file in npy
+'''
+def save_npy(filename, data, keys):
+
+    dtype = []
+    for k in keys:
+        dtype.append((k, 'f4'))
+    
+    r = np.zeros(len(data), dtype=dtype)
+    i = 0
+    for k in keys:
+        r[k] = data[:,i]
+        i = i+1
+
+    np.save(filename, r)
