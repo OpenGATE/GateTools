@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
+import gatetools as gt
+import itk
+import click
+
+# -----------------------------------------------------------------------------
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('filenames', nargs=-1)
+@click.option('--nevents','-N', help='Total numbers of events', required=True)
+@click.option('--output','-o', help='Output filename', required=True)
+def gate_image_uncertainty(filenames, nevents, output):
+    '''
+    
+    Compute relative statistical uncertainty (typically for Edep or
+    Dose), with the history by history method as explained for example
+    in [Chetty2006]
+
+    FILENAMES: list of image filenames of values and squared values (must be odd number)
+
+    Example:
+    
+    gate_image_uncertainty run.XYZ/output_*/dose-Edep.mhd run.XYZ/output_*/dose-Edep-Squared.mhd -o u.mhd -N 100000000
+
+    '''
+
+    # check size is even: first half are values, second half are squared values
+    n = len(filenames)
+    if n%2 != 0:
+        raise RuntimeError("ERROR: must provide even number of input files (got {})".format(n))
+    s = int(n/2)
+
+    # build lists of input image
+    i = 0
+    input_list=[]
+    input_squared_list=[]
+    for f in filenames:
+        image = itk.imread(f)
+        if i<s:
+            input_list.append(image)
+        else:
+            input_squared_list.append(image)
+        i = i+1
+
+    # compute uncertainty
+    o = gt.image_uncertainty(input_list, input_squared_list, nevents)
+
+    # write file
+    itk.imwrite(o, output)    
+    
+
+# -----------------------------------------------------------------------------
+if __name__ == '__main__':
+    gate_image_uncertainty()
+

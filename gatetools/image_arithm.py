@@ -65,7 +65,7 @@ def _image_list(input_list):
     # check that they have the same geometry
     origin0 = output_list[0].GetOrigin()
     spacing0 = output_list[0].GetSpacing()
-    size0 = output_list[0].GetSize())
+    size0 = output_list[0].GetSize()
     return [ img for img in output_list \
             if np.allclose(img.GetOrigin(),origin0) and \
                np.allclose(img.GetSpacing(),spacing0) and \
