@@ -1,11 +1,5 @@
-/GPATH
-/GRTAGS
-/GTAGS
-/__pycache__/
-/old/
-/old1/
-/old2/
-/src/__pycache__/
-src/pygan.egg-info/
-src/phsp.egg-info/
+src/phsp.egg-info
+GPATH
+GRTAGS
 *~
+src/__pycache__/
