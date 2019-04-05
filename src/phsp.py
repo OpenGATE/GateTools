@@ -6,6 +6,8 @@ import sys
 import os
 import uproot
 import time
+import tokenize
+from io import BytesIO
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -136,15 +138,63 @@ def remove_keys(data, keys, rm_keys):
 
     cols = np.arange(len(keys))
     index = []
-    if len(rm_keys) != 0:
-        for k in rm_keys:
-            if k not in keys:
-                print('Error the key', k, 'does not exist in', keys)
-                exit(0)
+    if len(rm_keys) == 0:
+        return data, keys
+    
+    for k in rm_keys:
+        if k not in keys:
+            print('Error the key', k, 'does not exist in', keys)
+            exit(0)
             i = keys.index(k)
             cols = np.delete(cols, i)
             index.append(i)
         for c in index:
             keys.pop(c)
-        data = data[:, cols]
+    data = data[:, cols]
     return data, keys
+
+
+''' ---------------------------------------------------------------------------
+Keep only the given keys
+'''
+def select_keys(data, input_keys, output_keys):
+
+    cols = np.arange(len(input_keys))
+    index = []
+    if len(output_keys) == 0:
+        print('Error, select_keys is void')
+        exit(0)
+
+    s = str(output_keys)
+    dd = tokenize.tokenize(BytesIO(s.encode('utf-8')).readline)
+    keys = []
+    for toknum, tokval, _, _, _ in dd:
+        if tokval != 'utf-8' and tokval != '':
+            keys.append(tokval)
+
+    cols = []
+    for k in keys:
+        i = input_keys.index(k)
+        cols.append(i)
+
+    data = data[:, cols]
+    
+    return data, keys
+
+
+''' ----------------------------------------------------------------------------
+Retrive a fig nb 
+---------------------------------------------------------------------------- '''
+def get_sub_fig(ax, i):
+    # check if single fig
+    if not type(ax) is np.ndarray:
+        return ax
+
+    # check if single row/line
+    if ax.ndim == 1:
+        return ax[i]
+
+    # other cases
+    index = np.unravel_index(i, ax.shape)
+    return ax[index[0]][index[1]]
+

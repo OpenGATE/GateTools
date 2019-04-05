@@ -26,5 +26,6 @@ setuptools.setup(
     scripts=[
         'bin/phsp_convert',
         'bin/phsp_info',
+        'bin/phsp_plot',
     ]
 )
