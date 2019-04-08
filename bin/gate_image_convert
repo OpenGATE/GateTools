@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
+import gatetools as gt
+import click
+import itk
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('-i', '--input', type=str, required=True, help='Input image name')
+@click.option('-o', '--output', type=str, required=True, help='Output image name')
+@click.option('-p', '--pixeltype', type=str, help='Pixel type conversion')
+
+def gate_image_convert(input, output, pixeltype):
+    """
+    \b
+    Convert the input to the output with pixeltype. If pixeltype is not set, the output has the same pixel type than the input.
+    Available format:
+        - 2D:
+            - .bmp
+            - .jpeg
+            - .png
+        - 3D:
+            - .mhd
+            - .nii
+            - .nhdr, .nrrd
+            - .tiff
+    Available pixel type
+        - unsigned char
+        - signed short
+        - unsigned short
+        - float
+    """
+
+    #Read input
+    inputImage = itk.imread(input)
+
+    # convert image
+    outputImage = gt.image_convert(inputImage, pixeltype)
+
+    # write file
+    itk.imwrite(outputImage, output)
+
+if __name__ == '__main__':
+    gate_image_convert()
+

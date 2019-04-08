@@ -29,5 +29,6 @@ setuptools.setup(
     scripts=[
         'bin/gate_info',
         'bin/gate_image_uncertainty',
+        'bin/gate_image_convert',
         ]
 )
