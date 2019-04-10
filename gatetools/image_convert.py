@@ -28,7 +28,7 @@ def image_convert(inputImage, pixeltype=None):
     """
 
     #If pixel type is not None, convert it,
-    #If None it could be a type convervion without pixel conversion
+    #If None it could be a type conversion without pixel conversion
     if pixeltype is not None:
         InputType = type(inputImage)
         OutputType = itk.Image[itk.ctype(pixeltype), inputImage.GetImageDimension()]
