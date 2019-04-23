@@ -27,5 +27,6 @@ setuptools.setup(
         'bin/phsp_convert',
         'bin/phsp_info',
         'bin/phsp_plot',
+        'bin/phsp_peaks',
     ]
 )

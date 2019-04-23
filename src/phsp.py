@@ -198,3 +198,17 @@ def get_sub_fig(ax, i):
     index = np.unravel_index(i, ax.shape)
     return ax[index[0]][index[1]]
 
+
+''' ----------------------------------------------------------------------------
+Retrive the E from a dataset
+---------------------------------------------------------------------------- '''
+def get_E(data, keys):
+    try:
+        Ei = keys.index('Ekine')
+    except:
+        try:
+            Ei = keys.index('E')
+        except:
+            raise RuntimeError("Error, cannot find key 'Ekine' nor 'E'. Keys are: ", keys)
+    E = data[:,Ei]
+    return E, Ei
