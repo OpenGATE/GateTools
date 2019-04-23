@@ -13,7 +13,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-n', default=float(-1), help='Use -1 to read all data')
 @click.option('--output', '-o', default='AUTO', help='If AUTO, use input_filename.npy')
 @click.option('--rm_keys', '-r', multiple=True, help='Remove the given keys')
-@click.option('--keys', '-k', help='Remove the given keys, give as a list such that "X Y Z" ')
+@click.option('--keys', '-k', help='Set the kept keys, give as a list such that "X Y Z" ', default='')
 @click.option('--overwrite', '-f', is_flag=True, default=False, help='Overwrite file if already exist')
 @click.option('--shuffle', '-s', is_flag=True, default=False, help='Shuffle the data')
 def phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
@@ -42,13 +42,18 @@ def phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
         print('Error output extension must by .npy:', output)
         exit(0)
 
-    if len(keys) > 0 and len(rm_keys) > 0:
+    if keys != '' and len(rm_keys) > 0:
         print('Cannot provide both --rm_keys and --keys')
         exit(0)
 
     # load data keys and the total nb of values (m) ; only n values are read
     data, read_keys, m = phsp.load(input_filename, n)
 
+    # default keys
+    if keys == '' and len(rm_keys) == 0:
+        for k in read_keys:
+            keys += str(k)+' '
+    
     # remove keys if needed
     if len(rm_keys) > 0:
         data, keys = phsp.remove_keys(data, read_keys, rm_keys)
@@ -57,7 +62,13 @@ def phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
 
     # shuffle
     if shuffle:
-        np.random.shuffle(data)            
+        np.random.shuffle(data)
+
+    # special case
+    if 'Ekine' in keys:
+        index = keys.index('Ekine')
+        keys[index] = 'E'
+        print('Replace Ekine by E')
             
     # write 
     phsp.save_npy(output, data, keys)

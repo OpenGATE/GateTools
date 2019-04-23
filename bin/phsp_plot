@@ -38,10 +38,9 @@ def phsp_plot(filename, key, n, quantile, nb_bins):
     ncol = int(nfig/nrow)
     if ncol*nrow<nfig:
         nrow += 1
-    print(len(keys), nrow, ncol)
     
     # create fig
-    f, ax = plt.subplots(nrow, ncol, figsize=(15,5))
+    f, ax = plt.subplots(nrow, ncol, figsize=(25,10))
 
     # loop
     i = 0
@@ -52,19 +51,31 @@ def phsp_plot(filename, key, n, quantile, nb_bins):
         q1 = quantile
         q2 = 1.0-quantile
         q = (np.quantile(x, q1), np.quantile(x, q2))
+        label = ' {} $\mu$={:.2f} $\sigma$={:.2f}'.format(k, np.mean(x), np.std(x))
         a.hist(x, nb_bins,
-               density=True,
+               # density=True,
                histtype='stepfilled',
-               #histtype='step',
                range=q,
                facecolor='g',
                alpha=0.9,
-               label=k)
-        a.set_ylabel('Probability')
+               label=label)
+        #a.set_ylabel('Probability')
+        a.set_ylabel('Counts')
         a.legend()
         i = i+1
 
-    plt.tight_layout()
+    # remove empty plot
+    r = nrow-1
+    while i<ncol*nrow:
+        c = i-int(i/ncol)*ncol
+        ax[r,c].set_axis_off()
+        i = i+1        
+
+    if n == -1:
+        n = m
+    # plt.subplots_adjust(top=0.7)
+    plt.suptitle('{} Values: {}/{}'.format(filename, n, m))
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.show()
 
 # --------------------------------------------------------------------------
