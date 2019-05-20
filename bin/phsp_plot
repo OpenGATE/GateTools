@@ -29,15 +29,13 @@ def phsp_plot(filename, key, n, quantile, nb_bins):
     # load data
     data, read_keys, m = phsp.load(filename, n)
 
+    # get keys
     keys = key
     if len(key) == 0:
         keys = read_keys
 
-    nfig = len(keys)
-    nrow = int(np.sqrt(nfig))
-    ncol = int(nfig/nrow)
-    if ncol*nrow<nfig:
-        nrow += 1
+    # compute fig row/col
+    nrow, ncol = phsp.fig_get_nb_row_col(len(keys))
     
     # create fig
     f, ax = plt.subplots(nrow, ncol, figsize=(25,10))
@@ -45,7 +43,7 @@ def phsp_plot(filename, key, n, quantile, nb_bins):
     # loop
     i = 0
     for k in keys:
-        a = phsp.get_sub_fig(ax,i)
+        a = phsp.fig_get_sub_fig(ax,i)
         index = read_keys.index(k)
         x = data[:,index]
         q1 = quantile
@@ -65,11 +63,7 @@ def phsp_plot(filename, key, n, quantile, nb_bins):
         i = i+1
 
     # remove empty plot
-    r = nrow-1
-    while i<ncol*nrow:
-        c = i-int(i/ncol)*ncol
-        ax[r,c].set_axis_off()
-        i = i+1        
+    phsp.fig_rm_empty_plot(len(keys), ax)
 
     if n == -1:
         n = m

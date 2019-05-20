@@ -17,18 +17,21 @@ from io import BytesIO
 Load a PHSP (Phase-Space) file
 Output is numpy structured array
 '''
-def load(filename, nmax=-1):
+def load(filename, nmax=-1, random=False):
     b, extension = os.path.splitext(filename)
     nmax = int(nmax)
 
     if extension == '.root':
+        if random:
+            print('Error, cannot random on root file for the moment')
+            exit(0)
         return load_root(filename, nmax)
 
     # if extension == '.raw':
     #     return load_raw(filename)
 
     if extension == '.npy':
-        return load_npy(filename, nmax)
+        return load_npy(filename, nmax, random)
 
     print('Error, dont know how to open phsp with extension ',
           extension,
@@ -84,7 +87,7 @@ def load_root(filename, nmax=-1):
 Load a PHSP (Phase-Space) file in npy
 Output is numpy structured array
 '''
-def load_npy(filename, nmax=-1):
+def load_npy(filename, nmax=-1, random=False):
     # Check if file exist
     if (not os.path.isfile(filename)):
         print("File '"+filename+"' does not exist.")
@@ -93,7 +96,11 @@ def load_npy(filename, nmax=-1):
     x = np.load(filename, mmap_mode='r')
     n = len(x)
     if nmax > 0:
-        x = x[:nmax]
+        if random:
+            x = np.random.choice(x, nmax, replace=False)
+        else:
+            x = x[:nmax]
+
     data = x.view(np.float32).reshape(x.shape + (-1,))
     #data = np.float64(data) # long
     return data, x.dtype.names, n
@@ -174,29 +181,16 @@ def select_keys(data, input_keys, output_keys):
 
     cols = []
     for k in keys:
-        i = input_keys.index(k)
-        cols.append(i)
+        try:
+            i = input_keys.index(k)
+            cols.append(i)
+        except:
+            print('Error, cannot find',k,'in keys:',input_keys)
+            exit(0)
 
     data = data[:, cols]
     
     return data, keys
-
-
-''' ----------------------------------------------------------------------------
-Retrive a fig nb 
----------------------------------------------------------------------------- '''
-def get_sub_fig(ax, i):
-    # check if single fig
-    if not type(ax) is np.ndarray:
-        return ax
-
-    # check if single row/line
-    if ax.ndim == 1:
-        return ax[i]
-
-    # other cases
-    index = np.unravel_index(i, ax.shape)
-    return ax[index[0]][index[1]]
 
 
 ''' ----------------------------------------------------------------------------
@@ -212,3 +206,46 @@ def get_E(data, keys):
             raise RuntimeError("Error, cannot find key 'Ekine' nor 'E'. Keys are: ", keys)
     E = data[:,Ei]
     return E, Ei
+
+
+''' ----------------------------------------------------------------------------
+Retrive a fig nb 
+---------------------------------------------------------------------------- '''
+def fig_get_sub_fig(ax, i):
+    # check if single fig
+    if not type(ax) is np.ndarray:
+        return ax
+
+    # check if single row/line
+    if ax.ndim == 1:
+        return ax[i]
+
+    # other cases
+    index = np.unravel_index(i, ax.shape)
+    return ax[index[0]][index[1]]
+
+
+''' ----------------------------------------------------------------------------
+Compute a fig with adapted row/col for n fig
+---------------------------------------------------------------------------- '''
+def fig_get_nb_row_col(nfig):
+    nrow = int(np.sqrt(nfig))
+    ncol = int(nfig/nrow)
+    if ncol*nrow<nfig:
+        nrow += 1
+    return nrow, ncol
+
+
+''' ----------------------------------------------------------------------------
+Remove empty plot
+---------------------------------------------------------------------------- '''
+def fig_rm_empty_plot(nfig, ax):
+    nrow, ncol = fig_get_nb_row_col(nfig)
+    r = nrow-1
+    i = nfig
+    while i<ncol*nrow:
+        c = i-int(i/ncol)*ncol
+        ax[r,c].set_axis_off()
+        i = i+1  
+
+
