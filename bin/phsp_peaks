@@ -12,11 +12,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('input_filename')
 @click.option('-n', default=float(-1), help='Use -1 to read all data')
 @click.option('--nb_peaks', '-p', default=int(2), help='Number of peaks to find')
-# @click.option('--output', '-o', default='AUTO', help='If AUTO, use input_filename.npy')
-# @click.option('--rm_keys', '-r', multiple=True, help='Remove the given keys')
-# @click.option('--keys', '-k', help='Set the kept keys, give as a list such that "X Y Z" ', default='')
-# @click.option('--overwrite', '-f', is_flag=True, default=False, help='Overwrite file if already exist')
-# @click.option('--shuffle', '-s', is_flag=True, default=False, help='Shuffle the data')
 def phsp_peaks(input_filename, n, nb_peaks):
     '''
     \b

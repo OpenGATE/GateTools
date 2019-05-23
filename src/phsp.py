@@ -103,7 +103,7 @@ def load_npy(filename, nmax=-1, random=False):
 
     data = x.view(np.float32).reshape(x.shape + (-1,))
     #data = np.float64(data) # long
-    return data, x.dtype.names, n
+    return data, list(x.dtype.names), n
 
 
 
@@ -149,17 +149,33 @@ def remove_keys(data, keys, rm_keys):
         return data, keys
     
     for k in rm_keys:
+        print(k)
         if k not in keys:
             print('Error the key', k, 'does not exist in', keys)
             exit(0)
-            i = keys.index(k)
-            cols = np.delete(cols, i)
-            index.append(i)
+        i = keys.index(k)
+        cols = np.delete(cols, i)
+        index.append(i)
         for c in index:
             keys.pop(c)
     data = data[:, cols]
+    print(keys)
     return data, keys
 
+
+''' ---------------------------------------------------------------------------
+Convert string of keys to arrays of key
+'''
+def str_keys_to_array_keys(keys):
+    if keys == None:
+        return []
+    s = str(keys)
+    dd = tokenize.tokenize(BytesIO(s.encode('utf-8')).readline)
+    keys = []
+    for toknum, tokval, _, _, _ in dd:
+        if tokval != 'utf-8' and tokval != '' and tokval != None:
+            keys.append(tokval)
+    return keys
 
 ''' ---------------------------------------------------------------------------
 Keep only the given keys
@@ -172,15 +188,8 @@ def select_keys(data, input_keys, output_keys):
         print('Error, select_keys is void')
         exit(0)
 
-    s = str(output_keys)
-    dd = tokenize.tokenize(BytesIO(s.encode('utf-8')).readline)
-    keys = []
-    for toknum, tokval, _, _, _ in dd:
-        if tokval != 'utf-8' and tokval != '':
-            keys.append(tokval)
-
     cols = []
-    for k in keys:
+    for k in output_keys:
         try:
             i = input_keys.index(k)
             cols.append(i)
@@ -189,8 +198,7 @@ def select_keys(data, input_keys, output_keys):
             exit(0)
 
     data = data[:, cols]
-    
-    return data, keys
+    return data
 
 
 ''' ----------------------------------------------------------------------------
@@ -249,3 +257,23 @@ def fig_rm_empty_plot(nfig, ax):
         i = i+1  
 
 
+''' ----------------------------------------------------------------------------
+Remove empty plot
+---------------------------------------------------------------------------- '''
+def add_angle(data, keys, k1='X', k2='Y'):
+    '''
+    Add the angle to the data atan2(k2,k1)
+    return augmented data + additional key
+    '''
+
+    i1 = keys.index(k1)
+    i2 = keys.index(k2)
+    angle = np.arctan2(data[:,i2], data[:,i1])
+    data = np.column_stack((data, angle))
+    keys = keys+('angleXY',)
+    return data, keys
+
+    
+
+
+    

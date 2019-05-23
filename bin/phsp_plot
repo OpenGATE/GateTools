@@ -12,12 +12,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename')
 @click.option('-n', default=float(-1), help='Use -1 to read all data')
-@click.option('--key', '-k', multiple=True, help='Plot the given keys')
+@click.option('--keys', '-k', help='Plot the given keys (as a str list such that "X Y Z")', default='')
 @click.option('--quantile', '-q', default=float(0), help='Restrict histogram to quantile')
 @click.option('--nb_bins', '-b',
               default=int(100),
               help='Number of bins')
-def phsp_plot(filename, key, n, quantile, nb_bins):
+def phsp_plot(filename, keys, n, quantile, nb_bins):
     '''
     \b
     Plot histograms
@@ -30,9 +30,13 @@ def phsp_plot(filename, key, n, quantile, nb_bins):
     data, read_keys, m = phsp.load(filename, n)
 
     # get keys
-    keys = key
-    if len(key) == 0:
+    keys = phsp.str_keys_to_array_keys(keys)
+    if len(keys) == 0:
         keys = read_keys
+
+    # augment data if needed
+    if 'angleXY' in keys:
+        data, read_keys = phsp.add_angle(data, read_keys, 'X', 'Y')
 
     # compute fig row/col
     nrow, ncol = phsp.fig_get_nb_row_col(len(keys))
