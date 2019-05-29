@@ -169,36 +169,12 @@ Convert string of keys to arrays of key
 def str_keys_to_array_keys(keys):
     if keys == None:
         return []
-    s = str(keys)
-    dd = tokenize.tokenize(BytesIO(s.encode('utf-8')).readline)
+    dd = tokenize.tokenize(BytesIO(keys.encode('utf-8')).readline)
     keys = []
     for toknum, tokval, _, _, _ in dd:
         if tokval != 'utf-8' and tokval != '' and tokval != None:
             keys.append(tokval)
     return keys
-
-''' ---------------------------------------------------------------------------
-Keep only the given keys
-'''
-def select_keys(data, input_keys, output_keys):
-
-    cols = np.arange(len(input_keys))
-    index = []
-    if len(output_keys) == 0:
-        print('Error, select_keys is void')
-        exit(0)
-
-    cols = []
-    for k in output_keys:
-        try:
-            i = input_keys.index(k)
-            cols.append(i)
-        except:
-            print('Error, cannot find',k,'in keys:',input_keys)
-            exit(0)
-
-    data = data[:, cols]
-    return data
 
 
 ''' ----------------------------------------------------------------------------
@@ -257,23 +233,101 @@ def fig_rm_empty_plot(nfig, ax):
         i = i+1  
 
 
-''' ----------------------------------------------------------------------------
-Remove empty plot
----------------------------------------------------------------------------- '''
-def add_angle(data, keys, k1='X', k2='Y'):
-    '''
-    Add the angle to the data atan2(k2,k1)
-    return augmented data + additional key
-    '''
 
+''' ---------------------------------------------------------------------------
+In the list of keys, toggle angleXY to XY or XY to angleXY
+'''
+def keys_toggle_angle(keys):
+
+    k = keys.copy()
+    if 'X' in keys and 'Y' in keys:        
+        k.remove('X')
+        k.remove('Y')
+        k.append('angleXY')
+    else:
+        if 'angleXY' in keys:
+            k.append('X')
+            k.append('Y')
+            k.remove('angleXY')
+    return k   
+
+        
+'''  ---------------------------------------------------------------------------
+Keep only the given keys
+'''
+def select_keys(data, input_keys, output_keys):
+
+    cols = np.arange(len(input_keys))
+    index = []
+    if len(output_keys) == 0:
+        print('Error, select_keys is void')
+        exit(0)
+
+    cols = []
+    for k in output_keys:
+        try:
+            i = input_keys.index(k)
+            cols.append(i)
+        except:
+            print('Error, cannot find',k,'in keys:',input_keys)
+            exit(0)
+
+    data = data[:, cols]
+    return data
+
+
+'''  ---------------------------------------------------------------------------
+Add and compute angleXY in the list of keys
+ angle = atan2(k2,k1)
+'''
+def add_angle(data, keys, k1='X', k2='Y'):
+
+    if 'angleXY' in keys:
+        return data, keys
+    
     i1 = keys.index(k1)
     i2 = keys.index(k2)
     angle = np.arctan2(data[:,i2], data[:,i1])
     data = np.column_stack((data, angle))
-    keys = keys+('angleXY',)
-    return data, keys
+    k = keys.copy()
+    k.append('angleXY')    
+    return data, k
+ 
 
+
+''' ----------------------------------------------------------------------------
+Add X and Y from angleXY
+---------------------------------------------------------------------------- '''
+def add_vector_angle(data, keys, radius, k='angleXY', k1='X', k2='Y'):
+
+    # nothing to do if already exist
+    if k1 in keys and k2 in keys:
+        return data, keys
+
+    if k not in keys:
+        print('Cannot convert angle, the key angleXY does not exist in ', keys)
+
+    i = keys.index(k)
+    angle = data[:,i]
+    dx = radius * np.cos(angle)
+    dy = radius * np.sin(angle)
+    data = np.column_stack((data, dx))
+    data = np.column_stack((data, dy))
+
+    kk = keys.copy()
+    kk.append(k1)
+    kk.append(k2)
+    return data, kk
+
+''' ----------------------------------------------------------------------------
+Add missing keys (angleXY or X+Y)
+---------------------------------------------------------------------------- '''
+def add_missing_angle(data, input_keys, output_keys, radius):
     
+    if 'angleXY' in output_keys:
+        data, input_keys = add_angle(data, input_keys)
 
+    if 'X' in output_keys and 'Y' in output_keys:
+        data, input_keys = add_vector_angle(data, input_keys, radius)
 
-    
+    return data, input_keys
