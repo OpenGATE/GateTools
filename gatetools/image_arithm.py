@@ -43,8 +43,7 @@ This module provides basic arithmatic image operations for ITK images, e.g. dose
 
 import os
 import itk
-from functools import reduce
-import operator
+import numpy as np
 
 def _image_size(img):
     # FIXME
@@ -75,14 +74,14 @@ def _image_list(input_list):
             input_images.append(itk.imread(img))
         else:
             raise TypeError("ERROR: {} is not an SimpleITK image object nor a path to an existing image file".format(img))
-    if not output_list:
+    if not input_images:
         raise RuntimeError("got no images")
     # check that they have the same geometry
     checked_images=list()
-    origin0 = output_list[0].GetOrigin()
-    spacing0 = output_list[0].GetSpacing()
-    size0 = _image_size(output_list[0])
-    for img for img in input_images:
+    origin0 = input_images[0].GetOrigin()
+    spacing0 = input_images[0].GetSpacing()
+    size0 = _image_size(input_images[0])
+    for img in input_images:
         img_size = _image_size(img)
         if not img_size == size0:
             raise TypeError("images have incompatible size: {} versus {}".format(size0,img_size))
@@ -94,6 +93,7 @@ def _image_list(input_list):
         else:
             # TODO: maybe we should also check pixel types?
             checked_images.append(img)
+    return checked_images
 
 def _image_output(img,filename=None):
     """
@@ -103,7 +103,7 @@ def _image_output(img,filename=None):
         sitk.imwrite(img,filename)
     return img
 
-def _apply_operation_to_image_list(op,valtype,input_list,filename=None):
+def _apply_operation_to_image_list(op,valtype,input_list,output_file=None):
     op_instance=None
     for i,img in enumerate(_image_list(input_list)):
         if op_instance is None:
@@ -143,14 +143,15 @@ def image_divide(input_list=[], defval=0.,output_file=None):
     """
     raw_result = _apply_operation_to_image_list(itk.DivideImageFilter,valtype=itk.F,input_list=input_list)
     # FIXME: where do numpy/ITK store the value of the "maximum value that can be respresented with a 32bit float"?
+    # FIXME: maybe we should/wish to support integer division as well?
     mask = itk.GetArrayViewFromImage(raw_result)>1e38
     if np.sum(mask)==0:
-        return raw_result
+        return _image_output(raw_result,output_file)
     ratios = itk.GetArrayFromImage(raw_result)
     ratios[mask] = defval
     fixed_result = itk.GetImageFromArray(ratios)
     fixed_result.CopyInformationFrom(raw_result)
-    return fixed_result
+    return _image_output(fixed_result,output_file)
 
 #####################################################################################
 import unittest
@@ -159,20 +160,26 @@ from datetime import datetime
 
 class Test_Sum(unittest.TestCase):
     def test_two_2D_images(self):
-        imgAf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32).reshape(4,5))
-        imgBf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32)[::-1].reshape(4,5))
-        imgCf = image_sum([imgAf,imgBf])
-        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf)==4.*5.) )
-        imgAui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16).reshape(40,50))
-        imgBui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16)[::-1].reshape(40,50))
-        imgCui = image_sum([imgAui,imgBui])
-        self.assertTrue( itk.GetArrayViewFromImage(imgCui)==40*50 )
+        imgAf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32).reshape(4,5).copy())
+        imgBf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32)[::-1].reshape(4,5).copy())
+        imgCf = image_sum(input_list=[imgAf,imgBf])
+        print("got image with spacing {}".format(imgCf.GetSpacing()))
+        self.assertTrue( imgCf.GetPixel((1,1)) == 4.*5. )
+        print("at least one pixel is correct.")
+        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf),4.*5.) )
+        imgAui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16).reshape(40,50).copy())
+        imgBui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16)[::-1].reshape(40,50).copy())
+        imgCui = image_sum(input_list=[imgAui,imgBui])
+        print("got image with spacing {}".format(imgCui.GetSpacing()))
+        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==40*50).all() )
     def test_two_3D_images(self):
-        imgAf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32).reshape(3,4,5))
-        imgBf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32)[::-1].reshape(3,4,5))
-        imgCf = image_sum([imgAf,imgBf])
-        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf)==3.*4.*5.) )
-        imgAui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16).reshape(30,40,50))
-        imgBui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16)[::-1].reshape(30,40,50))
-        imgCui = image_sum([imgAui,imgBui])
-        self.assertTrue( itk.GetArrayViewFromImage(imgCui)==30*40*50 )
+        imgAf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32).reshape(3,4,5).copy())
+        imgBf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32)[::-1].reshape(3,4,5).copy())
+        imgCf = image_sum(input_list=[imgAf,imgBf])
+        print("got image with spacing {}".format(imgCf.GetSpacing()))
+        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf),3.*4.*5.) )
+        imgAui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16).reshape(30,40,50).copy())
+        imgBui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16)[::-1].reshape(30,40,50).copy())
+        imgCui = image_sum(input_list=[imgAui,imgBui])
+        print("got image with spacing {}".format(imgCui.GetSpacing()))
+        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==30*40*50).all() )
