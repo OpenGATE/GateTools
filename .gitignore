@@ -2,3 +2,4 @@
 *~
 gatetools.egg-info/
 gatetools/__pycache__/
+*.pyc
