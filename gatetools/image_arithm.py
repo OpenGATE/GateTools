@@ -25,6 +25,12 @@ This module provides basic arithmatic image operations for ITK images, e.g. dose
     11. img / scalar
     12. normalize(img) (divide by max)
     13. -ln(img/I0)
+    Some of these operations are quite directly possible with SimpleITK, for
+    instance the image objects in SimpleITK have a 'plus' operator defined, so
+    that you can literally write imgsum = img1+img1, which will do what you
+    expect when the images are geometrically compatible, and raise an exception
+    otherwise. We are using directly using the ITK python bindings, which do
+    not seem to have this nifty feature, so we are providing it here.
 """
 
 # -----------------------------------------------------------------------------
@@ -36,9 +42,17 @@ This module provides basic arithmatic image operations for ITK images, e.g. dose
 
 
 import os
-import SimpleITK as sitk
+import itk
 from functools import reduce
 import operator
+
+def _image_size(img):
+    # FIXME
+    # Why doesn't ITK provide a simple method/function for this very basic query?
+    # In SimpleITK it's img.GetSize(), but this method does not seem to exist in normal ITK.
+    # Or am I overlooking something in the docs?
+    # TODO: the numpy array shape is a tuple. Would it be useful to convert that tuple to a numpy array?
+    return itk.GetArrayViewFromImage(img).shape
 
 def _image_list(input_list):
     """
@@ -50,85 +64,115 @@ def _image_list(input_list):
     Images with incompatible geometry are silently ignored.
     TODO: should we sound the alarm (warnings/errors, raise exceptions) in case of incompatible geometries?
     TODO: discuss policy in case of empty/erroneous input
+    TODO: is a 'TypeError' the correct exception to raise in case of incompatible image types, or should it be InputError?
     """
-    output_list=list()
+    input_images=list()
     for img in input_list:
-        # TODO: try to implement this with duck typing instead of explicit type checks.
-        if type(img)==sitk.SimpleITK.Image:
-            output_list.append(img)
-        elif type(img)==str and os.path.exists(img):
-            output_list.append(sitk.ReadImage(img))
+        if hasattr(img,"GetSpacing") and hasattr(img,"GetOrigin"):
+            # semi-duck-typing
+            input_images.append(img)
+        elif os.path.exists(img):
+            input_images.append(itk.imread(img))
         else:
-            raise TypeError("ERROR: {} is not an SimpleITK image object nor a filename".format(img))
+            raise TypeError("ERROR: {} is not an SimpleITK image object nor a path to an existing image file".format(img))
     if not output_list:
         raise RuntimeError("got no images")
     # check that they have the same geometry
+    checked_images=list()
     origin0 = output_list[0].GetOrigin()
     spacing0 = output_list[0].GetSpacing()
-    size0 = output_list[0].GetSize()
-    return [ img for img in output_list \
-            if np.allclose(img.GetOrigin(),origin0) and \
-               np.allclose(img.GetSpacing(),spacing0) and \
-               (img.GetSize()==size0) ]
+    size0 = _image_size(output_list[0])
+    for img for img in input_images:
+        img_size = _image_size(img)
+        if not img_size == size0:
+            raise TypeError("images have incompatible size: {} versus {}".format(size0,img_size))
+        elif not np.allclose(img.GetOrigin(),origin0):
+            raise TypeError("images have incompatible origins: {} versus {}".format(origin0,img.GetOrigin()))
+        elif not np.allclose(img.GetSpacing(),spacing0):
+            raise TypeError("images have incompatible {} spacing: {} versus {}".format(
+                "pixel" if len(spacing0)==2 else "voxel",spacing0,img.GetSpacing()))
+        else:
+            # TODO: maybe we should also check pixel types?
+            checked_images.append(img)
 
 def _image_output(img,filename=None):
     """
     Helper function for optional writing to file of output images.
     """
     if filename is not None:
-        sitk.WriteImage(img,filename)
+        sitk.imwrite(img,filename)
     return img
 
-def image_sum(input_list=[],output_file=None):
+def _apply_operation_to_image_list(op,valtype,input_list,filename=None):
+    op_instance=None
+    for i,img in enumerate(_image_list(input_list)):
+        if op_instance is None:
+            imgtype = itk.Image[valtype,img.GetImageDimension()]
+            op_instance = op[imgtype,imgtype,imgtype].New()
+        op_instance.SetInput(i,img)
+    return _image_output(op_instance.GetOutput(),output_file)
+
+def image_sum(input_list=[],valtype=itk.F,output_file=None):
     """
     Computes element-wise sum of a list of image with equal geometry.
     """
-    return _image_output(reduce(operator.add,_image_list(input_list)),output_file)
+    return _apply_operation_to_image_list(itk.AddImageFilter,valtype,input_list,output_file)
 
-def image_product(input_list=[],output_file=None):
+def image_product(input_list=[],output_file=None,valtype=itk.F):
     """
     Computes element-wise product of a list of image with equal geometry.
     """
-    return _image_output(reduce(operator.mul,_image_list(input_list)),output_file)
+    return _apply_operation_to_image_list(itk.MultiplyImageFilter,valtype,input_list,output_file)
 
-def image_min(input_list=[],output_file=None):
+def image_min(input_list=[],output_file=None,valtype=itk.F):
     """
     Computes element-wise minimum of a list of image with equal geometry.
     """
-    images = _image_list(input_list)
-    output_array = sitk.GetArrayFromImage(images[0])
-    for img in images[1:]:
-        output_array = np.fmin(output_array,sitk.GetArrayFromImage(img))
-    output_image = sitk.GetImageFromArray(output_array)
-    output_image.CopyInformation(images[0])
-    return _image_output(output_image,output_file)
+    return _apply_operation_to_image_list(itk.MinimumImageFilter,valtype,input_list,output_file)
 
-def image_max(input_list=[],output_file=None):
+def image_max(input_list=[],output_file=None,valtype=itk.F):
     """
     Computes element-wise maximum of a list of image with equal geometry.
     """
-    images = _image_list(input_list)
-    output_array = sitk.GetArrayFromImage(images[0])
-    for img in images[1:]:
-        output_array = np.fmax(output_array,sitk.GetArrayFromImage(img))
-    output_image = sitk.GetImageFromArray(output_array)
-    output_image.CopyInformation(images[0])
-    return _image_output(output_image,output_file)
+    return _apply_operation_to_image_list(itk.MaximumImageFilter,valtype,input_list,output_file)
 
-def image_divide(input1,input2,defval=0.,output_file=None):
+def image_divide(input_list=[], defval=0.,output_file=None):
     """
     Computes element-wise ratio of two images with equal geometry.
     Non-finite values are replaced with defvalue (unless it's None).
     """
-    images = _image_list([input1,input2])
-    assert(len(images)==2)
-    ratio_img = images[0] / images[1]
-    if defval is None:
-        return ratio_img
-    ratio_array = sitk.GetArrayFromImage(ratio_img)
-    mask = np.logical_not( np.isfinite(ratio_array) )
-    if mask.any():
-        ratio_array[mask] = defval
-        ratio_img = sitk.GetImageFromArray(ratio_array)
-        ratio_img.CopyInformation(images[0])
-    return _image_output(ratio_img,output_file)
+    raw_result = _apply_operation_to_image_list(itk.DivideImageFilter,valtype=itk.F,input_list=input_list)
+    # FIXME: where do numpy/ITK store the value of the "maximum value that can be respresented with a 32bit float"?
+    mask = itk.GetArrayViewFromImage(raw_result)>1e38
+    if np.sum(mask)==0:
+        return raw_result
+    ratios = itk.GetArrayFromImage(raw_result)
+    ratios[mask] = defval
+    fixed_result = itk.GetImageFromArray(ratios)
+    fixed_result.CopyInformationFrom(raw_result)
+    return fixed_result
+
+#####################################################################################
+import unittest
+import sys
+from datetime import datetime
+
+class Test_Sum(unittest.TestCase):
+    def test_two_2D_images(self):
+        imgAf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32).reshape(4,5))
+        imgBf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32)[::-1].reshape(4,5))
+        imgCf = image_sum([imgAf,imgBf])
+        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf)==4.*5.) )
+        imgAui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16).reshape(40,50))
+        imgBui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16)[::-1].reshape(40,50))
+        imgCui = image_sum([imgAui,imgBui])
+        self.assertTrue( itk.GetArrayViewFromImage(imgCui)==40*50 )
+    def test_two_3D_images(self):
+        imgAf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32).reshape(3,4,5))
+        imgBf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32)[::-1].reshape(3,4,5))
+        imgCf = image_sum([imgAf,imgBf])
+        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf)==3.*4.*5.) )
+        imgAui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16).reshape(30,40,50))
+        imgBui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16)[::-1].reshape(30,40,50))
+        imgCui = image_sum([imgAui,imgBui])
+        self.assertTrue( itk.GetArrayViewFromImage(imgCui)==30*40*50 )
