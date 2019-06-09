@@ -20,6 +20,7 @@ setuptools.setup(
     ),
     install_requires=[
         'uproot',
+        'click',
         'pydicom',
         'tqdm',
         'colored',
