@@ -11,7 +11,7 @@ setuptools.setup(
     description="Tools for GATE ",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://gitlab.in2p3.fr/dsarrut/syd",
+    url="https://github.com/OpenGATE/GateTools",
     packages=['gatetools'],
     classifiers=(
         "Programming Language :: Python :: 3",
@@ -31,5 +31,6 @@ setuptools.setup(
         'bin/gate_info',
         'bin/gate_image_uncertainty',
         'bin/gate_image_convert',
+        'bin/gate_gamma_index',
         ]
 )
