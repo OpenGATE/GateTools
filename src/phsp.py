@@ -8,6 +8,8 @@ import uproot
 import time
 import tokenize
 from io import BytesIO
+from matplotlib import pyplot as plt
+from matplotlib.colors import LogNorm
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -331,3 +333,25 @@ def add_missing_angle(data, input_keys, output_keys, radius):
         data, input_keys = add_vector_angle(data, input_keys, radius)
 
     return data, input_keys
+
+
+''' ----------------------------------------------------------------------------
+Fig 2D histo
+---------------------------------------------------------------------------- '''
+def fig_histo2D(ax, data, keys, k, nbins, color='g'):
+    i1 = keys.index(k[0])
+    x = data[:,i1]
+    i2 = keys.index(k[1])
+    y = data[:,i2]
+    if color == 'g':
+        cmap = plt.cm.Greens
+    if color == 'r':
+        cmap = plt.cm.Reds
+    if color == 'b':
+        cmap = plt.cm.Blues
+        
+    counts, xedges, yedges, im = ax.hist2d(x, y, bins=(nbins, nbins), alpha=1, cmap=cmap)
+    #, norm=LogNorm())
+    plt.colorbar(im, ax=ax)
+    ax.set_xlabel(k[0])
+    ax.set_ylabel(k[1])

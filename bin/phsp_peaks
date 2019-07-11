@@ -12,7 +12,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('input_filename')
 @click.option('-n', default=float(-1), help='Use -1 to read all data')
 @click.option('--nb_peaks', '-p', default=int(2), help='Number of peaks to find')
-def phsp_peaks(input_filename, n, nb_peaks):
+@click.option('--output', '-o', default='auto', help="If 'auto', use filename_E.pth")
+@click.option('--dry_run/--no-dry_run', default=False)
+def phsp_peaks(input_filename, n, nb_peaks, dry_run, output):
     '''
     \b
     Detect and separate the energy peaks. 
@@ -21,7 +23,14 @@ def phsp_peaks(input_filename, n, nb_peaks):
     <INPUT_FILENAME> : input PHSP root file
     '''
 
-    # load data keys and the total nb of values (m) ; only n values are read
+    if output == 'auto':
+        b, extension = os.path.splitext(input_filename)
+        output_filename = b
+    else:
+        output_filename = output
+    print('output', output_filename)
+
+        # load data keys and the total nb of values (m) ; only n values are read
     data, keys, m = phsp.load(input_filename, n)
 
     # get E 
@@ -41,15 +50,18 @@ def phsp_peaks(input_filename, n, nb_peaks):
         condition = data[:, index] == v
         d = data[condition]
         data = data[np.logical_not(condition)]
-        e = str(int(round(v*1000)))
-        output = filename+'_'+e+'.npy'
-        print('Write peak',e,'keV with', len(d), 'elements in', output)
-        phsp.save_npy(output, d, keys)
+        e = str(v*1000)
+        er = str(int(round(v*1000)))
+        out = output_filename+'_'+er+'.npy'
+        print('Write peak',e,'keV with', len(d), 'elements in', out)
+        if not dry_run:
+            phsp.save_npy(out, d, keys)
 
     # write
-    output = filename+'_nopeak'+'.npy'
-    print('Write remaining data with', len(data), 'elements in', output)
-    phsp.save_npy(output, data, keys)
+    out = output_filename+'_nopeak'+'.npy'
+    print('Write remaining data with', len(data), 'elements in', out)
+    if not dry_run:
+        phsp.save_npy(out, data, keys)
 
 
 # --------------------------------------------------------------------------

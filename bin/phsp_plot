@@ -14,9 +14,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-n', default=float(-1), help='Use -1 to read all data')
 @click.option('--keys', '-k', help='Plot the given keys (as a str list such that "X Y Z")', default='')
 @click.option('--quantile', '-q', default=float(0), help='Restrict histogram to quantile')
-@click.option('--nb_bins', '-b',
-              default=int(100),
-              help='Number of bins')
+@click.option('--nb_bins', '-b', default=int(100), help='Number of bins')
 def phsp_plot(filename, keys, n, quantile, nb_bins):
     '''
     \b
@@ -38,8 +36,19 @@ def phsp_plot(filename, keys, n, quantile, nb_bins):
     if 'angleXY' in keys:
         data, read_keys = phsp.add_angle(data, read_keys, 'X', 'Y')
 
+    # 2D figs
+    keys_2D = [
+        ['X', 'Ekine'],
+        ['X', 'Y'],
+        ['X', 'Z'],
+        ['dZ', 'dY'],
+        ['dZ', 'Ekine'],
+    ]
+        
     # compute fig row/col
-    nrow, ncol = phsp.fig_get_nb_row_col(len(keys))
+    nb_fig = len(keys)+len(keys_2D)
+    print(nb_fig, keys, keys_2D)
+    nrow, ncol = phsp.fig_get_nb_row_col(nb_fig)
     
     # create fig
     f, ax = plt.subplots(nrow, ncol, figsize=(25,10))
@@ -66,8 +75,14 @@ def phsp_plot(filename, keys, n, quantile, nb_bins):
         a.legend()
         i = i+1
 
+    # 2D
+    for k in keys_2D:
+        a = phsp.fig_get_sub_fig(ax,i)
+        phsp.fig_histo2D(a, data, read_keys, k, nb_bins, 'g')
+        i = i+1
+        
     # remove empty plot
-    phsp.fig_rm_empty_plot(len(keys), ax)
+    phsp.fig_rm_empty_plot(nb_fig, ax)
 
     if n == -1:
         n = m
