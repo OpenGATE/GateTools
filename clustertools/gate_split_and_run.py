@@ -118,6 +118,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--mac', default='mac/main.mac', help='Input mac filename')
 @click.option('--j', default=10, help='Number of jobs/core')
 @click.option('--numberprimaries', default=0, help='Total number of primaries for all jobs')
+@click.option('--env', default='', help='Bash scrip to set environment variables during job')
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--paramtogate', default='', help='Parameters for Gate')
 @click.option('--timestart', default=0.0, help='Set time start for the first job')
@@ -128,7 +129,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 
-def runJobs(mac, j, numberprimaries, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, copydata, dry):
+def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, copydata, dry):
     """
     \b
     Run Gate jobs
@@ -287,6 +288,7 @@ def runJobs(mac, j, numberprimaries, releasedir, paramtogate, timestart, timesli
                       ',RELEASEDIR=' + releasedir + \
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
+                      ',ENV=' + env + \
                       '\" ' + jobFile
         else:
             command = 'qsub -N \"gatejob.' + runId + \
