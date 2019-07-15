@@ -53,7 +53,7 @@ class ParserMacro:
                     #Parse alias
                     splitLine = line.split(" ")
                     splitLine = [x for x in splitLine if x]
-                    if splitLine[0] == '/control/alias':
+                    if len(splitLine) > 0 and splitLine[0] == '/control/alias':
                         self.parserAlias[splitLine[1]] = [file, index]
 
 
