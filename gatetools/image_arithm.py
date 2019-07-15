@@ -100,7 +100,7 @@ def _image_output(img,filename=None):
     Helper function for optional writing to file of output images.
     """
     if filename is not None:
-        sitk.imwrite(img,filename)
+        itk.imwrite(img,filename)
     return img
 
 def _apply_operation_to_image_list(op,valtype,input_list,output_file=None):
@@ -110,6 +110,7 @@ def _apply_operation_to_image_list(op,valtype,input_list,output_file=None):
             imgtype = itk.Image[valtype,img.GetImageDimension()]
             op_instance = op[imgtype,imgtype,imgtype].New()
         op_instance.SetInput(i,img)
+    op_instance.Update()
     return _image_output(op_instance.GetOutput(),output_file)
 
 def image_sum(input_list=[],valtype=itk.F,output_file=None):
@@ -163,23 +164,24 @@ class Test_Sum(unittest.TestCase):
         imgAf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32).reshape(4,5).copy())
         imgBf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32)[::-1].reshape(4,5).copy())
         imgCf = image_sum(input_list=[imgAf,imgBf])
-        print("got image with spacing {}".format(imgCf.GetSpacing()))
-        self.assertTrue( imgCf.GetPixel((1,1)) == 4.*5. )
-        print("at least one pixel is correct.")
-        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf),4.*5.) )
+        #print("got image with spacing {}".format(imgCf.GetSpacing()))
+        index = imgCf.GetLargestPossibleRegion().GetSize() -1
+        self.assertTrue( imgCf.GetPixel(index) == 4.*5. -1.)
+        #print("at least one pixel is correct.")
+        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf),4.*5.-1) )
         imgAui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16).reshape(40,50).copy())
         imgBui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16)[::-1].reshape(40,50).copy())
-        imgCui = image_sum(input_list=[imgAui,imgBui])
-        print("got image with spacing {}".format(imgCui.GetSpacing()))
-        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==40*50).all() )
+        imgCui = image_sum(input_list=[imgAui,imgBui],valtype=itk.US)
+        #print("got image with spacing {}".format(imgCui.GetSpacing()))
+        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==40*50-1).all() )
     def test_two_3D_images(self):
         imgAf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32).reshape(3,4,5).copy())
         imgBf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32)[::-1].reshape(3,4,5).copy())
         imgCf = image_sum(input_list=[imgAf,imgBf])
-        print("got image with spacing {}".format(imgCf.GetSpacing()))
-        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf),3.*4.*5.) )
+        index = imgCf.GetLargestPossibleRegion().GetSize() -1
+        self.assertTrue( imgCf.GetPixel(index) == 3.*4.*5. -1.)
         imgAui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16).reshape(30,40,50).copy())
         imgBui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16)[::-1].reshape(30,40,50).copy())
-        imgCui = image_sum(input_list=[imgAui,imgBui])
-        print("got image with spacing {}".format(imgCui.GetSpacing()))
-        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==30*40*50).all() )
+        imgCui = image_sum(input_list=[imgAui,imgBui],valtype=itk.US)
+        #print("got image with spacing {}".format(imgCui.GetSpacing()))
+        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==30*40*50-1).all() )
