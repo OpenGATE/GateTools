@@ -136,10 +136,10 @@ class ParserMacro:
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('--mac', default='mac/main.mac', help='Input mac filename')
-@click.option('--j', default=10, help='Number of jobs/core')
-@click.option('--numberprimaries', default=0, help='Total number of primaries for all jobs')
-@click.option('--env', default='', help='Bash scrip to set environment variables during job')
+@click.argument('mac', nargs=1)
+@click.option('--j', default=1, help='Number of jobs/core')
+@click.option('--n', default=0, help='Total number of primaries for all jobs')
+@click.option('--env', default='', help='Bash script to set environment variables during job')
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--paramtogate', default='', help='Parameters for Gate')
 @click.option('--timestart', default=0.0, help='Set time start for the first job')
@@ -151,12 +151,18 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 
-def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, alias, copydata, dry):
+def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, alias, copydata, dry):
     """
     \b
     Run Gate jobs
+
+    MAC: input mac filename
+
     """
 
+    #
+    numberprimaries = n
+    
     #Control if options are correct:
     if numberprimaries != 0:
         if timestart != 0 or timeslice != 0 or timestop != 0:
@@ -176,8 +182,9 @@ def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, ti
 
     # Get the release of Gate used for the simulation
     if (releasedir == ''):
-        releasedir = os.path.dirname(find_executable('Gate'))
-        if releasedir == '':
+        try:
+            releasedir = os.path.dirname(find_executable('Gate'))
+        except:
             print(colorama.Fore.RED + 'ERROR: No Gate found in PATH' + colorama.Style.RESET_ALL)
             exit(1)
         else:
@@ -220,7 +227,7 @@ def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, ti
     # Find qsub
     qsub = shutil.which('qsub')
     if qsub is None:
-        print(colorama.Fore.YELLOW + 'WARNING: qsub is not found. Simply run Gate on multpile cores.' + colorama.Style.RESET_ALL)
+        print('No qsub, run Gate on multiple cores.')
 
     # Parameter files
     paramFileName = os.path.join(outputDir, 'params.txt')
