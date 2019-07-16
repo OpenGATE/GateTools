@@ -14,10 +14,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--short/--not-short', '-s',
               default=False,
-              help='If true, only display results Gate path')
+              help='If true, display Gate path only')
 def gate_info(short):
     '''
-    Print information about a Gate and environment
+    Print information about a Gate and the environment
     '''
     gt.print_gate_info(short)
 
