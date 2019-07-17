@@ -18,43 +18,59 @@ class ParserMacro:
         self.parserAllFiles = {}
         self.aliasToGate = {}
         self.aliasNumber = 0
+        self.parserAlias = {}
+        self.parserAttributes = {}
 
     def parseMacFiles(self, fullMacroDir, mainMacroFile):
         macFiles = [mainMacroFile]
         while len(macFiles) != 0:
-            self.parserAllFiles[macFiles[0]] = []
-            with open(os.path.join(fullMacroDir, macFiles[0])) as f:  # open file
+            currentMacFiles = self.decriptAlias(macFiles[0])
+            currentMacFiles = " ".join(currentMacFiles)
+            self.parserAllFiles[currentMacFiles] = []
+            with open(os.path.join(fullMacroDir, currentMacFiles)) as f:  # open file
                 for line in f:
-                    self.parserAllFiles[macFiles[0]] += [line]
+                    self.parserAllFiles[currentMacFiles] += [line]
                     if not line.startswith('#') and not line == '\n':
                         line = line.strip() #Remove trailing whitespace
                         if line.startswith('/control/execute'):
                             splitLine = line.split(" ")
                             splitLine = [x for x in splitLine if x]
                             macFiles.append(splitLine[1])
+            self.parseAttributes(currentMacFiles)
             macFiles = macFiles[1:]
 
-    def parseAttributes(self):
-        self.parserAttributes = {}
-        self.parserAlias = {}
-        for file in self.parserAllFiles:
-            for index, line in enumerate(self.parserAllFiles[file]):
-                if not line.startswith('#') and not line == '\n':
-                    line = line.strip() #Remove trailing whitespace
-                    if line.startswith('/gate/application/setTimeStart'):
-                        self.parserAttributes["setTimeStart"] = [file, index]
-                    elif line.startswith('/gate/application/setTimeSlice'):
-                        self.parserAttributes["setTimeSlice"] = [file, index]
-                    elif line.startswith('/gate/application/setTimeStop'):
-                        self.parserAttributes["setTimeStop"] = [file, index]
-                    elif line.startswith('/gate/application/setTotalNumberOfPrimaries'):
-                        self.parserAttributes["setTotalNumberOfPrimaries"] = [file, index]
 
-                    #Parse alias
-                    splitLine = line.split(" ")
-                    splitLine = [x for x in splitLine if x]
-                    if len(splitLine) > 0 and splitLine[0] == '/control/alias':
-                        self.parserAlias[splitLine[1]] = [file, index]
+    def setAlias(self, alias):
+        for a in alias:
+            print(a)
+            print(a[0])
+            print(a[1])
+            self.parserAlias[a[0]] = a[1]
+
+    def parseAttributes(self):
+        for file in self.parserAllFiles:
+            parseAttributes(file)
+
+    def parseAttributes(self, file):
+        for index, line in enumerate(self.parserAllFiles[file]):
+            if not line.startswith('#') and not line == '\n':
+                line = line.strip() #Remove trailing whitespace
+                if line.startswith('/gate/application/setTimeStart'):
+                    self.parserAttributes["setTimeStart"] = [file, index]
+                elif line.startswith('/gate/application/setTimeSlice'):
+                    self.parserAttributes["setTimeSlice"] = [file, index]
+                elif line.startswith('/gate/application/setTimeStop'):
+                    self.parserAttributes["setTimeStop"] = [file, index]
+                elif line.startswith('/gate/application/setTotalNumberOfPrimaries'):
+                    self.parserAttributes["setTotalNumberOfPrimaries"] = [file, index]
+
+                #Parse alias
+                splitLine = line.split(" ")
+                splitLine = [x for x in splitLine if x]
+                if len(splitLine) > 0 and splitLine[0] == '/control/alias':
+                    splitLine[2] = self.decriptAlias(splitLine[2])
+                    splitLine[2] = " ".join(splitLine[2])
+                    self.parserAlias[splitLine[1]] = splitLine[2]
 
 
     def setAttributes(self, attribute, valuesForAllJobs):
@@ -77,37 +93,42 @@ class ParserMacro:
     # Check if containing alias, in such a case, replace it by the alias value if it exist, else raise an error
     def getAttributes(self, attribute):
         line = self.parserAllFiles[self.parserAttributes[attribute][0]][self.parserAttributes[attribute][1]]
-        line = line.strip()
-        line = line.split(" ")
-        splitLine = []
-        for x in line:
-            if x.startswith('{') and x.endswith('}'):
-                if x[1:-1] in self.parserAlias:
-                    print(colorama.Fore.YELLOW + "WARNING: attribute \"" + attribute + "\" is an alias " + x +
-                          ". Prefer a value instead of an alias" + colorama.Style.RESET_ALL)
-                    splitLine += [self.getAlias(x[1:-1])]
-                else:
-                    print(colorama.Fore.RED + "ERROR: attribute \"" + attribute + "\" is an alias " + x + colorama.Style.RESET_ALL)
-                    print(colorama.Fore.RED + "And the alias was not found in macro files" + colorama.Style.RESET_ALL)
-                    exit(1)
-            elif x:
-                splitLine += [x]
+        splitLine = self.decriptAlias(line, attribute)
         return splitLine[1:]
-
 
     def getAlias(self, alias):
         if not alias in self.parserAlias:
             print(colorama.Fore.RED + "ERROR: alias " + alias + " is not found in macro files" + colorama.Style.RESET_ALL)
             exit(1)
-        line = self.parserAllFiles[self.parserAlias[alias][0]][self.parserAlias[alias][1]]
-        line = line.strip()
-        splitLine = line.split(" ")
-        splitLine = [x for x in splitLine if x]
-        return " ".join(splitLine[2:]) #Do not return the command and the name of the alias
+        return self.parserAlias[alias] #Do not return the command and the name of the alias
 
+    def decriptAlias(self, line, attribute=""):
+        line = line.strip()
+        line = line.split(" ")
+        splitLine = []
+        for x in line:
+            startAliasIndex = x.find('{')
+            endAliasIndex = x.find('}')
+            if startAliasIndex != -1 and endAliasIndex != 1:
+                if startAliasIndex < endAliasIndex:
+                    if x[startAliasIndex+1:endAliasIndex] in self.parserAlias:
+                        print(self.parserAlias)
+                        print(colorama.Fore.YELLOW + "WARNING: attribute \"" + x + "\" is an alias " + x[startAliasIndex+1:endAliasIndex] +
+                              ". Prefer a value instead of an alias" + colorama.Style.RESET_ALL)
+                        xAlias = x[:startAliasIndex] + self.getAlias(x[startAliasIndex+1:endAliasIndex]) + x[endAliasIndex+1:]
+                        splitLine += [xAlias]
+                    else:
+                        print(colorama.Fore.RED + "ERROR: attribute \"" + x + "\" is an alias " + x[startAliasIndex+1:endAliasIndex] + colorama.Style.RESET_ALL)
+                        print(colorama.Fore.RED + "And the alias was not found in macro files" + colorama.Style.RESET_ALL)
+                        exit(1)
+            elif x:
+                splitLine += [x]
+        return splitLine
 
     def writeMacFiles(self, outputDir):
         for file in self.parserAllFiles:
+            folder = os.path.dirname(os.path.join(outputDir, file))
+            os.makedirs(folder, exist_ok=True)
             with open(os.path.join(outputDir, file), 'w') as f:
                 for element in self.parserAllFiles[file]:
                     f.write(element)
@@ -126,10 +147,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--timestop', default=0.0, help='Set time stop for the last job')
 @click.option('--splittime', is_flag=True, help='Divide time duration into the number of jobs')
 @click.option('--output', default='', help='Output folder (default: run.XXX)')
+@click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a exemple Lu-177 -a foo 72.3)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 
-def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, copydata, dry):
+def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, alias, copydata, dry):
     """
     \b
     Run Gate jobs
@@ -212,8 +234,8 @@ def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, ti
     #Parse macro files and sub-Macro
     os.mkdir(os.path.join(outputDir, 'mac'))
     parserMacro = ParserMacro()
+    parserMacro.setAlias(alias)
     parserMacro.parseMacFiles(fullMacroDir, mainMacroFile)
-    parserMacro.parseAttributes()
 
     # Copy data
     if copydata:
@@ -259,13 +281,13 @@ def runJobs(mac, j, numberprimaries, env, releasedir, paramtogate, timestart, ti
             if indexAlias != -1:
                 paramtogateEnd = paramtogate[indexAlias+3:]
                 paramtogateJob = paramtogate[:indexAlias+2]
-                for alias in parserMacro.aliasToGate:
-                    paramtogateJob += '[' + alias + ',' + str(parserMacro.aliasToGate[alias][i]) + ']'
+                for aliasMac in parserMacro.aliasToGate:
+                    paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
                     paramtogateJob += paramtogateEnd
             else:
                 paramtogateJob += ' -a '
-                for alias in parserMacro.aliasToGate:
-                    paramtogateJob += '[' + alias + ',' + str(parserMacro.aliasToGate[alias][i]) + ']'
+                for aliasMac in parserMacro.aliasToGate:
+                    paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
 
         if qsub is None:
             command = 'PARAM=\" ' + paramtogateJob + \
