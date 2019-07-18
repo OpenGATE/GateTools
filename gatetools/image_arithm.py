@@ -44,6 +44,8 @@ This module provides basic arithmatic image operations for ITK images, e.g. dose
 import os
 import itk
 import numpy as np
+from functools import reduce
+import operator
 
 def _image_size(img):
     # FIXME
@@ -73,7 +75,7 @@ def _image_list(input_list):
         elif os.path.exists(img):
             input_images.append(itk.imread(img))
         else:
-            raise TypeError("ERROR: {} is not an SimpleITK image object nor a path to an existing image file".format(img))
+            raise TypeError("ERROR: {} is not an ITK image object nor a path to an existing image file".format(img))
     if not input_images:
         raise RuntimeError("got no images")
     # check that they have the same geometry
@@ -113,11 +115,29 @@ def _apply_operation_to_image_list(op,valtype,input_list,output_file=None):
     op_instance.Update()
     return _image_output(op_instance.GetOutput(),output_file)
 
+def _apply_operation_to_image_list_v2(op, input_list, output_file=None):
+    img_list = _image_list(input_list)
+    if len(img_list) == 1:
+        return _image_output(img_list[0], output_file)
+    np_list = [ itk.GetArrayViewFromImage(img) for img in img_list]
+    np_result = reduce(op, np_list)
+    img = itk.GetImageFromArray(np_result)
+    img.CopyInformation(img_list[0])
+    return _image_output(img, output_file)
+
+
 def image_sum(input_list=[],valtype=itk.F,output_file=None):
     """
     Computes element-wise sum of a list of image with equal geometry.
     """
-    return _apply_operation_to_image_list(itk.AddImageFilter,valtype,input_list,output_file)
+
+    # WRONG with more than 2 images
+    # creating 'itk.AddImageFilter' when calling that function make it very slow
+    #return _apply_operation_to_image_list(itk.AddImageFilter,valtype,input_list,output_file)
+
+    # alternative with np
+    # still read *all* images in memory, may lead to memory problem if too large
+    return _apply_operation_to_image_list_v2(operator.add, input_list, output_file)
 
 def image_product(input_list=[],output_file=None,valtype=itk.F):
     """
