@@ -44,6 +44,8 @@ This module provides basic arithmatic image operations for ITK images, e.g. dose
 import os
 import itk
 import numpy as np
+from functools import reduce
+import operator
 
 def _image_size(img):
     # FIXME
@@ -51,7 +53,7 @@ def _image_size(img):
     # In SimpleITK it's img.GetSize(), but this method does not seem to exist in normal ITK.
     # Or am I overlooking something in the docs?
     # TODO: the numpy array shape is a tuple. Would it be useful to convert that tuple to a numpy array?
-    return itk.GetArrayViewFromImage(img).shape
+    return img.GetLargestPossibleRegion().GetSize()
 
 def _image_list(input_list):
     """
@@ -103,46 +105,58 @@ def _image_output(img,filename=None):
         itk.imwrite(img,filename)
     return img
 
-def _apply_operation_to_image_list(op,valtype,input_list,output_file=None):
-    op_instance=None
-    for i,img in enumerate(_image_list(input_list)):
-        if op_instance is None:
-            imgtype = itk.Image[valtype,img.GetImageDimension()]
-            op_instance = op[imgtype,imgtype,imgtype].New()
-        op_instance.SetInput(i,img)
-    op_instance.Update()
-    return _image_output(op_instance.GetOutput(),output_file)
+# ITK filters are kind of useless for our purposes.
+#def _apply_operation_to_image_list_old(op,valtype,input_list,output_file=None):
+#    op_instance=None
+#    for i,img in enumerate(_image_list(input_list)):
+#        if op_instance is None:
+#            imgtype = itk.Image[valtype,img.GetImageDimension()]
+#            op_instance = op[imgtype,imgtype,imgtype].New()
+#        op_instance.SetInput(i,img)
+#    op_instance.Update()
+#    return _image_output(op_instance.GetOutput(),output_file)
 
-def image_sum(input_list=[],valtype=itk.F,output_file=None):
+def _apply_operation_to_image_list(op, input_list, output_file=None):
+    img_list = _image_list(input_list)
+    if len(img_list) == 1:
+        return _image_output(img_list[0], output_file)
+    np_list = [ itk.GetArrayViewFromImage(img) for img in img_list]
+    np_result = reduce(op, np_list)
+    img = itk.GetImageFromArray(np_result)
+    img.CopyInformation(img_list[0])
+    return _image_output(img, output_file)
+
+
+def image_sum(input_list=[],output_file=None):
     """
     Computes element-wise sum of a list of image with equal geometry.
     """
-    return _apply_operation_to_image_list(itk.AddImageFilter,valtype,input_list,output_file)
+    return _apply_operation_to_image_list(operator.add,input_list,output_file)
 
-def image_product(input_list=[],output_file=None,valtype=itk.F):
+def image_product(input_list=[],output_file=None):
     """
     Computes element-wise product of a list of image with equal geometry.
     """
-    return _apply_operation_to_image_list(itk.MultiplyImageFilter,valtype,input_list,output_file)
+    return _apply_operation_to_image_list(operator.mul,input_list,output_file)
 
-def image_min(input_list=[],output_file=None,valtype=itk.F):
+def image_min(input_list=[],output_file=None):
     """
     Computes element-wise minimum of a list of image with equal geometry.
     """
-    return _apply_operation_to_image_list(itk.MinimumImageFilter,valtype,input_list,output_file)
+    return _apply_operation_to_image_list(np.minimum,input_list,output_file)
 
-def image_max(input_list=[],output_file=None,valtype=itk.F):
+def image_max(input_list=[],output_file=None):
     """
     Computes element-wise maximum of a list of image with equal geometry.
     """
-    return _apply_operation_to_image_list(itk.MaximumImageFilter,valtype,input_list,output_file)
+    return _apply_operation_to_image_list(np.maximum,input_list,output_file)
 
 def image_divide(input_list=[], defval=0.,output_file=None):
     """
     Computes element-wise ratio of two images with equal geometry.
     Non-finite values are replaced with defvalue (unless it's None).
     """
-    raw_result = _apply_operation_to_image_list(itk.DivideImageFilter,valtype=itk.F,input_list=input_list)
+    raw_result = _apply_operation_to_image_list(itk.DivideImageFilter,input_list=input_list)
     # FIXME: where do numpy/ITK store the value of the "maximum value that can be respresented with a 32bit float"?
     # FIXME: maybe we should/wish to support integer division as well?
     mask = itk.GetArrayViewFromImage(raw_result)>1e38
@@ -160,28 +174,161 @@ import sys
 from datetime import datetime
 
 class Test_Sum(unittest.TestCase):
-    def test_two_2D_images(self):
-        imgAf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32).reshape(4,5).copy())
-        imgBf = itk.GetImageFromArray(np.arange(4*5,dtype=np.float32)[::-1].reshape(4,5).copy())
-        imgCf = image_sum(input_list=[imgAf,imgBf])
-        #print("got image with spacing {}".format(imgCf.GetSpacing()))
-        index = imgCf.GetLargestPossibleRegion().GetSize() -1
-        self.assertTrue( imgCf.GetPixel(index) == 4.*5. -1.)
-        #print("at least one pixel is correct.")
-        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgCf),4.*5.-1) )
-        imgAui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16).reshape(40,50).copy())
-        imgBui = itk.GetImageFromArray(np.arange(40*50,dtype=np.uint16)[::-1].reshape(40,50).copy())
-        imgCui = image_sum(input_list=[imgAui,imgBui],valtype=itk.US)
+    def test_five_2D_images(self):
+        nx,ny = 4,5
+        hundred = 100
+        thousand = 1000
+        spacing = (42.,24.)
+        origin = (4242.,2424.)
+        # float images
+        imglistF = [ itk.GetImageFromArray(np.arange(nx*ny,dtype=np.float32).reshape(nx,ny).copy()),
+                     itk.GetImageFromArray(np.arange(nx*ny,dtype=np.float32)[::-1].reshape(nx,ny).copy()),
+                     itk.GetImageFromArray(np.arange(0,nx*ny*hundred,hundred,dtype=np.float32).reshape(nx,ny).copy()),
+                     itk.GetImageFromArray(np.arange(0,nx*ny*hundred,hundred,dtype=np.float32)[::-1].reshape(4,5).copy()),
+                     itk.GetImageFromArray(thousand*np.ones((nx,ny),dtype=np.float32)) ]
+        for imgF in imglistF:
+            imgF.SetSpacing( spacing )
+            imgF.SetOrigin( origin )
+        imgsumF = image_sum(input_list=imglistF)
+        #print("got image with spacing {}".format(imgsumF.GetSpacing()))
+        index = imgsumF.GetLargestPossibleRegion().GetSize() -1
+        #print("get sum value {} while expecting {}".format(imgsumF.GetPixel(index),4.*5. -1.))
+        self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgsumF),nx*ny-1.+(nx*ny-1.)*hundred +thousand) ) # floats: approximate equality
+        self.assertTrue( itk.GetArrayFromImage(imgsumF).shape == (nx,ny))
+        self.assertTrue( np.allclose(imgsumF.GetSpacing(),spacing))
+        self.assertTrue( np.allclose(imgsumF.GetOrigin(),origin))
+        # unsigned short int images ("US" in itk lingo)
+        nx,ny = 40,50
+        ten = 10
+        thirteen = 13
+        spacing = (32.,23.)
+        origin = (3232.,2323.)
+        imglistUS = [ itk.GetImageFromArray(np.arange(nx*ny,dtype=np.uint16).reshape(nx,ny).copy()),
+                      itk.GetImageFromArray(np.arange(nx*ny,dtype=np.uint16)[::-1].reshape(nx,ny).copy()),
+                      itk.GetImageFromArray(np.arange(0,ten*nx*ny,ten,dtype=np.uint16).reshape(nx,ny).copy()),
+                      itk.GetImageFromArray(np.arange(0,ten*nx*ny,ten,dtype=np.uint16)[::-1].reshape(nx,ny).copy()),
+                      itk.GetImageFromArray(thirteen*np.ones((nx,ny),dtype=np.uint16)) ]
+        for imgUS in imglistUS:
+            imgUS.SetSpacing( spacing )
+            imgUS.SetOrigin( origin )
+        imgsumUS = image_sum(input_list=imglistUS)
         #print("got image with spacing {}".format(imgCui.GetSpacing()))
-        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==40*50-1).all() )
-    def test_two_3D_images(self):
-        imgAf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32).reshape(3,4,5).copy())
-        imgBf = itk.GetImageFromArray(np.arange(3*4*5,dtype=np.float32)[::-1].reshape(3,4,5).copy())
-        imgCf = image_sum(input_list=[imgAf,imgBf])
-        index = imgCf.GetLargestPossibleRegion().GetSize() -1
-        self.assertTrue( imgCf.GetPixel(index) == 3.*4.*5. -1.)
-        imgAui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16).reshape(30,40,50).copy())
-        imgBui = itk.GetImageFromArray(np.arange(30*40*50,dtype=np.uint16)[::-1].reshape(30,40,50).copy())
-        imgCui = image_sum(input_list=[imgAui,imgBui],valtype=itk.US)
-        #print("got image with spacing {}".format(imgCui.GetSpacing()))
-        self.assertTrue( (itk.GetArrayViewFromImage(imgCui)==30*40*50-1).all() )
+        #print("get sum value {} while expecting {}".format(imgsumUS.GetPixel(index),40*50-1+10*40*50-10+13))
+        self.assertTrue( (itk.GetArrayViewFromImage(imgsumUS)==nx*ny-1+ten*nx*ny-ten+thirteen).all() ) # ints: exact equality
+        self.assertTrue( itk.GetArrayFromImage(imgsumUS).shape == (nx,ny))
+        self.assertTrue( np.allclose(imgsumUS.GetSpacing(),spacing))
+        self.assertTrue( np.allclose(imgsumUS.GetOrigin(),origin))
+    def test_five_3D_images(self):
+        nx,ny,nz = 3,4,5
+        hundred = 100
+        thirteen = 13.333
+        spacing = (421.,214.,142.)
+        origin = (421421.,214214.,142142.)
+        # float images
+        imglistF = [ itk.GetImageFromArray(        np.arange(nx*ny*nz,dtype=np.float32).reshape(nx,ny,nz).copy()),
+                     itk.GetImageFromArray(        np.arange(nx*ny*nz,dtype=np.float32)[::-1].reshape(nx,ny,nz).copy()),
+                     itk.GetImageFromArray(hundred*np.arange(nx*ny*nz,dtype=np.float32).reshape(nx,ny,nz).copy()),
+                     itk.GetImageFromArray(hundred*np.arange(nx*ny*nz,dtype=np.float32)[::-1].reshape(nx,ny,nz).copy()),
+                     itk.GetImageFromArray(thirteen*np.ones((nx,ny,nz),dtype=np.float32)) ]
+        for imgF in imglistF:
+            imgF.SetSpacing( spacing )
+            imgF.SetOrigin( origin )
+        imgsumF = image_sum(input_list=imglistF)
+        index = imgsumF.GetLargestPossibleRegion().GetSize() -1
+        self.assertTrue( np.allclose(itk.GetArrayFromImage(imgsumF),(hundred+1)*(nx*ny*nz -1.)+thirteen))
+        self.assertTrue( np.allclose(imgsumF.GetSpacing(),spacing))
+        self.assertTrue( np.allclose(imgsumF.GetOrigin(),origin))
+        # unsigned short int images ("US" in itk lingo)
+        nx,ny,nz = 30,40,50
+        thirteen = 13
+        spacing = (321.,213.,132.)
+        origin = (321321.,213213.,132132.)
+        imglistUS = [ itk.GetImageFromArray( np.arange(nx*ny*nz,dtype=np.uint16).reshape(nx,ny,nz).copy()),
+                      itk.GetImageFromArray( np.arange(nx*ny*nz,dtype=np.uint16)[::-1].reshape(nx,ny,nz).copy()),
+                      itk.GetImageFromArray((np.arange(nx*ny*nz,dtype=np.uint16)%nz).reshape(nx,ny,nz).copy()),
+                      itk.GetImageFromArray((np.arange(nx*ny*nz,dtype=np.uint16)[::-1]%nz).reshape(nx,ny,nz).copy()),
+                      itk.GetImageFromArray(thirteen*np.ones((nx,ny,nz),dtype=np.uint16)) ]
+        for imgUS in imglistUS:
+            imgUS.SetSpacing( spacing )
+            imgUS.SetOrigin( origin )
+        imgsumUS = image_sum(input_list=imglistUS)
+        #print("got image with spacing {}".format(imgsumUS.GetSpacing()))
+        self.assertTrue( (itk.GetArrayViewFromImage(imgsumUS)==nx*ny*nz-1+nz-1+thirteen).all() )
+        self.assertTrue( np.allclose(imgsumUS.GetSpacing(),spacing) )
+        self.assertTrue( np.allclose(imgsumUS.GetOrigin(),origin) )
+        self.assertTrue( itk.GetArrayFromImage(imgsumUS).shape == (nx,ny,nz))
+
+class Test_Product(unittest.TestCase):
+    # TODO: also test correct behavior in case of NAN, zero, etc
+    def test_three_float_3D_images(self):
+        nx,ny,nz = 2,3,4
+        minlog,maxlog=-5.,5.
+        spacing = (421.,214.,142.)
+        origin = (421421.,214214.,142142.)
+        thirteen = 13.333
+        imglistF = [ itk.GetImageFromArray(np.logspace(minlog,maxlog,nx*ny*nz).reshape(nx,ny,nz).astype(np.float32)),
+                     itk.GetImageFromArray(np.logspace(minlog,maxlog,nx*ny*nz)[::-1].reshape(nx,ny,nz).astype(np.float32)),
+                     itk.GetImageFromArray(thirteen*np.ones((nx,ny,nz),dtype=np.float32)) ]
+        for imgF in imglistF:
+            imgF.SetSpacing(spacing)
+            imgF.SetOrigin(origin)
+        imgprodF = image_product(input_list=imglistF)
+        self.assertTrue( np.allclose(itk.GetArrayFromImage(imgprodF),thirteen))
+        self.assertTrue( itk.GetArrayFromImage(imgprodF).shape == (nx,ny,nz))
+        self.assertTrue( np.allclose(imgprodF.GetSpacing(),spacing))
+        self.assertTrue( np.allclose(imgprodF.GetOrigin(),origin))
+        self.assertTrue( type(imgprodF) == itk.Image[itk.F,3])
+    def test_five_int_3D_images(self):
+        import ctypes # needed for definition of "unsigned long", as np.uint32 is not recognized as such
+        nx,ny,nz = 30,40,50
+        spacing = (321.,213.,132.)
+        origin = (321321.,213213.,132132.)
+        pval=np.ones(5)/5.0
+        p2=np.random.multinomial(1,pval,(nz,nx,ny)).swapaxes(0,3).copy()
+        p3=np.random.multinomial(2,pval,(nz,nx,ny)).swapaxes(0,3).copy()
+        p7=np.random.multinomial(2,pval,(nz,nx,ny)).swapaxes(0,3).copy()
+        p13=np.random.multinomial(1,pval,(nz,nx,ny)).swapaxes(0,3).copy()
+        p37=np.random.multinomial(1,pval,(nz,nx,ny)).swapaxes(0,3).copy()
+        a0,a1,a2,a3,a4 = 2**p2*3**p3*7**p7*13**p13*37**p37
+        imglist = list()
+        for a in (a0,a1,a2,a3,a4):
+            img = itk.GetImageFromArray(a.astype(ctypes.c_ulong))
+            img.SetSpacing( spacing )
+            img.SetOrigin( origin )
+            imglist.append(img)
+        imgprodUS = image_product(input_list=imglist)
+        answer = 424242
+        self.assertTrue( type(imgprodUS) == itk.Image[itk.UL,3])
+        self.assertTrue( (itk.GetArrayFromImage(imgprodUS) == answer).all() )
+        self.assertTrue( itk.GetArrayFromImage(imgprodUS).shape == (nx,ny,nz))
+        self.assertTrue( np.allclose(imgprodUS.GetSpacing(),spacing) )
+        self.assertTrue( np.allclose(imgprodUS.GetOrigin(),origin) )
+
+class Test_MinMax(unittest.TestCase):
+    def test_eight_3D_images(self):
+        nx,ny,nz = 30,40,50
+        dmin,dmax = np.float32(-20.5), np.float32(31230.5)
+        spacing = (321.,213.,132.)
+        origin = (321321.,213213.,132132.)
+        alist = [ np.random.uniform(dmin,dmax,nx*ny*nz).astype(np.float32) for i in range(8)]
+        indices = np.arange(nx*ny*nz,dtype=np.uint32)
+        imglist=list()
+        for (j,a) in enumerate(alist):
+            a[indices%8 == j] = dmin
+            a[indices%8 == (j+4)%8] = dmax
+            img=itk.GetImageFromArray(a.reshape(nx,ny,nz).copy())
+            img.SetSpacing(spacing)
+            img.SetOrigin(origin)
+            imglist.append(img)
+        imgmin = image_min(imglist)
+        imgmax = image_max(imglist)
+        self.assertTrue( type(imgmin) == itk.Image[itk.F,3])
+        self.assertTrue( type(imgmax) == itk.Image[itk.F,3])
+        self.assertTrue( np.allclose(itk.GetArrayFromImage(imgmin),dmin))
+        self.assertTrue( np.allclose(itk.GetArrayFromImage(imgmax),dmax))
+        self.assertTrue( np.allclose(imgmin.GetSpacing(),spacing))
+        self.assertTrue( np.allclose(imgmax.GetSpacing(),spacing))
+        self.assertTrue( np.allclose(imgmin.GetOrigin(),origin))
+        self.assertTrue( np.allclose(imgmax.GetOrigin(),origin))
+
+# TODO: test division
