@@ -9,6 +9,7 @@
 import gatetools as gt
 import itk
 import click
+import sys
 
 # -----------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -57,7 +58,7 @@ def gate_image_arithm_main(files,operation,output,verbose):
         print("Looks like you are trying to read images of a type that are not supported by the ITK python bindings on your system.")
         print("This 'KeyError' was raised by ITK: {}".format(ke))
         print("Sorry!")
-        return
+        sys.exit(1)
         #raise # the full traceback is scary and uninformative
     n = len(input_images)
     if n == 1:
@@ -78,7 +79,7 @@ def gate_image_arithm_main(files,operation,output,verbose):
     except TypeError as te:
         print("Looks like the input files had incompatible types and/or geometries.")
         print("Specifically: '{}'".format(te))
-        return
+        sys.exit(2)
         #raise # the full traceback is scary and uninformative
 
 # -----------------------------------------------------------------------------
