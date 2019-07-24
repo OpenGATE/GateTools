@@ -8,7 +8,7 @@ Current list of command line tools:
 | Tool  | Comment |
 | ------------- | ------------- |
 | `gate_info`  | Display info about current Gate/G4 version  |
-| `gate_image_arithm`  | TODO  |
+| `gate_image_arithm`  | Pixel- or voxel-wise arithmetic operations |
 | `gate_image_convert` | Convert image file format (mhd, hdr, nfty ... not DICOM) |
 | `gate_image_uncertainty`| Compute statistical uncertainty|
 | `gate_gamma_index`| Compute gamma index between images|
