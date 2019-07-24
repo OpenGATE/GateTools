@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
+import gatetools as gt
+import itk
+import click
+
+# -----------------------------------------------------------------------------
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('files',
+                nargs=-1,
+                required=True, # this ensures nargs>=1, but the click docs recommend against it
+                type=click.Path(exists=True, file_okay=True, dir_okay=False,
+                                writable=False, readable=True, resolve_path=True,
+                                allow_dash=False, path_type=None))
+@click.option('--operation','-O', help='Operation', type=click.Choice(['sum','product','min','max']))
+@click.option('--verbose/--quiet','-v/-q', help='Be verbose (-v) or keep quiet (-q, default)', default=False)
+@click.option('--output','-o', help='Output filename', required=True,
+              type=click.Path(exists=False, file_okay=False, dir_okay=False,
+                  writable=True, readable=False, resolve_path=True, allow_dash=False, path_type=None))
+def gate_image_arithm_main(files,operation,output,verbose):
+    '''
+    Command line tool for basic pixel-wise (or voxel-wise) arithmetic
+    operations on one or more images of the same type and geometry. Currently
+    implemented:
+
+    \b
+    - sum
+    - product
+    - minimum
+    - maximum
+
+    FILES: files that are the input for the arithmetic operation (and will not be changed).
+    Note that the standard ITK python bindings do NOT support images with double precision float
+    values.
+
+    OUTPUT: File path to store the result.
+
+    \b
+    Examples:
+    \b
+    gate_image_arithm -O sum     -o sum.mhd  input1.mhd input2.mhd input3.mhd
+    gate_image_arithm -O product -o prod.mhd input1.mhd input2.mhd
+    gate_image_arithm -O min     -o min.mhd  input1.mhd input2.mhd input3.mhd
+    gate_image_arithm -O max     -o max.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
+    '''
+
+    try:
+        input_images = [itk.imread(fpath) for fpath in files]
+    except KeyError as ke:
+        print("Looks like you are trying to read images of a type that are not supported by the ITK python bindings on your system.")
+        print("This 'KeyError' was raised by ITK: {}".format(ke))
+        print("Sorry!")
+        return
+        #raise # the full traceback is scary and uninformative
+    n = len(input_images)
+    if n == 1:
+        if verbose:
+            print("Only one input file => output = input!")
+        itk.imwrite(input_images[0], output)
+        return
+    opdict = dict([("sum",gt.image_sum),
+                   ("product",gt.image_product),
+                   ("min",gt.image_min),
+                   ("max",gt.image_max) ])
+    if verbose:
+        prefix="\n - "
+        print("Going to (try to) compute the {} of the following input files:{}{}".format(operation,prefix,prefix.join(files)))
+        print("Output will be written to: {}".format(output))
+    try:
+        opdict[operation](input_list=input_images,output_file=output)
+    except TypeError as te:
+        print("Looks like the input files had incompatible types and/or geometries.")
+        print("Specifically: '{}'".format(te))
+        return
+        #raise # the full traceback is scary and uninformative
+
+# -----------------------------------------------------------------------------
+if __name__ == '__main__':
+    gate_image_arithm_main()
