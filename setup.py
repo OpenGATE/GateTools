@@ -24,7 +24,8 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk'
+        'itk',
+        'unittest2',
       ],
     scripts=[
         'bin/gate_info',
