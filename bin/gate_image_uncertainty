@@ -9,54 +9,97 @@
 import gatetools as gt
 import itk
 import click
+import os
+import numpy as np
 
 # -----------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filenames', nargs=-1)
-@click.option('--nevents','-N', help='Total numbers of events', required=True)
+@click.option('--nevents','-n', help='Total numbers of events', default=0)
+@click.option('--counts/--not-counts', '-c', default=False, help='Compute uncertainty for counts image (Poisson process)')
 @click.option('--output','-o', help='Output filename', required=True)
-def gate_image_uncertainty(filenames, nevents, output):
+@click.option('--by_slice/--not-by_slice', '-s', default=False, help='Display mean uncertainty by slice (only with --counts)')
+@click.option('--threshold', '-t', default=0.0,
+              help='Threshold in %, do not consider pixels with value lower \
+              than this % of the max value by slice (only with --counts)')
+@click.option('--verbose/--no-verbose', '-v', default=False, help='Verbose')
+def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, verbose):
     '''
-    
-    Compute relative statistical uncertainty (typically for Edep or
-    Dose), with the history by history method as explained for example
-    in [Chetty2006]
+    Compute relative statistical uncertainty image for a list of
+    images. Images are summed before computing the the uncertainty.
 
-    FILENAMES: list of image filenames of values and squared values (must be odd number)
+    FILENAMES: list of image filenames
 
-    Example:
-    
-    gate_image_uncertainty run.XYZ/output_*/dose-Edep.mhd run.XYZ/output_*/dose-Edep-Squared.mhd -o u.mhd -N 100000000
+    Mode 1: if option '-c' is *not* provided, looks for files
+    "XXX-Squared.mhd" (in the same dir than the filenames). Squared
+    images will be used to compute the uncertainty with the history by
+    history method [Chetty2006, IJROBP]. The number of events (option
+    -n) must be provided.
+
+    Mode 2: if option '-c' is provided, image values are considered as
+    counts of Poisson distribution. The variance is thus equal to the
+    mean. No need to indicate the number of events.
+
+    Option '-s' and '-t': display slice by slice mean relative uncertainty. Only consider pixel values greater than threshold% of the max value in the image.
+
+    Example1:
+    gate_image_uncertainty run.XYZ/output_*/dose-Edep.mhd -o u.mhd -N 100000000
+
+    Example2:
+    gate_image_uncertainty output/projection.mhd -c -o u.mhd -s -t 0.1
 
     '''
 
-    # check size is even: first half are values, second half are squared values
-    n = len(filenames)
-    if n%2 != 0:
-        raise RuntimeError("ERROR: must provide even number of input files (got {})".format(n))
-    s = int(n/2)
+    # do nothing if no filenames
+    if len(filenames) == 0:
+        print('Please provide at least one filename')
+        exit()
 
-    # build lists of input image
-    i = 0
-    input_list=[]
-    input_squared_list=[]
-    for f in filenames:
-        image = itk.imread(f)
-        if i<s:
-            input_list.append(image)
+    # ensure that nevents is an int (convert sci notation e.g. 1e5)
+    nevents = int(nevents)
+
+    # verbose
+    if verbose:
+        print("Found {} file(s)".format(len(filenames)))
+
+    # uncertainty with squared images
+    if not counts:
+        # find the squared images filenames
+        sfilenames = []
+        for f in filenames:
+            fs = os.path.splitext(f)[0]+'-Squared'+os.path.splitext(f)[1]
+            exist = os.path.isfile(fs)
+            if not exist:
+                print('The file {} does not exist'.format(fs))
+                exit()
+            sfilenames.append(fs)
+        # compute uncertainty history by hitory
+        if by_slice:
+            uncertainty, m, nb = gt.image_uncertainty_by_slice(filenames, sfilenames, nevents, threshold)
         else:
-            input_squared_list.append(image)
-        i = i+1
+            uncertainty = gt.image_uncertainty(filenames, sfilenames, nevents, threshold)
+    else:
+        # compute uncertainty Poisson
+        if by_slice:
+            uncertainty, m, nb = gt.image_uncertainty_Poisson_by_slice(filenames, threshold)
+        else:
+            uncertainty = gt.image_uncertainty_Poisson(filenames, threshold)
 
-    # compute uncertainty
-    o = gt.image_uncertainty(input_list, input_squared_list, nevents)
+
+    if by_slice:
+        i =0
+        for mean,n in zip(m, nb):
+            print("Channel {0} uncertainty and nb pixels = {1:6.2f} % {2:10}".format(i, mean*100.0, n))
+            i = i+1
+
 
     # write file
-    itk.imwrite(o, output)    
-    
+    if verbose:
+        print('Write {}'.format(output))
+    itk.imwrite(uncertainty, output)
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
     gate_image_uncertainty()
-

@@ -20,58 +20,137 @@ from functools import reduce
 import operator
 import numpy as np
 
-def image_uncertainty(img_list=[], img_squared_list=[], N=0):
-    """
-    Compute relative statistical uncertainty 
-
-    - img_list and img_squared_list: lists of itk images
-    - N: number of primary events
-    """
-
-    # Check size  # FIXME --> should use a similar function than the one in image_arithm. To put in gate_helpers
-    first = img_list[0]
-    origin = first.GetOrigin()
-    spacing = first.GetSpacing()
-    size = first.GetLargestPossibleRegion().GetSize()
-    for img in img_list+img_squared_list:
-        o = img.GetOrigin()
-        sp = img.GetSpacing()
-        si = img.GetLargestPossibleRegion().GetSize()
-        b = np.allclose(o, origin) and np.allclose(sp,spacing) and (si == size)
-        if not b:
-            raise RuntimeError('Error: all images must have same origin/spacing/size. I expected {} {} {} and found {} {} {}'
-                               .format(origin, spacing, size, o, sp, si))
+def relative_uncertainty_Poisson(x, threshold=0):
+    sigma = np.sqrt(x)
+    u = np.divide(sigma, x, out=np.ones_like(x), where=x > threshold)
+    return u
 
 
-    # Check N
+def relative_uncertainty(x, sq_x, N, threshold=0):
+    u = np.sqrt( (N*sq_x - x*x) / (N-1) )
+    u = np.divide(u, x, out=np.ones_like(x), where=x > threshold)
+    return u
+
+def relative_uncertainty_by_slice(x, threshold=0, sq_x=[], N=0):
+    i=0
+    means = []
+    nb = []
+    uncertainty = np.copy(x)
+    uncertainty.fill(0.0)
+    use_square = False
+    if len(sq_x)>0:
+        use_square = True
+    else:
+        sq_x = x
+    for s,sq in zip(x, sq_x):
+        t = np.max(s)*threshold
+        sigma = np.sqrt(s)
+        if use_square:
+            u = relative_uncertainty(s, sq, N, t)
+        else:
+            u = relative_uncertainty_Poisson(s, t)
+        n = len(np.where(s > t)[0])
+        if n==0:
+            mean = 1.0
+        else:
+            mean = u[np.where(s > t)].sum()
+            mean = mean/n
+        means.append(mean)
+        nb.append(n)
+        uncertainty[i] = u
+        i = i + 1
+    return uncertainty, means, nb
+
+def check_N(N):
     N = float(N)
     if N<0:
         raise RuntimeError('ERROR: N  must be positive')
-    
-    # view as np
-    np_list = [ itk.GetArrayViewFromImage(img) for img in img_list]
-    np_sq_list = [ itk.GetArrayViewFromImage(img) for img in img_squared_list]
 
-    # sum # FIXME --> should use image_sum (but currently use sitk not itk)
-    np_sum = reduce(operator.add, np_list)
-    np_sq_sum = reduce(operator.add, np_sq_list)
-    
-    # debug --> OK
-    if False:
-        img_sum = itk.GetImageViewFromArray(np_sum)
-        img_sum.CopyInformation(img_list[0])
-        itk.imwrite(img_sum, 'sum.mhd')
-        img_sq = itk.GetImageViewFromArray(np_sq_sum)
-        img_sq.CopyInformation(img_list[0])
-        itk.imwrite(img_sq, 'sq.mhd')
 
-    # compute relative uncertainty [Chetty 2006]
-    uncertainty = np.sqrt((N*np_sq_sum - np_sum*np_sum) / (N-1))/np_sum
+def image_uncertainty(img_list=[], img_squared_list=[], N=0, threshold=0):
+    check_N(N)
+
+    # Get the sums
+    img_sum = gt.image_sum(img_list)
+    img_sq_sum = gt.image_sum(img_squared_list)
+
+    # View as np
+    np_sum = itk.GetArrayViewFromImage(img_sum)
+    np_sq_sum = itk.GetArrayViewFromImage(img_sq_sum)
+
+    # Compute relative uncertainty [Chetty 2006]
+    t = np.max(np_sum)*threshold
+    uncertainty = relative_uncertainty(np_sum, np_sq_sum, N, t)
+
+    # create and return itk image
+    img_uncertainty = itk.GetImageFromArray(uncertainty)
+    img_uncertainty.CopyInformation(img_sum)
+    return img_uncertainty
+
+
+def image_uncertainty_by_slice(img_list=[], img_squared_list=[], N=0, threshold=0):
+    check_N(N)
+
+    # Get the sums
+    img_sum = gt.image_sum(img_list)
+    img_sq_sum = gt.image_sum(img_squared_list)
+
+    # View as np
+    np_sum = itk.GetArrayViewFromImage(img_sum)
+    np_sq_sum = itk.GetArrayViewFromImage(img_sq_sum)
+
+    # compute uncertainty
+    uncertainty, means, nb = relative_uncertainty_by_slice(np_sum, threshold, np_sq_sum, N)
+
+    # create and return itk image
+    img_uncertainty = itk.GetImageFromArray(uncertainty)
+    img_uncertainty.CopyInformation(img_sum)
+    return img_uncertainty, means, nb
+
+
+def image_uncertainty_Poisson(img_list=[], threshold=0):
+    # Get the sums
+    img_sum = gt.image_sum(img_list)
+
+    # View as np
+    np_sum = itk.GetArrayViewFromImage(img_sum)
+
+    # Convert to float
+    np_sum = np_sum.astype(np.float64)
+
+    # Get stddev (variance is the mean)
+    sigma = np.sqrt(np_sum)
+
+    # compute uncertainty
+    t = np.max(np_sum)*threshold
+    uncertainty = relative_uncertainty_Poisson(np_sum, t)
 
     # np is double, convert to float32
     uncertainty = uncertainty.astype(np.float32)
 
     # create and return itk image
     img_uncertainty = itk.GetImageFromArray(uncertainty)
-    img_uncertainty.CopyInformation(img_list[0]) 
+    img_uncertainty.CopyInformation(img_sum)
     return img_uncertainty
+
+
+def image_uncertainty_Poisson_by_slice(img_list=[], threshold=0):
+    # Get the sums
+    img_sum = gt.image_sum(img_list)
+
+    # View as np
+    np_sum = itk.GetArrayViewFromImage(img_sum)
+
+    # Convert to float
+    np_sum = np_sum.astype(np.float64)
+
+    # compute uncertainty
+    uncertainty, means, nb = relative_uncertainty_by_slice(np_sum, threshold)
+
+    # np is double, convert to float32
+    uncertainty = uncertainty.astype(np.float32)
+
+    # create and return itk image
+    img_uncertainty = itk.GetImageFromArray(uncertainty)
+    img_uncertainty.CopyInformation(img_sum)
+    return img_uncertainty, means, nb
