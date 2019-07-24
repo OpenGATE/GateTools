@@ -75,7 +75,7 @@ def _image_list(input_list):
         elif os.path.exists(img):
             input_images.append(itk.imread(img))
         else:
-            raise TypeError("ERROR: {} is not an SimpleITK image object nor a path to an existing image file".format(img))
+            raise TypeError("ERROR: {} is not an ITK image object nor a path to an existing image file".format(img))
     if not input_images:
         raise RuntimeError("got no images")
     # check that they have the same geometry
@@ -104,17 +104,6 @@ def _image_output(img,filename=None):
     if filename is not None:
         itk.imwrite(img,filename)
     return img
-
-# ITK filters are kind of useless for our purposes.
-#def _apply_operation_to_image_list_old(op,valtype,input_list,output_file=None):
-#    op_instance=None
-#    for i,img in enumerate(_image_list(input_list)):
-#        if op_instance is None:
-#            imgtype = itk.Image[valtype,img.GetImageDimension()]
-#            op_instance = op[imgtype,imgtype,imgtype].New()
-#        op_instance.SetInput(i,img)
-#    op_instance.Update()
-#    return _image_output(op_instance.GetOutput(),output_file)
 
 def _apply_operation_to_image_list(op, input_list, output_file=None):
     img_list = _image_list(input_list)
@@ -175,6 +164,7 @@ from datetime import datetime
 
 class Test_Sum(unittest.TestCase):
     def test_five_2D_images(self):
+        print('Test_Sum test_five_2D_images')
         nx,ny = 4,5
         hundred = 100
         thousand = 1000
@@ -219,6 +209,7 @@ class Test_Sum(unittest.TestCase):
         self.assertTrue( np.allclose(imgsumUS.GetSpacing(),spacing))
         self.assertTrue( np.allclose(imgsumUS.GetOrigin(),origin))
     def test_five_3D_images(self):
+        print('Test_Sum test_five_3D_images')
         nx,ny,nz = 3,4,5
         hundred = 100
         thirteen = 13.333
@@ -261,6 +252,7 @@ class Test_Sum(unittest.TestCase):
 class Test_Product(unittest.TestCase):
     # TODO: also test correct behavior in case of NAN, zero, etc
     def test_three_float_3D_images(self):
+        print('Test_Product test_three_float_3D_images')
         nx,ny,nz = 2,3,4
         minlog,maxlog=-5.,5.
         spacing = (421.,214.,142.)
@@ -279,6 +271,7 @@ class Test_Product(unittest.TestCase):
         self.assertTrue( np.allclose(imgprodF.GetOrigin(),origin))
         self.assertTrue( type(imgprodF) == itk.Image[itk.F,3])
     def test_five_int_3D_images(self):
+        print('Test_Product test_five_int_3D_images')
         import ctypes # needed for definition of "unsigned long", as np.uint32 is not recognized as such
         nx,ny,nz = 30,40,50
         spacing = (321.,213.,132.)
@@ -306,6 +299,7 @@ class Test_Product(unittest.TestCase):
 
 class Test_MinMax(unittest.TestCase):
     def test_eight_3D_images(self):
+        print('Test_MinMax test_eight_3D_images')
         nx,ny,nz = 30,40,50
         dmin,dmax = np.float32(-20.5), np.float32(31230.5)
         spacing = (321.,213.,132.)

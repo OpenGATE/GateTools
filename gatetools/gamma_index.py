@@ -241,6 +241,7 @@ class Test_GammaIndex3dIdenticalMesh(unittest.TestCase):
     def test_identity(self):
         # two identical images should give gamma=0.0 in all voxels
         #print("test identity")
+        print('Test_GammaIndex3dIdenticalMesh test_identity')
         np.random.seed(1234567)
         a_rnd = np.random.uniform(0.,10.,(4,5,6))
         img1 = itk.GetImageFromArray(a_rnd)
@@ -251,6 +252,7 @@ class Test_GammaIndex3dIdenticalMesh(unittest.TestCase):
     def test_scaling(self):
         #print("test scaling small")
         # two images identical up to a scaling factor 1.03 should give gamma(3%)<=1.0 in all voxels
+        print('Test_GammaIndex3dIdenticalMesh test_scaling')
         np.random.seed(1234567)
         a_rnd = np.random.uniform(0.,10.,(4,5,6))
         img1 = itk.GetImageFromArray(a_rnd)
@@ -262,6 +264,7 @@ class Test_GammaIndex3dIdenticalMesh(unittest.TestCase):
         #print("test 3D checkerboards: have D=0.25 in even voxels and D=0.75 in odd voxels for ref image, vice versa for test image.")
         #for every voxel in the target image, the neighboring voxels in the ref image has the same dose
         #therefore the gamma index should be equal to spacing/dta for all voxels.
+        print('Test_GammaIndex3dIdenticalMesh test_checkerboards')
         nx,ny,nz=4,5,6
         ix,iy,iz = np.meshgrid(np.arange(nx,dtype=int),np.arange(ny,dtype=int),np.arange(nz,dtype=int),indexing='ij')
         a_odd  = 0.5*(((ix+iy+iz) % 2) == 1).astype(float)+0.25
@@ -274,6 +277,7 @@ class Test_GammaIndex3dIdenticalMesh(unittest.TestCase):
         self.assertTrue(np.allclose(itk.GetArrayViewFromImage(img_gamma_odd_even),0.5))
         #print("DONE test checkerboards")
     def test_large_image(self):
+        print('Test_GammaIndex3dIdenticalMesh test_large_image')
         for N in [1,2,5,10,20]:
         #for N in [1,2,5,10,20,50]:
         #for N in [1,2,5,10,20,50,100]:
@@ -290,6 +294,7 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
     def test_EqualMesh(self):
         # For equal meshes, the "unequalmesh" implementation should give the
         # same results as "equal mesh" implementation.
+        print('Test_GammaIndex3dUnequalMesh test_EqualMesh')
         np.random.seed(71234567)
         for i in range(5):
             #print("{}. comparing implementations with 'equal' and 'unequal' geometry assumptions".format(i))
@@ -323,6 +328,7 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
     def test_Shift(self):
         # two images identical up to a translation less than half the spacing should yield a gamma index 
         # equal to the ratio of the length of the translation vector and the DTA.
+        print('Test_GammaIndex3dUnequalMesh test_Shift')
         np.random.seed(1234568)
         for i in range(5):
             #print("shift image no. {}".format(i))
@@ -350,6 +356,7 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
         # Now it's easy to compute 'by hand' the min(gamma(i,j)) for each target voxel.
         # This tests that the gamma calculation is done correctly wehn it needs
         # to "travel" more than one voxel to get to the "minimum".
+        print('Test_GammaIndex3dUnequalMesh test_Gradient')
         refN=(100,10,10)
         refO=(-50.,0.,0.)
         refS=(1.,1.,1.)
