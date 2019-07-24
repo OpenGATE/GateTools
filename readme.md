@@ -13,7 +13,8 @@ Current list of command line tools:
 | `gate_image_uncertainty`| Compute statistical uncertainty|
 | `gate_gamma_index`| Compute gamma index between images|
 
- 
+Tests: run `python –m unittest2 gatetools` or `unit2 gatetools` (according to your python installation)
+
 Dependencies:
 - click: https://click.palletsprojects.com
 - uproot: https://github.com/scikit-hep/uproot
@@ -21,7 +22,7 @@ Dependencies:
 - tqdm: https://github.com/tqdm/tqdm
 - colored: https://gitlab.com/dslackw/colored
 - itk: https://itk.org/
-
+- unittest2: https://pypi.org/project/unittest2/
 
 
 
