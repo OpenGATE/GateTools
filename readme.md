@@ -24,7 +24,7 @@ Dependencies:
 - tqdm: https://github.com/tqdm/tqdm
 - colored: https://gitlab.com/dslackw/colored
 - itk: https://itk.org/
-- unittest2: https://pypi.org/project/unittest2/
+
 
 
 
