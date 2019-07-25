@@ -5,7 +5,7 @@ To install : `pip install -e .` (TEMPORARY)
 To install : `pip install gatetools` (SOON !)
 
 
-Current list of command line tools:
+Current list of command line tools. Use the flag `-h` to get print the help of each tool.
 
 | Tool  | Comment |
 | ------------- | ------------- |
