@@ -1,4 +1,3 @@
-
 The **gatetools** gather Python script useful for [GATE](https://github.com/OpenGATE/Gate/) simulation. 
 
 To install : `pip install -e .` (TEMPORARY)
