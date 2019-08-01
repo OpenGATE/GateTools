@@ -138,7 +138,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('mac', nargs=1)
 @click.option('--j', default=1, help='Number of jobs/core')
-@click.option('--n', default=1.0, help='Total number of primaries for all jobs')
+@click.option('--n', default=0.0, help='Total number of primaries for all jobs')
 @click.option('--env', default='', help='Bash script to set environment variables during job')
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--paramtogate', default='', help='Parameters for Gate')
@@ -251,7 +251,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
         os.symlink(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
 
     # Set number of Primaries
-    if numberprimaries != 0:
+    if numberprimaries != 0.0:
         parserMacro.setAttributes('setTotalNumberOfPrimaries', j*[int(numberprimaries/j)])
 
     # Set time options
