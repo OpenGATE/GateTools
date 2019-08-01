@@ -310,8 +310,8 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
             command = 'qsub -o ' + outputDir + \
                       ' -e ' + outputDir + \
                       ' -l sps=1 -N \"gate.' + runId + \
-                      '\" -v \"PARAM=\"' + paramtogateJob + \
-                      '\",INDEX=' + str(i) + \
+                      '\" -v \"PARAM=\\\"' + paramtogateJob + \
+                      '\\\",INDEX=' + str(i) + \
                       ',INDEXMAX=' + str(j) + \
                       ',OUTPUTDIR=' + outputDir + \
                       ',RELEASEDIR=' + releasedir + \
@@ -322,8 +322,8 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
         else:
             command = 'qsub -N \"gatejob.' + runId + \
                       ' -o ' + outputDir + \
-                      ' -v \"PARAM=\"' + paramtogateJob + \
-                      '\",INDEX=' + str(i) + \
+                      ' -v \"PARAM=\\\"' + paramtogateJob + \
+                      '\\\",INDEX=' + str(i) + \
                       ',INDEXMAX=' + str(j) + \
                       ',OUTPUTDIR=' + outputDir + \
                       ',RELEASEDIR=' + releasedir + \
