@@ -274,6 +274,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
             arrayStartTime += [startTime + i*slicedTime]
             arrayStopTime += [startTime + (i+1)*slicedTime]
         parserMacro.setAttributes('setTimeStart', arrayStartTime)
+        parserMacro.setAttributes('setTimeSlice', arrayStopTime - arrayStartTime)
         parserMacro.setAttributes('setTimeStop', arrayStopTime)
 
     #Write mac files into output folder
