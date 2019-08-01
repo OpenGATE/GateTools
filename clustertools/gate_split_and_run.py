@@ -7,7 +7,7 @@ import click
 import socket
 from distutils.spawn import find_executable
 import colorama
-
+import numpy as np
 
 
 def get_dns_domain():
@@ -274,7 +274,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
             arrayStartTime += [startTime + i*slicedTime]
             arrayStopTime += [startTime + (i+1)*slicedTime]
         parserMacro.setAttributes('setTimeStart', arrayStartTime)
-        parserMacro.setAttributes('setTimeSlice', arrayStopTime - arrayStartTime)
+        parserMacro.setAttributes('setTimeSlice', np.array(arrayStopTime) - np.array(arrayStartTime))
         parserMacro.setAttributes('setTimeStop', arrayStopTime)
 
     #Write mac files into output folder
