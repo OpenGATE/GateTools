@@ -166,8 +166,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
     #Control if options are correct:
     if numberprimaries != 0:
         if timestart != 0 or timeslice != 0 or timestop != 0:
-            print(colorama.Fore.RED + "ERROR: Cannot use time options (timestart, timeslice or timestop) with numberprimaries." + colorama.Style.RESET_ALL)
-            exit(1)
+            print(colorama.Fore.YELLOW + "WARNING: Cannot use time options (timestart, timeslice or timestop) with numberprimaries." + colorama.Style.RESET_ALL)
 
     directoryJobFiles = os.path.dirname(os.path.abspath(__file__))
     jobFile = ""
