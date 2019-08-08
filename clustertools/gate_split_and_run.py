@@ -222,7 +222,7 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
         outputDir = tempfile.mkdtemp(prefix='run.', dir=fullMacroDir)
     elif not os.path.isdir(outputDir):
         os.mkdir(outputDir)
-    runId = outputDir[outputDir.find('run.') + 4:]
+    runId = outputDir[outputDir.find('.') +1:]
     print('Run Id is: ' + runId)
 
     # Find qsub
