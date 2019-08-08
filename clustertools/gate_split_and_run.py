@@ -137,8 +137,8 @@ class ParserMacro:
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('mac', nargs=1)
-@click.option('--j', default=1, help='Number of jobs/core')
-@click.option('--n', default=0.0, help='Total number of primaries for all jobs')
+@click.option('-j', '--jobs', default=1, help='Number of jobs/core')
+@click.option('-n', '--primaries', default=0.0, help='Total number of primaries for all jobs')
 @click.option('--env', default='', help='Bash script to set environment variables during job')
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--paramtogate', default='', help='Parameters for Gate')
@@ -146,12 +146,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--timeslice', default=0.0, help='Set time duration for one job')
 @click.option('--timestop', default=0.0, help='Set time stop for the last job')
 @click.option('--splittime', is_flag=True, help='Divide time duration into the number of jobs')
-@click.option('--output', default='', help='Output folder (default: run.XXX)')
+@click.option('-o', '--output', default='', help='Output fullpath folder (default: run.XXX)')
 @click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a exemple Lu-177 -a foo 72.3)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
-@click.option('--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
-
-def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, alias, copydata, dry):
+@click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
+def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, alias, copydata, dry):
     """
     \b
     Run Gate jobs
@@ -161,7 +160,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
     """
 
     #
-    numberprimaries = n
+    numberprimaries = primaries
     
     #Control if options are correct:
     if numberprimaries != 0:
@@ -231,7 +230,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
     # Parameter files
     paramFileName = os.path.join(outputDir, 'params.txt')
     paramFile = open(paramFileName, "w")
-    paramFile.write('njobs = ' + str(j))
+    paramFile.write('njobs = ' + str(jobs))
     paramFile.write('macro = ' + mac)
     if paramtogate != '':
         paramFile.write('param = ' + paramtogate)
@@ -251,25 +250,25 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
 
     # Set number of Primaries
     if numberprimaries != 0.0:
-        parserMacro.setAttributes('setTotalNumberOfPrimaries', j*[int(numberprimaries/j)])
+        parserMacro.setAttributes('setTotalNumberOfPrimaries', jobs*[int(numberprimaries/jobs)])
 
     # Set time options
     if timestart != 0:
-        parserMacro.setAttributes('setTimeStart', j*[timestart])
+        parserMacro.setAttributes('setTimeStart', jobs*[timestart])
     if timeslice != 0:
-        parserMacro.setAttributes('setTimeSlice', j*[timeslice])
+        parserMacro.setAttributes('setTimeSlice', jobs*[timeslice])
     if timestop != 0:
-        parserMacro.setAttributes('setTimeStop', j*[timestop])
+        parserMacro.setAttributes('setTimeStop', jobs*[timestop])
 
     #Manage split time option
-    #Divide the time into j range of time
+    #Divide the time into jobs range of time
     if splittime:
         startTime = float(parserMacro.getAttributes('setTimeStart')[0])
         stopTime = float(parserMacro.getAttributes('setTimeStop')[0])
-        slicedTime = (stopTime - startTime)/j
+        slicedTime = (stopTime - startTime)/jobs
         arrayStartTime = []
         arrayStopTime = []
-        for i in range(0, j):
+        for i in range(0, jobs):
             arrayStartTime += [startTime + i*slicedTime]
             arrayStopTime += [startTime + (i+1)*slicedTime]
         parserMacro.setAttributes('setTimeStart', arrayStartTime)
@@ -280,7 +279,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
     parserMacro.writeMacFiles(outputDir)
 
     # Run jobs
-    for i in range(0, j):
+    for i in range(0, jobs):
         #Set paramtogate with alias for each job
         paramtogateJob = paramtogate
         if len(parserMacro.aliasToGate) != 0:
@@ -299,7 +298,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
         if qsub is None:
             command = 'PARAM=\" ' + paramtogateJob + \
                       '\" INDEX=' + str(i) + \
-                      ' INDEXMAX=' + str(j) + \
+                      ' INDEXMAX=' + str(jobs) + \
                       ' OUTPUTDIR=' + outputDir + \
                       ' RELEASEDIR=' + releasedir + \
                       ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
@@ -312,7 +311,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
                       ' -l sps=1 -N \"gate.' + runId + \
                       '\" -v \"PARAM=\\\"' + paramtogateJob + \
                       '\\\",INDEX=' + str(i) + \
-                      ',INDEXMAX=' + str(j) + \
+                      ',INDEXMAX=' + str(jobs) + \
                       ',OUTPUTDIR=' + outputDir + \
                       ',RELEASEDIR=' + releasedir + \
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
@@ -324,7 +323,7 @@ def runJobs(mac, j, n, env, releasedir, paramtogate, timestart, timeslice, times
                       ' -o ' + outputDir + \
                       ' -v \"PARAM=\\\"' + paramtogateJob + \
                       '\\\",INDEX=' + str(i) + \
-                      ',INDEXMAX=' + str(j) + \
+                      ',INDEXMAX=' + str(jobs) + \
                       ',OUTPUTDIR=' + outputDir + \
                       ',RELEASEDIR=' + releasedir + \
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
