@@ -40,12 +40,14 @@ class ParserMacro:
             macFiles = macFiles[1:]
 
 
-    def setAlias(self, alias):
+    def setAlias(self, alias, jobs):
         for a in alias:
             print(a)
             print(a[0])
             print(a[1])
             self.parserAlias[a[0]] = a[1]
+            self.aliasToGate[a[0]] = jobs*[a[1]]
+            self.aliasNumber += 1
 
     def parseAttributes(self):
         for file in self.parserAllFiles:
@@ -242,7 +244,7 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
     #Parse macro files and sub-Macro
     os.mkdir(os.path.join(outputDir, 'mac'))
     parserMacro = ParserMacro()
-    parserMacro.setAlias(alias)
+    parserMacro.setAlias(alias, jobs)
     parserMacro.parseMacFiles(fullMacroDir, mainMacroFile)
 
     # Copy data
