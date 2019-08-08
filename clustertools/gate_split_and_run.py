@@ -215,6 +215,9 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
 
     # Create output directory
     outputDir = output
+    if os.path.isdir(outputDir):
+        print(colorama.Fore.RED + 'ERROR: The output folder already exist (remove it): ' + outputDir + colorama.Style.RESET_ALL)
+        exit(1)
     if outputDir == '':
         outputDir = tempfile.mkdtemp(prefix='run.', dir=fullMacroDir)
     elif not os.path.isdir(outputDir):
