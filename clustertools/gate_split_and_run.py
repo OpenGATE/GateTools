@@ -281,6 +281,9 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
     #Write mac files into output folder
     parserMacro.writeMacFiles(outputDir)
 
+    #Create file to write commands in it
+    commandsFile = open(os.path.join(outputDir, "commands.txt"), "a")
+
     # Run jobs
     for i in range(0, jobs):
         #Set paramtogate with alias for each job
@@ -332,6 +335,8 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
                       '\" ' + jobFile
+        commandsFile.write(command)
+        commandsFile.write("\n")
         if dry:
             print(command)
         else:
