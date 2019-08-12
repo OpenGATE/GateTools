@@ -85,7 +85,7 @@ def _image_list(input_list):
     size0 = _image_size(input_images[0])
     for img in input_images:
         img_size = _image_size(img)
-        if not img_size == size0:
+        if not np.allclose(img_size, size0):
             raise TypeError("images have incompatible size: {} versus {}".format(size0,img_size))
         elif not np.allclose(img.GetOrigin(),origin0):
             raise TypeError("images have incompatible origins: {} versus {}".format(origin0,img.GetOrigin()))
