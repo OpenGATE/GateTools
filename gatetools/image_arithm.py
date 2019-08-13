@@ -146,7 +146,7 @@ def image_divide(input_list=[], defval=0.,output_file=None):
     Computes element-wise ratio of two images with equal geometry.
     Non-finite values are replaced with defvalue (unless it's None).
     """
-    raw_result = _apply_operation_to_image_list(itk.DivideImageFilter,input_list=input_list)
+    raw_result = _apply_operation_to_image_list(operator.truediv,input_list=input_list)
     # FIXME: where do numpy/ITK store the value of the "maximum value that can be respresented with a 32bit float"?
     # FIXME: maybe we should/wish to support integer division as well?
     mask = itk.GetArrayViewFromImage(raw_result)>1e38
@@ -324,5 +324,24 @@ class Test_MinMax(unittest.TestCase):
         self.assertTrue( np.allclose(imgmax.GetSpacing(),spacing))
         self.assertTrue( np.allclose(imgmin.GetOrigin(),origin))
         self.assertTrue( np.allclose(imgmax.GetOrigin(),origin))
+
+class Test_Divide(unittest.TestCase):
+    def test_nine_3D_images(self):
+        print('Test_Divide test_nine_3D_images')
+        nx,ny,nz = 30,40,50
+        spacing = (321.,213.,132.)
+        origin = (321321.,213213.,132132.)
+        imgList = [ itk.GetImageFromArray(5.0 * np.ones((nx, ny, nz), dtype=np.float32)),
+                    itk.GetImageFromArray(2.0 * np.ones((nx, ny, nz), dtype=np.float32)),
+                    itk.GetImageFromArray(2.5 * np.ones((nx, ny, nz), dtype=np.float32))]
+        for img in imgList:
+            img.SetSpacing(spacing)
+            img.SetOrigin(origin)
+        imgdivide = image_divide(input_list=imgList)
+        self.assertTrue( type(imgdivide) == itk.Image[itk.F,3])
+        self.assertTrue( np.allclose(itk.GetArrayFromImage(imgdivide),1.0))
+        self.assertTrue( np.allclose(imgdivide.GetSpacing(),spacing))
+        self.assertTrue( np.allclose(imgdivide.GetOrigin(),origin))
+
 
 # TODO: test division
