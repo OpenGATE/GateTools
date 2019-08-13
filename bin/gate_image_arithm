@@ -22,10 +22,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                                 allow_dash=False, path_type=None))
 @click.option('--operation','-O', help='Operation', type=click.Choice(['sum','product','min','max','divide']))
 @click.option('--verbose/--quiet','-v/-q', help='Be verbose (-v) or keep quiet (-q, default)', default=False)
+@click.option('--scalar','-s', help='scalar for operation', type=float)
 @click.option('--output','-o', help='Output filename', required=True,
               type=click.Path(exists=False, file_okay=False, dir_okay=False,
                   writable=True, readable=False, resolve_path=True, allow_dash=False, path_type=None))
-def gate_image_arithm_main(files,operation,output,verbose):
+def gate_image_arithm_main(files,operation,scalar,output,verbose):
     '''
     Command line tool for basic pixel-wise (or voxel-wise) arithmetic
     operations on one or more images of the same type and geometry. Currently
@@ -62,6 +63,18 @@ def gate_image_arithm_main(files,operation,output,verbose):
         print("Sorry!")
         sys.exit(1)
         #raise # the full traceback is scary and uninformative
+    if not scalar == None:
+        duplicator = itk.ImageDuplicator.New(input_images[0])
+        duplicator.Update()
+        InputType = type(input_images[0])
+        input_dimension = input_images[0].GetImageDimension()
+        OutputType = itk.Image[itk.F, input_dimension]
+        castFilter = itk.CastImageFilter[InputType, OutputType].New()
+        castFilter.SetInput(duplicator.GetOutput())
+        castFilter.Update()
+        scalarImage = castFilter.GetOutput()
+        scalarImage.FillBuffer(scalar)
+        input_images += [scalarImage]
     n = len(input_images)
     if n == 1:
         if verbose:
