@@ -46,6 +46,7 @@ import itk
 import numpy as np
 from functools import reduce
 import operator
+import ctypes # needed for definition of "unsigned long", as np.uint32 is not recognized as such
 
 def _image_size(img):
     # FIXME
@@ -272,7 +273,6 @@ class Test_Product(unittest.TestCase):
         self.assertTrue( type(imgprodF) == itk.Image[itk.F,3])
     def test_five_int_3D_images(self):
         print('Test_Product test_five_int_3D_images')
-        import ctypes # needed for definition of "unsigned long", as np.uint32 is not recognized as such
         nx,ny,nz = 30,40,50
         spacing = (321.,213.,132.)
         origin = (321321.,213213.,132132.)
