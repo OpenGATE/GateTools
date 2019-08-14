@@ -12,9 +12,9 @@ import itk
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('-i', '--input', type=str, required=True, help='Input image name')
 @click.option('-o', '--output', type=str, required=True, help='Output image name')
 @click.option('-p', '--pixeltype', type=str, help='Pixel type conversion')
+@click.argument('input', type=str, required=True, nargs=-1)
 
 def gate_image_convert(input, output, pixeltype):
     """
@@ -35,10 +35,19 @@ def gate_image_convert(input, output, pixeltype):
         - signed short
         - unsigned short
         - float
+    To convert Dicom to another format, set the folder fullpath containing the .dcm files as input; eg:
+        -i ~/path/to/dcm/*dcm
+        -i ~/path/to/dcm/toto.dcm
     """
 
     #Read input
-    inputImage = itk.imread(input)
+    if len(input) == 1:
+        inputImage = itk.imread(input)
+    elif len(input) > 1:
+        inputImage = gt.read_dicom(input)
+    else:
+        print("ERROR: no input available")
+        return
 
     # convert image
     outputImage = gt.image_convert(inputImage, pixeltype)
