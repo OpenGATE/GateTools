@@ -146,6 +146,7 @@ def image_divide(input_list=[], defval=0.,output_file=None):
     Computes element-wise ratio of two images with equal geometry.
     Non-finite values are replaced with defvalue (unless it's None).
     """
+    np.seterr(divide='ignore', invalid='ignore')
     raw_result = _apply_operation_to_image_list(operator.truediv,input_list=input_list)
     # FIXME: where do numpy/ITK store the value of the "maximum value that can be respresented with a 32bit float"?
     # FIXME: maybe we should/wish to support integer division as well?
