@@ -156,7 +156,7 @@ def image_divide(input_list=[], defval=0.,output_file=None):
     ratios = itk.GetArrayFromImage(raw_result)
     ratios[mask] = defval
     fixed_result = itk.GetImageFromArray(ratios)
-    fixed_result.CopyInformationFrom(raw_result)
+    fixed_result.CopyInformation(raw_result)
     return _image_output(fixed_result,output_file)
 
 #####################################################################################
