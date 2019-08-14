@@ -159,6 +159,25 @@ def image_divide(input_list=[], defval=0.,output_file=None):
     fixed_result.CopyInformation(raw_result)
     return _image_output(fixed_result,output_file)
 
+
+def image_invert(input_list=[],output_file=None):
+    """
+    Computes element-wise invert of a list of image with equal geometry.
+    Add image with ones at the beginning of the list and use the division
+    """
+    duplicator = itk.ImageDuplicator.New(input_list[0])
+    duplicator.Update()
+    InputType = type(input_list[0])
+    input_dimension = input_list[0].GetImageDimension()
+    OutputType = itk.Image[itk.F, input_dimension]
+    castFilter = itk.CastImageFilter[InputType, OutputType].New()
+    castFilter.SetInput(duplicator.GetOutput())
+    castFilter.Update()
+    scalarImage = castFilter.GetOutput()
+    scalarImage.FillBuffer(1.0)
+    input_list = [scalarImage] + input_list
+    return image_divide(input_list=input_list,output_file=output_file)
+
 #####################################################################################
 import unittest
 import sys
@@ -343,6 +362,24 @@ class Test_Divide(unittest.TestCase):
         self.assertTrue( np.allclose(itk.GetArrayFromImage(imgdivide),1.0))
         self.assertTrue( np.allclose(imgdivide.GetSpacing(),spacing))
         self.assertTrue( np.allclose(imgdivide.GetOrigin(),origin))
+
+class Test_Invert(unittest.TestCase):
+    def test_ten_3D_images(self):
+        print('Test_Invert test_ten_3D_images')
+        nx, ny, nz = 30, 40, 50
+        spacing = (321., 213., 132.)
+        origin = (321321., 213213., 132132.)
+        imgList = [itk.GetImageFromArray(5.0 * np.ones((nx, ny, nz), dtype=np.float32)),
+                   itk.GetImageFromArray(2.0 * np.ones((nx, ny, nz), dtype=np.float32)),
+                   itk.GetImageFromArray(2.5 * np.ones((nx, ny, nz), dtype=np.float32))]
+        for img in imgList:
+            img.SetSpacing(spacing)
+            img.SetOrigin(origin)
+        imginvert = image_invert(input_list=imgList)
+        self.assertTrue(type(imginvert) == itk.Image[itk.F, 3])
+        self.assertTrue(np.allclose(itk.GetArrayFromImage(imginvert), 0.04))
+        self.assertTrue(np.allclose(imginvert.GetSpacing(), spacing))
+        self.assertTrue(np.allclose(imginvert.GetOrigin(), origin))
 
 
 # TODO: test division
