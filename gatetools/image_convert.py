@@ -14,6 +14,7 @@ This module provides a function to convert image from one type to another:
 
 import itk
 import pydicom
+from pydicom.tag import Tag
 import gatetools as gt
 import numpy as np
 
@@ -30,34 +31,53 @@ def read_dicom(dicomFiles):
     # skip files with no SliceLocation (eg scout views)
     slices = []
     skipcount = 0
-    for f in files:
-        if hasattr(f, 'SliceLocation'):
-            slices.append(f)
-        else:
-            skipcount = skipcount + 1
+    if len(files) > 1:
+        for f in files:
+            if hasattr(f, 'SliceLocation'):
+                slices.append(f)
+            else:
+                skipcount = skipcount + 1
 
-    if skipcount >0:
-        print("skipped, no SliceLocation: {}".format(skipcount))
+        if skipcount >0:
+            print("skipped, no SliceLocation: {}".format(skipcount))
 
-    # ensure they are in the correct order
-    slices = sorted(slices, key=lambda s: s.SliceLocation)
+        # ensure they are in the correct order
+        slices = sorted(slices, key=lambda s: s.SliceLocation)
+    else:
+        print("ERROR: no file available")
+        return
+
 
     # pixel aspects, assuming all slices are the same
     ps = slices[0].PixelSpacing
     ss = slices[0].SliceThickness
     spacing = [ps[0], ps[1], ss]
-    ip = slices[0][0x20, 0x32].value #Image Position
+    if Tag(0x20, 0x32) in slices[0]:
+        ip = slices[0][0x20, 0x32].value #Image Position
+    else:
+        ip = slices[0][0x54, 0x22][0][0x20, 0x32].value #Image Position
     origin = [ip[0], ip[1], ip[2]]
-    io = slices[0][0x20, 0x37].value #Image Orientation
+    if Tag(0x20, 0x37) in slices[0]:
+        io = slices[0][0x20, 0x37].value #Image Orientation
+    else:
+        io = slices[0][0x54, 0x22][0][0x20, 0x37].value #Image Orientation
     #orientation = [io[0], io[1], io[2], io[3], io[4], io[5]]
-    ri = slices[0][0x28, 0x1052].value #Rescale Intercept
-    rs = slices[0][0x28, 0x1053].value #Rescale Slope
+    if Tag(0x28, 0x1052) in slices[0]:
+        ri = slices[0][0x28, 0x1052].value #Rescale Intercept
+        rs = slices[0][0x28, 0x1053].value #Rescale Slope
+    elif Tag(0x11, 0x103b) in slices[0]:
+        rs = slices[0][0x11, 0x103b].value #Rescale Intercept
+        ri = slices[0][0x11, 0x103c].value #Rescale Slope
+    elif Tag(0x40, 0x9096) in slices[0]:
+        ri = slices[0][0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
+        rs = slices[0][0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
 
     # create 3D array
     img_shape = list(slices[0].pixel_array.shape)
     img_shape[0] = len(slices)
     img_shape.append(slices[0].pixel_array.shape[0])
     img3d = np.zeros(img_shape)
+    print(slices[0].pixel_array.shape)
 
     # fill 3D array with the images from the files
     for i, s in enumerate(slices):
@@ -68,9 +88,85 @@ def read_dicom(dicomFiles):
     img_result = itk.GetImageFromArray(np.float32(img3d))
     img_result.SetSpacing(spacing)
     img_result.SetOrigin(origin)
-    #img_result.SetDirection(orientation) ##TODO
+    arrayDirection = np.zeros([3,3], np.float64)
+    arrayDirection[0,0] = io[0]
+    arrayDirection[0,1] = io[1]
+    arrayDirection[0,2] = io[2]
+    arrayDirection[1,0] = io[3]
+    arrayDirection[1,1] = io[4]
+    arrayDirection[1,2] = io[5]
+    arrayDirection[2,2] = 1.0
+    matrixItk = itk.Matrix[itk.D,3,3](itk.GetVnlMatrixFromArray(arrayDirection))
+    img_result.SetDirection(matrixItk)
     return img_result
 
+def read_3d_dicom(dicomFile):
+    """
+
+    Read dicom file and return an float 3D image
+    """
+    files = []
+    files.append(pydicom.read_file(dicomFile[0]))
+
+    # skip files with no SliceLocation (eg scout views)
+    slices = []
+    if len(files) == 1:
+        slices.append(files[0])
+    else:
+        print("ERROR: no file available")
+        return
+
+
+    # pixel aspects, assuming all slices are the same
+    ps = slices[0].PixelSpacing
+    ss = slices[0].SliceThickness
+    spacing = [ps[0], ps[1], ss]
+    if Tag(0x20, 0x32) in slices[0]:
+        ip = slices[0][0x20, 0x32].value #Image Position
+    else:
+        ip = slices[0][0x54, 0x22][0][0x20, 0x32].value #Image Position
+    origin = [ip[0], ip[1], ip[2]]
+    if Tag(0x20, 0x37) in slices[0]:
+        io = slices[0][0x20, 0x37].value #Image Orientation
+    else:
+        io = slices[0][0x54, 0x22][0][0x20, 0x37].value #Image Orientation
+    rs = 1.0
+    ri = 0.0
+    if Tag(0x28, 0x1052) in slices[0]:
+        ri = slices[0][0x28, 0x1052].value #Rescale Intercept
+        rs = slices[0][0x28, 0x1053].value #Rescale Slope
+    elif Tag(0x11, 0x103b) in slices[0]:
+        rs = slices[0][0x11, 0x103b].value #Pixel Scale
+        ri = slices[0][0x11, 0x103c].value #Pixel Offset
+    elif Tag(0x40, 0x9096) in slices[0]:
+        ri = slices[0][0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
+        rs = slices[0][0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
+
+    # create 3D array
+    img_shape = list(slices[0].pixel_array.shape)
+    img3d = np.zeros(img_shape)
+
+    # fill 3D array with the images from the files
+    img3d[:, :, :] = slices[0].pixel_array
+    img3d = rs*img3d+ri
+
+    img_result = itk.GetImageFromArray(np.float32(img3d))
+    img_result.SetSpacing(spacing)
+    img_result.SetOrigin(origin)
+    arrayDirection = np.zeros([3,3], np.float64)
+    arrayDirection[0,0] = io[0]
+    arrayDirection[0,1] = io[1]
+    arrayDirection[0,2] = io[2]
+    arrayDirection[1,0] = io[3]
+    arrayDirection[1,1] = io[4]
+    arrayDirection[1,2] = io[5]
+    if slices[0][0x18, 0x88].value <0:
+        arrayDirection[2,2] = -1.0
+    else:
+        arrayDirection[2,2] = 1.0
+    matrixItk = itk.Matrix[itk.D,3,3](itk.GetVnlMatrixFromArray(arrayDirection))
+    img_result.SetDirection(matrixItk)
+    return img_result
 
 def image_convert(inputImage, pixeltype=None):
     """
