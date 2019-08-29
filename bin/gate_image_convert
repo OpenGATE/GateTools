@@ -17,28 +17,22 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('input', type=str, required=True, nargs=-1)
 
 def gate_image_convert(input, output, pixeltype):
-    """
+    '''
     \b
-    Convert the input to the output with pixeltype. If pixeltype is not set, the output has the same pixel type than the input.
-    Available format:
-        - 2D:
-            - .bmp
-            - .jpeg
-            - .png
-        - 3D:
-            - .mhd
-            - .nii
-            - .nhdr, .nrrd
-            - .tiff
-    Available pixel type
-        - unsigned char
-        - signed short
-        - unsigned short
-        - float
-    To convert Dicom to another format, set the folder fullpath containing the .dcm files as input; eg:
+    
+    Convert the input to the output with pixeltype. If pixeltype is
+    not set, the output has the same pixel type than the input.
+    
+    Available formats: (2D) .bmp .jpeg .png, (3D) .mhd .nii .nhdr .nrrd .tiff
+    
+    Available pixel types: uchar, short, ushort, float
+    
+    To convert Dicom to another format, set the folder fullpath
+    containing the .dcm files as input, eg:
+    
         -i ~/path/to/dcm/*dcm
         -i ~/path/to/dcm/toto.dcm
-    """
+    '''
 
     #Read input
     if len(input) == 1 and not input[0].endswith(".dcm"):
