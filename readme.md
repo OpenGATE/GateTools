@@ -1,7 +1,7 @@
 
-Install with : `pip install gatetools`
+Provides Python tools useful for [GATE](https://github.com/OpenGATE/Gate/) simulations. 
 
-This module provides Python tools useful for [GATE](https://github.com/OpenGATE/Gate/) simulation. 
+Install with : `pip install gatetools`
 
 Current list of command line tools. Use the flag `-h` to get print the help of each tool.
 
