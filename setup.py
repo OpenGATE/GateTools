@@ -38,7 +38,11 @@ setuptools.setup(
 
 # Help for uploading the package (TEST)
 
+# pip uninstall gatetools
 # python3 setup.py sdist bdist_wheel
 # twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
 # test with
 # pip3 install --index-url https://test.pypi.org/simple/ gatetools
+
+
