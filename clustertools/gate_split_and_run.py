@@ -195,7 +195,7 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
                       ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ' MACRODIR=' + outputDir + \
                       ' PBS_JOBID=\"local_' + str(i) + \
-                      '\" bash ' + jobFile
+                      '\" bash ' + jobFile + " > /dev/null &";
         elif get_dns_domain() == 'in2p3.fr':
             command = 'qsub -o ' + outputDir + \
                       ' -e ' + outputDir + \
@@ -227,6 +227,8 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
         else:
             os.system(command)
 
+    print('{} jobs running', format(len(jobs))
+    print('Run folder is: run.' + runId)
 
 
 if __name__ == "__main__":
