@@ -20,7 +20,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                 type=click.Path(exists=True, file_okay=True, dir_okay=False,
                                 writable=False, readable=True, resolve_path=True,
                                 allow_dash=False, path_type=None))
-@click.option('--operation','-O', help='Operation', type=click.Choice(['sum','product','min','max']))
+@click.option('--operation','-O', help='Operation', type=click.Choice(['sum','product','min','max', 'reldiff']))
 @click.option('--verbose/--quiet','-v/-q', help='Be verbose (-v) or keep quiet (-q, default)', default=False)
 @click.option('--output','-o', help='Output filename', required=True,
               type=click.Path(exists=False, file_okay=False, dir_okay=False,
@@ -36,6 +36,7 @@ def gate_image_arithm_main(files,operation,output,verbose):
     - product
     - minimum
     - maximum
+    - absolute relative difference (|A-B|)/max(A) (two input images only, not more)
 
     FILES: files that are the input for the arithmetic operation (and will not be changed).
     Note that the standard ITK python bindings do NOT support images with double precision float
@@ -50,6 +51,7 @@ def gate_image_arithm_main(files,operation,output,verbose):
     gate_image_arithm -O product -o prod.mhd input1.mhd input2.mhd
     gate_image_arithm -O min     -o min.mhd  input1.mhd input2.mhd input3.mhd
     gate_image_arithm -O max     -o max.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
+    gate_image_arithm -O absreldiff -o diff.mhd input1.mhd input2.mhd 
     '''
 
     try:
@@ -69,6 +71,7 @@ def gate_image_arithm_main(files,operation,output,verbose):
     opdict = dict([("sum",gt.image_sum),
                    ("product",gt.image_product),
                    ("min",gt.image_min),
+                   ("absreldiff",gt.image_absolute_relative_difference),
                    ("max",gt.image_max) ])
     if verbose:
         prefix="\n - "
