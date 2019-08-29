@@ -5,10 +5,10 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.1",
+    version="0.8",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
-    description="Tools for GATE ",
+    description="Tools for GATE, see https://github.com/OpenGATE/Gate",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/OpenGATE/GateTools",
@@ -34,3 +34,11 @@ setuptools.setup(
         'bin/gate_gamma_index',
         ]
 )
+
+
+# Help for uploading the package (TEST)
+
+# python3 setup.py sdist bdist_wheel
+# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+# test with
+# pip3 install --index-url https://test.pypi.org/simple/ gatetools
