@@ -157,6 +157,27 @@ def image_divide(input_list=[], defval=0.,output_file=None):
     fixed_result.CopyInformationFrom(raw_result)
     return _image_output(fixed_result,output_file)
 
+def image_absolute_relative_difference(input_list=[], defval=0.,output_file=None):
+    """    
+    Computes element-wise absolute relative difference (|A-B|)/A of
+    two images with equal geometry.  Non-finite values are replaced
+    with defvalue (unless it's None).    
+    """
+
+    if len(input_list) != 2:
+        raise RuntimeError("Two images must be provided to reldiff operator")
+
+    img_list = _image_list(input_list)
+    np_list = [ itk.GetArrayViewFromImage(img) for img in img_list]
+    np_1 = np_list[0]
+    np_2 = np_list[1]
+    m = np.max(np_1)
+    np_result = np.divide((np.abs(np_1-np_2)), m, out=np.zeros_like(np_1), where=np_1 != 0)
+    img = itk.GetImageFromArray(np_result)
+    img.CopyInformation(img_list[0])
+    return _image_output(img, output_file)
+
+
 #####################################################################################
 import unittest
 import sys

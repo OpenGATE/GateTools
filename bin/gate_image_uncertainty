@@ -73,6 +73,8 @@ def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, thresho
             if not exist:
                 print('The file {} does not exist'.format(fs))
                 exit()
+            if verbose:
+                print('Found squared image {}'.format(fs))
             sfilenames.append(fs)
         # compute uncertainty history by hitory
         if by_slice:
