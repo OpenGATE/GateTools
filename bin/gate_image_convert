@@ -23,7 +23,9 @@ def gate_image_convert(input, output, pixeltype):
     
     Available formats: (2D) .bmp .jpeg .png, (3D) .mhd .nii .nhdr .nrrd .tiff
     
-    Available pixel types: uchar, short, ushort, float
+    Available pixel types: unsigned char, signed short, unsigned short, float
+
+    uchar, short, ushort, float
     
     To convert Dicom to another format, set the folder fullpath
     containing the .dcm files as input, eg:
