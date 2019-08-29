@@ -46,8 +46,11 @@ def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
     print('Processor:         ', platform.processor())
     print('Python:            ', platform.python_version())
     print('System:            ', platform.system())
-    print('GateTools version: ', gtv)    
+    print('GateTools version: ', gtv)
     for g in g4_list:
-        print('{:<19} {}'.format(g, os.environ[g]))
+        try:
+            print('{:<19} {}'.format(g, os.environ[g]))
+        except:
+            print('{:<19} NOT FOUND'.format(g))
 
 
