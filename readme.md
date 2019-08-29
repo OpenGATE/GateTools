@@ -1,7 +1,15 @@
 
-Provides Python tools useful for [GATE](https://github.com/OpenGATE/Gate/) simulations. 
+**(Hopefully) useful tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
 
 Install with : `pip install gatetools`
+
+Example of usage: 
+```
+gate_image_convert -i input.dcm -o output.mhd
+gate_image_convert -i input.mhd -o output_float.mhd -p float
+gate_image_arithm -i *.mhd -o output.mhd -O sum
+gate_gamma_index data/tps_dose.mhd result.XYZ/gate-DoseToWater.mhd -o gamma.mhd --dd 2 --dta 2.5 -u "%" -T 0.2
+```
 
 Current list of command line tools. Use the flag `-h` to get print the help of each tool.
 
