@@ -18,8 +18,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 def gate_image_convert(input, output, pixeltype):
     '''
-    \b
-    
     Convert the input to the output with pixeltype. If pixeltype is
     not set, the output has the same pixel type than the input.
     

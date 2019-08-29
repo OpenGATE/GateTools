@@ -16,14 +16,23 @@ import numpy as np
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filenames', nargs=-1)
+
 @click.option('--nevents','-n', help='Total numbers of events', default=0)
-@click.option('--counts/--not-counts', '-c', default=False, help='Compute uncertainty for counts image (Poisson process)')
+
+@click.option('--counts/--not-counts', '-c', default=False,
+              help='Compute uncertainty for counts image (Poisson process)')
+
 @click.option('--output','-o', help='Output filename', required=True)
-@click.option('--by_slice/--not-by_slice', '-s', default=False, help='Display mean uncertainty by slice (only with --counts)')
+
+@click.option('--by_slice/--not-by_slice', '-s',
+              default=False, help='Display mean uncertainty by slice (only with --counts)')
+
 @click.option('--threshold', '-t', default=0.0,
               help='Threshold in %, do not consider pixels with value lower \
               than this % of the max value by slice (only with --counts)')
+
 @click.option('--verbose/--no-verbose', '-v', default=False, help='Verbose')
+
 def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, verbose):
     '''
     Compute relative statistical uncertainty image for a list of
@@ -41,7 +50,9 @@ def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, thresho
     counts of Poisson distribution. The variance is thus equal to the
     mean. No need to indicate the number of events.
 
-    Option '-s' and '-t': display slice by slice mean relative uncertainty. Only consider pixel values greater than threshold% of the max value in the image.
+    Option '-s' and '-t': display slice by slice mean relative
+    uncertainty. Only consider pixel values greater than threshold %
+    of the max value in the image.
 
     Example1:
     gate_image_uncertainty run.XYZ/output_*/dose-Edep.mhd -o u.mhd -N 100000000
