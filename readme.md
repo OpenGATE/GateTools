@@ -1,11 +1,10 @@
-
 The **gatetools** gather Python script useful for [GATE](https://github.com/OpenGATE/Gate/) simulation. 
 
 To install : `pip install -e .` (TEMPORARY)
 To install : `pip install gatetools` (SOON !)
 
 
-Current list of command line tools:
+Current list of command line tools. Use the flag `-h` to get print the help of each tool.
 
 | Tool  | Comment |
 | ------------- | ------------- |
@@ -15,7 +14,7 @@ Current list of command line tools:
 | `gate_image_uncertainty`| Compute statistical uncertainty|
 | `gate_gamma_index`| Compute gamma index between images|
 
-Tests: run `python –m unittest2 gatetools` or `unit2 gatetools` (according to your python installation)
+Tests: run `python -m unittest gatetools`
 
 Dependencies:
 - click: https://click.palletsprojects.com
