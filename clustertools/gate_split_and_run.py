@@ -128,7 +128,7 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
     os.mkdir(os.path.join(outputDir, 'mac'))
     parserMacro = ParserMacro()
     parserMacro.setAlias(alias, jobs)
-    parserMacro.parseMacFiles(fullMacroDir, mainMacroFile)
+    parserMacro.parseMainMacFiles(fullMacroDir, mainMacroFile)
 
     # Copy data
     if copydata:

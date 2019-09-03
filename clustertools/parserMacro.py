@@ -9,38 +9,29 @@ class ParserMacro:
         self.aliasNumber = 0
         self.parserAlias = {}
         self.parserAttributes = {}
-        self.macFiles = []
         self.fullMacroDir = ""
 
-    def parseMacFiles(self, fullMacroDir, mainMacroFile):
+    def parseMainMacFiles(self, fullMacroDir, mainMacroFile):
         self.fullMacroDir = fullMacroDir
-        self.macFiles = [os.path.join(self.fullMacroDir, mainMacroFile)]
-        while len(self.macFiles) != 0:
-            #Take first macro file in the list
-            currentMacFiles = self.macFiles[0]
+        self.parseMacFiles(os.path.join(self.fullMacroDir, mainMacroFile))
 
-            # Structure containing all lines of the macro file
-            self.parserAllFiles[currentMacFiles] = []
-            with open(os.path.join(fullMacroDir, currentMacFiles)) as f:  # open file
-                for line in f:
-                    self.parserAllFiles[currentMacFiles] += [line]
+    def parseMacFiles(self, currentMacFiles):
+        # Structure containing all lines of the macro file
+        self.parserAllFiles[currentMacFiles] = []
+        with open(os.path.join(self.fullMacroDir, currentMacFiles)) as f:  # open file
+            for line in f:
+                line = line.strip() # Remove trailing whitespaces
+                self.parserAllFiles[currentMacFiles] += [line]
+                self.parseControlCommand(line, len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
+                self.parseAttributes(line, len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
 
-            #Start to parse the macro file
-            self.parseControlCommand(currentMacFiles)
-            self.parseAttributes(currentMacFiles)
-
-            #Take next file
-            del self.macFiles[0]
-
-    def parseControlCommand(self, file):
-        #Parse macro file to get /control/ commands
-        for index, line in enumerate(self.parserAllFiles[file]):
-            if not line.startswith('#') and not line == '\n':
-                line = line.strip()
-                splitLine = line.split(" ")
-                splitLine = [x for x in splitLine if x]
-                if len(splitLine) > 0 and splitLine[0][:9] == '/control/':
-                    self.checkControlCommand(splitLine, file, index)
+    def parseControlCommand(self, line, index, file):
+        # Parse macro file to get /control/ commands
+        if not line.startswith('#') and not line == '\n':
+            splitLine = line.split(" ")
+            splitLine = [x for x in splitLine if x]
+            if len(splitLine) > 0 and splitLine[0][:9] == '/control/':
+                self.checkControlCommand(splitLine, file, index)
 
     def checkControlCommand(self, splitLine, file, index):
         if len(splitLine) > 0 and splitLine[0] == '/control/alias':
@@ -97,7 +88,7 @@ class ParserMacro:
         if len(splitLine) > 0 and splitLine[0] == '/control/execute':
             splitLine[1] = self.decriptAlias(splitLine[1])
             splitLine[1] = " ".join(splitLine[1])
-            self.macFiles.append(os.path.join(self.fullMacroDir, splitLine[1]))
+            self.parseMacFiles(os.path.join(self.fullMacroDir, splitLine[1]))
 
     def parseOperation(self, splitLine):
         if len(splitLine) > 0 and splitLine[0] == '/control/add':
@@ -150,18 +141,16 @@ class ParserMacro:
             self.parserAlias[splitLine[1]] = value
             return value
 
-    def parseAttributes(self, file):
-        for index, line in enumerate(self.parserAllFiles[file]):
-            if not line.startswith('#') and not line == '\n':
-                line = line.strip() #Remove trailing whitespace
-                if line.startswith('/gate/application/setTimeStart'):
-                    self.parserAttributes["setTimeStart"] = [file, index]
-                elif line.startswith('/gate/application/setTimeSlice'):
-                    self.parserAttributes["setTimeSlice"] = [file, index]
-                elif line.startswith('/gate/application/setTimeStop'):
-                    self.parserAttributes["setTimeStop"] = [file, index]
-                elif line.startswith('/gate/application/setTotalNumberOfPrimaries'):
-                    self.parserAttributes["setTotalNumberOfPrimaries"] = [file, index]
+    def parseAttributes(self, line, index, file):
+        if not line.startswith('#') and not line == '\n':
+            if line.startswith('/gate/application/setTimeStart'):
+                self.parserAttributes["setTimeStart"] = [file, index]
+            elif line.startswith('/gate/application/setTimeSlice'):
+                self.parserAttributes["setTimeSlice"] = [file, index]
+            elif line.startswith('/gate/application/setTimeStop'):
+                self.parserAttributes["setTimeStop"] = [file, index]
+            elif line.startswith('/gate/application/setTotalNumberOfPrimaries'):
+                self.parserAttributes["setTotalNumberOfPrimaries"] = [file, index]
 
     def setAlias(self, alias, jobs):
         for a in alias:
