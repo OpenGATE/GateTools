@@ -1,5 +1,6 @@
 
 import os
+import colorama
 
 class ParserMacro:
     def __init__(self):
