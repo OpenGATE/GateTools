@@ -10,6 +10,7 @@ import gatetools as gt
 import itk
 import click
 import os
+import re
 import numpy as np
 
 # -----------------------------------------------------------------------------
@@ -20,20 +21,27 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nevents','-n', help='Total numbers of events', default=0)
 
 @click.option('--counts/--not-counts', '-c', default=False,
-              help='Compute uncertainty for counts image (Poisson process)')
+              help='Compute uncertainty for counts image (Poisson
+              process)')
 
 @click.option('--output','-o', help='Output filename', required=True)
 
-@click.option('--by_slice/--not-by_slice', '-s',
-              default=False, help='Display mean uncertainty by slice (only with --counts)')
+@click.option('--by_slice/--not-by_slice', '-s', default=False,
+              help='Display mean uncertainty by slice (only with
+              --counts)')
 
-@click.option('--threshold', '-t', default=0.0,
-              help='Threshold in %, do not consider pixels with value lower \
-              than this % of the max value by slice (only with --counts)')
+@click.option('--threshold', '-t', default=0.0, help='Threshold in %,
+              do not consider pixels with value lower \ than this % of
+              the max value by slice (only with --counts)')
+
+@click.option('--efficiency','-e', help='Compute efficiency
+              (1/t*sigma). The time is read in the given stat
+              file. Only slice by slice for the moment',
+              default=False)
 
 @click.option('--verbose/--no-verbose', '-v', default=False, help='Verbose')
 
-def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, verbose):
+def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, verbose):
     '''
     Compute relative statistical uncertainty image for a list of
     images. Images are summed before computing the the uncertainty.
@@ -60,6 +68,11 @@ def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, thresho
     Example2:
     gate_image_uncertainty output/projection.mhd -c -o u.mhd -s -t 0.1
 
+    Example3:
+    gate_image_uncertainty output/projection.mhd -c -o u.mhd -s -t 0.1 -e output/stats.txt
+
+    (Not yet implemented: efficiency image)
+    
     '''
 
     # do nothing if no filenames
@@ -74,6 +87,18 @@ def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, thresho
     if verbose:
         print("Found {} file(s)".format(len(filenames)))
 
+    # efficiency ?
+    time = 0.0
+    if efficiency:
+        fp = open(efficiency, 'r')
+        line = fp.readline()
+        while line:            
+            m = re.match(r'.*ElapsedTime = (.*)', line)
+            if m:
+                time = float(m.group(1))
+            line = fp.readline()
+        fp.close()
+        
     # uncertainty with squared images
     if not counts:
         # find the squared images filenames
@@ -103,7 +128,12 @@ def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, thresho
     if by_slice:
         i =0
         for mean,n in zip(m, nb):
-            print("Channel {0} uncertainty and nb pixels = {1:6.2f} % {2:10}".format(i, mean*100.0, n))
+            if efficiency:
+                eff = 1.0/(time * mean)
+                print("Channel {0} uncertainty and nb pixels = {1:6.2f} % {2:10}  efficiency = {3:6.15f}"
+                      .format(i, mean*100.0, n, eff))
+            else:
+                print("Channel {0} uncertainty and nb pixels = {1:6.2f} % {2:10}".format(i, mean*100.0, n))
             i = i+1
 
 
