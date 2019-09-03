@@ -67,7 +67,7 @@ class ParserMacro:
                 self.parserAllFiles[file][index] = newLine
         elif len(splitLine) > 0 and splitLine[0] != '/control/verbose' and splitLine[0] != '/control/listAlias':
             print(colorama.Fore.YELLOW + "WARNING: "
-                  "Unrecognized /control command: " + splitLine[0] + colorama.Style.RESET_ALL)
+                  "Ignored /control command: " + splitLine[0] + colorama.Style.RESET_ALL)
 
     def parseAlias(self, splitLine):
         if len(splitLine) > 0 and splitLine[0] == '/control/alias':
