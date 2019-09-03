@@ -160,7 +160,6 @@ class ParserMacro:
 
     def setAttributes(self, attribute, valuesForAllJobs):
         line = self.parserAllFiles[self.parserAttributes[attribute][0]][self.parserAttributes[attribute][1]]
-        line = line.strip() #Remove trailing whitespace
         splitLine = line.split(" ")
         splitLine = [x for x in splitLine if x]
         if not isinstance(valuesForAllJobs[0], list):
@@ -188,7 +187,6 @@ class ParserMacro:
         return self.parserAlias[alias] #Do not return the command and the name of the alias
 
     def decriptAlias(self, line, attribute=""):
-        line = line.strip()
         line = line.split(" ")
         splitLine = []
         for x in line:
