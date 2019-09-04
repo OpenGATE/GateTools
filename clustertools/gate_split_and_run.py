@@ -115,13 +115,13 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
         print('No qsub, run Gate on multiple cores.')
 
     # Parameter files
-    paramFileName = os.path.join(outputDir, 'params.txt')
+    paramFileName = os.path.join(outputDir, 'run.log')
     paramFile = open(paramFileName, "w")
-    paramFile.write('njobs = ' + str(jobs))
-    paramFile.write('macro = ' + mac)
+    paramFile.write('number of jobs = ' + str(jobs) + '\n')
+    paramFile.write('macro = ' + mac + '\n')
+    paramFile.write('runId = ' + runId + '\n')
     if paramtogate != '':
-        paramFile.write('param = ' + paramtogate)
-    paramFile.close()
+        paramFile.write('param = ' + paramtogate + '\n')
 
     #Parse macro files and sub-Macro
     os.mkdir(os.path.join(outputDir, 'mac'))
@@ -166,7 +166,7 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
     parserMacro.writeMacFiles(outputDir)
 
     #Create file to write commands in it
-    commandsFile = open(os.path.join(outputDir, "commands.txt"), "a")
+    paramFile.write('\ncommands: \n')
 
     # Run jobs
     for i in range(0, jobs):
@@ -219,13 +219,14 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
                       '\" ' + jobFile
-        commandsFile.write(command)
-        commandsFile.write("\n")
+        paramFile.write(command)
+        paramFile.write("\n")
         if dry:
             print(command)
         else:
             os.system(command)
 
+    paramFile.close()
     print(str(jobs) + ' jobs running')
     print('Run folder is: run.' + runId)
 
