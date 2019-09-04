@@ -20,10 +20,9 @@ class ParserMacro:
         self.parserAllFiles[currentMacFiles] = []
         with open(os.path.join(self.fullMacroDir, currentMacFiles)) as f:  # open file
             for line in f:
-                line = line.strip() # Remove trailing whitespaces
                 self.parserAllFiles[currentMacFiles] += [line]
-                self.parseControlCommand(line, len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
-                self.parseAttributes(line, len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
+                self.parseControlCommand(line.strip(), len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
+                self.parseAttributes(line.strip(), len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
 
     def parseControlCommand(self, line, index, file):
         # Parse macro file to get /control/ commands
@@ -160,6 +159,7 @@ class ParserMacro:
 
     def setAttributes(self, attribute, valuesForAllJobs):
         line = self.parserAllFiles[self.parserAttributes[attribute][0]][self.parserAttributes[attribute][1]]
+        line = line.strip()
         splitLine = line.split(" ")
         splitLine = [x for x in splitLine if x]
         if not isinstance(valuesForAllJobs[0], list):
@@ -177,6 +177,7 @@ class ParserMacro:
     # Check if containing alias, in such a case, replace it by the alias value if it exist, else raise an error
     def getAttributes(self, attribute):
         line = self.parserAllFiles[self.parserAttributes[attribute][0]][self.parserAttributes[attribute][1]]
+        line = line.strip()
         splitLine = self.decriptAlias(line, attribute)
         return splitLine[1:]
 
@@ -212,4 +213,4 @@ class ParserMacro:
             os.makedirs(folder, exist_ok=True)
             with open(os.path.join(outputDir, writtingFile), 'w') as f:
                 for element in self.parserAllFiles[file]:
-                    f.write(element + '\n')
+                    f.write(element)
