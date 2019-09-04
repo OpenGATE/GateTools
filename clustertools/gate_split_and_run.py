@@ -24,13 +24,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-j', '--jobs', default=1, help='Number of jobs/core')
 @click.option('--env', default='', help='Bash script to set environment variables during job')
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
-@click.option('--paramtogate', default='', help='Parameters for Gate')
 @click.option('--splittime', is_flag=True, help='Divide time duration into the number of jobs')
 @click.option('-o', '--output', default='', help='Output fullpath folder (default: run.XXX)')
 @click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a exemple Lu-177 -a foo 72.3)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
-def runJobs(mac, jobs, env, releasedir, paramtogate, splittime, output, alias, copydata, dry):
+def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry):
     """
     \b
     Run Gate jobs
@@ -108,8 +107,6 @@ def runJobs(mac, jobs, env, releasedir, paramtogate, splittime, output, alias, c
     paramFile.write('number of jobs = ' + str(jobs) + '\n')
     paramFile.write('macro = ' + mac + '\n')
     paramFile.write('runId = ' + runId + '\n')
-    if paramtogate != '':
-        paramFile.write('param = ' + paramtogate + '\n')
 
     #Parse macro files and sub-Macro
     os.mkdir(os.path.join(outputDir, 'mac'))
@@ -147,19 +144,9 @@ def runJobs(mac, jobs, env, releasedir, paramtogate, splittime, output, alias, c
     # Run jobs
     for i in range(0, jobs):
         #Set paramtogate with alias for each job
-        paramtogateJob = paramtogate
-        if len(parserMacro.aliasToGate) != 0:
-            indexAlias = paramtogate.find('-a')
-            if indexAlias != -1:
-                paramtogateEnd = paramtogate[indexAlias+3:]
-                paramtogateJob = paramtogate[:indexAlias+2]
-                for aliasMac in parserMacro.aliasToGate:
-                    paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
-                    paramtogateJob += paramtogateEnd
-            else:
-                paramtogateJob += ' -a '
-                for aliasMac in parserMacro.aliasToGate:
-                    paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
+        paramtogateJob = ' -a [JOB_ID,' + str(i) + ']'
+        for aliasMac in parserMacro.aliasToGate:
+            paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
 
         if qsub is None:
             command = 'PARAM=\" ' + paramtogateJob + \
