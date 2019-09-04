@@ -22,19 +22,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('mac', nargs=1)
 @click.option('-j', '--jobs', default=1, help='Number of jobs/core')
-@click.option('-n', '--primaries', default=0.0, help='Total number of primaries for all jobs')
 @click.option('--env', default='', help='Bash script to set environment variables during job')
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--paramtogate', default='', help='Parameters for Gate')
-@click.option('--timestart', default=0.0, help='Set time start for the first job')
-@click.option('--timeslice', default=0.0, help='Set time duration for one job')
-@click.option('--timestop', default=0.0, help='Set time stop for the last job')
 @click.option('--splittime', is_flag=True, help='Divide time duration into the number of jobs')
 @click.option('-o', '--output', default='', help='Output fullpath folder (default: run.XXX)')
 @click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a exemple Lu-177 -a foo 72.3)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
-def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, timeslice, timestop, splittime, output, alias, copydata, dry):
+def runJobs(mac, jobs, env, releasedir, paramtogate, splittime, output, alias, copydata, dry):
     """
     \b
     Run Gate jobs
@@ -42,14 +38,6 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
     MAC: input mac filename
 
     """
-
-    #
-    numberprimaries = primaries
-    
-    #Control if options are correct:
-    if numberprimaries != 0:
-        if timestart != 0 or timeslice != 0 or timestop != 0:
-            print(colorama.Fore.YELLOW + "WARNING: Cannot use time options (timestart, timeslice or timestop) with numberprimaries." + colorama.Style.RESET_ALL)
 
     directoryJobFiles = os.path.dirname(os.path.abspath(__file__))
     jobFile = ""
@@ -134,18 +122,6 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
         shutil.copytree(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
     else:
         os.symlink(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
-
-    # Set number of Primaries
-    if numberprimaries != 0.0:
-        parserMacro.setAttributes('setTotalNumberOfPrimaries', jobs*[int(numberprimaries/jobs)])
-
-    # Set time options
-    if timestart != 0:
-        parserMacro.setAttributes('setTimeStart', jobs*[timestart])
-    if timeslice != 0:
-        parserMacro.setAttributes('setTimeSlice', jobs*[timeslice])
-    if timestop != 0:
-        parserMacro.setAttributes('setTimeStop', jobs*[timestop])
 
     #Manage split time option
     #Divide the time into jobs range of time
