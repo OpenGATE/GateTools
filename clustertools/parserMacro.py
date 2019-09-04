@@ -1,6 +1,7 @@
 
 import os
 import colorama
+import shutil
 
 class ParserMacro:
     def __init__(self):
@@ -10,6 +11,7 @@ class ParserMacro:
         self.parserAlias = {}
         self.parserAttributes = {}
         self.fullMacroDir = ""
+        self.copyAppendixMac = []
 
     def parseMainMacFiles(self, fullMacroDir, mainMacroFile):
         self.fullMacroDir = fullMacroDir
@@ -22,6 +24,7 @@ class ParserMacro:
             for line in f:
                 self.parserAllFiles[currentMacFiles] += [line]
                 self.parseControlCommand(line.strip(), len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
+                self.checkIfAppendixMacFile(line.strip())
                 self.parseAttributes(line.strip(), len(self.parserAllFiles[currentMacFiles]) - 1, currentMacFiles)
 
     def parseControlCommand(self, line, index, file):
@@ -140,6 +143,18 @@ class ParserMacro:
             self.parserAlias[splitLine[1]] = value
             return value
 
+    def checkIfAppendixMacFile(self, line):
+        # Check if the line contains a file in mac that is not a /control/execute
+        if not line.startswith('#') and not line == '\n':
+            splitLine = line.split(" ")
+            splitLine = [x for x in splitLine if x]
+            if len(splitLine) >= 2 and not splitLine[0].startswith('/control/execute'):
+                splitLine = self.decriptAlias(line)
+                if splitLine[1].startswith('mac'):
+                    splitLine[1] = self.decriptAlias(splitLine[1])
+                    splitLine[1] = " ".join(splitLine[1])
+                    self.copyAppendixMac.append(os.path.join(self.fullMacroDir, splitLine[1]))
+
     def parseAttributes(self, line, index, file):
         if not line.startswith('#') and not line == '\n':
             if line.startswith('/gate/application/setTimeStart'):
@@ -214,3 +229,7 @@ class ParserMacro:
             with open(os.path.join(outputDir, writtingFile), 'w') as f:
                 for element in self.parserAllFiles[file]:
                     f.write(element)
+
+        for file in self.copyAppendixMac:
+            writtingFile = file[len(self.fullMacroDir):]
+            shutil.copyfile(file, os.path.join(outputDir, writtingFile))
