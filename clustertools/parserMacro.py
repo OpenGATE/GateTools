@@ -39,15 +39,13 @@ class ParserMacro:
         if len(splitLine) > 0 and splitLine[0] == '/control/alias':
             self.parseAlias(splitLine)
         elif len(splitLine) > 0 and splitLine[0] == '/control/strdoif':
-            newSplitLine = self.parseCondition(splitLine)
+            condition, newSplitLine = self.parseCondition(splitLine)
             if len(newSplitLine) > 0:
                 newLine = " ".join(newSplitLine)
                 newLine += '\n'
-                self.parserAllFiles[file][index] = newLine
                 if newSplitLine[0][:9] == '/control/':
                     self.checkControlCommand(newSplitLine, file, index)
-            else:
-                self.parserAllFiles[file][index] = "\n"
+            self.parserAllFiles[file][index] = self.parserAllFiles[file][index][:-1] + " # " + str(condition) + '\n'
         elif len(splitLine) > 0 and splitLine[0] == '/control/execute':
             self.getMacroFiles(splitLine)
         elif len(splitLine) > 0 and (splitLine[0] == '/control/add' or
@@ -55,9 +53,7 @@ class ParserMacro:
                                      splitLine[0] == '/control/multiply' or
                                      splitLine[0] == '/control/divide'):
             value = self.parseOperation(splitLine)
-            if value is not None:
-                newLine = '/control/alias ' + splitLine[1] + " " + str(value) + '\n'
-                self.parserAllFiles[file][index] = newLine
+            self.parserAllFiles[file][index] = self.parserAllFiles[file][index][:-1] + " # " + value + '\n'
         elif len(splitLine) > 0 and splitLine[0] != '/control/verbose' and splitLine[0] != '/control/listAlias':
             print(colorama.Fore.YELLOW + "WARNING: "
                   "Ignored /control command: " + splitLine[0] + colorama.Style.RESET_ALL)
@@ -78,13 +74,13 @@ class ParserMacro:
             splitLine[3] = " ".join(splitLine[3])
             if splitLine[2] == "==":
                 if splitLine[1] == splitLine[3]:
-                    return splitLine[4:]
+                    return True, splitLine[4:]
             elif splitLine[2] == "!=":
                 if splitLine[1] != splitLine[3]:
-                    return splitLine[4:]
+                    return True, splitLine[4:]
             else:
                 print(colorama.Fore.YELLOW + "WARNING: Not possible to decrypt: " + " ".join(splitLine) + colorama.Style.RESET_ALL)
-            return []
+            return False, []
 
     def getMacroFiles(self, splitLine):
         if len(splitLine) > 0 and splitLine[0] == '/control/execute':
