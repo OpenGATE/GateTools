@@ -226,7 +226,7 @@ def runJobs(mac, jobs, primaries, env, releasedir, paramtogate, timestart, times
         else:
             os.system(command)
 
-    print('{} jobs running', format(len(jobs))
+    print(str(jobs) + ' jobs running')
     print('Run folder is: run.' + runId)
 
 
