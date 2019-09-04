@@ -212,4 +212,4 @@ class ParserMacro:
             os.makedirs(folder, exist_ok=True)
             with open(os.path.join(outputDir, writtingFile), 'w') as f:
                 for element in self.parserAllFiles[file]:
-                    f.write(element)
+                    f.write(element + '\n')
