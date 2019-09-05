@@ -94,6 +94,8 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry)
     elif not os.path.isdir(outputDir):
         os.mkdir(outputDir)
     runId = os.path.basename(outputDir)[os.path.basename(outputDir).find('.') +1:]
+    if runId == '':
+        runId == os.path.basename(outputDir)
     print('Run Id is: ' + runId)
 
     # Find qsub
