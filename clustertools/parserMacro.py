@@ -12,10 +12,12 @@ class ParserMacro:
         self.parserAttributes = {}
         self.fullMacroDir = ""
         self.copyAppendixMac = []
+        self.mainMacroFile = ""
 
     def parseMainMacFiles(self, fullMacroDir, mainMacroFile):
         self.fullMacroDir = fullMacroDir
-        self.parseMacFiles(os.path.join(self.fullMacroDir, mainMacroFile))
+        self.mainMacroFile = mainMacroFile
+        self.parseMacFiles(os.path.join(self.fullMacroDir, self.mainMacroFile))
 
     def parseMacFiles(self, currentMacFiles):
         # Structure containing all lines of the macro file
@@ -216,6 +218,11 @@ class ParserMacro:
             elif x:
                 splitLine += [x]
         return splitLine
+
+    def setVisualisation(self):
+        self.parserAllFiles[os.path.join(self.fullMacroDir, self.mainMacroFile)] = ["/control/execute mac/visu.mac"] + self.parserAllFiles[os.path.join(self.fullMacroDir, self.mainMacroFile)]
+        shutil.copyfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "visu.mac"), os.path.join(self.fullMacroDir, "mac/visu.mac"))
+        self.copyAppendixMac.append(os.path.join(self.fullMacroDir, "mac/visu.mac"))
 
     def writeMacFiles(self, outputDir):
         for file in self.parserAllFiles:
