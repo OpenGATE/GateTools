@@ -29,7 +29,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a exemple Lu-177 -a foo 72.3)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
-def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry):
+@click.option('--qt', is_flag=True, help='Add visualisation - Be sure to have few particles')
+def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry, qt):
     """
     \b
     Run Gate jobs
@@ -115,6 +116,11 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry)
     parserMacro = ParserMacro()
     parserMacro.setAlias(alias, jobs)
     parserMacro.parseMainMacFiles(fullMacroDir, mainMacroFile)
+    paramtogateJob = ''
+    if qt:
+        print(colorama.Fore.YELLOW + 'WARNING: Be sure to have few particles for visualisation' + colorama.Style.RESET_ALL)
+        parserMacro.setVisualisation()
+        paramtogateJob += ' --qt '
 
     # Copy data
     if copydata:
@@ -146,7 +152,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry)
     # Run jobs
     for i in range(0, jobs):
         #Set paramtogate with alias for each job
-        paramtogateJob = ' -a [JOB_ID,' + str(i) + ']'
+        paramtogateJob += ' -a [JOB_ID,' + str(i) + ']'
         for aliasMac in parserMacro.aliasToGate:
             paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
 
