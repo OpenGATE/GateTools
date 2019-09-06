@@ -116,11 +116,11 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
     parserMacro = ParserMacro()
     parserMacro.setAlias(alias, jobs)
     parserMacro.parseMainMacFiles(fullMacroDir, mainMacroFile)
-    paramtogateJob = ''
+    paramtogate = ''
     if qt:
         print(colorama.Fore.YELLOW + 'WARNING: Be sure to have few particles for visualisation' + colorama.Style.RESET_ALL)
         parserMacro.setVisualisation()
-        paramtogateJob += ' --qt '
+        paramtogate += ' --qt '
 
     # Copy data
     if copydata:
@@ -152,7 +152,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
     # Run jobs
     for i in range(0, jobs):
         #Set paramtogate with alias for each job
-        paramtogateJob += ' -a [JOB_ID,' + str(i) + ']'
+        paramtogateJob = paramtogate + ' -a [JOB_ID,' + str(i) + ']'
         for aliasMac in parserMacro.aliasToGate:
             paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
 
