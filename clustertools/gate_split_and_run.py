@@ -61,6 +61,10 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
             print('Found Gate in folder: ' + releasedir)
             releasedir = 'NONE'
     else:
+        if os.path.isfile(releasedir):
+            print(colorama.Fore.RED + 'ERROR: RELEASEDIR is a file, change it to a folder: ' + releasedir + colorama.Style.RESET_ALL)
+            print(colorama.Fore.RED + 'Did you mean? ' + os.path.dirname(releasedir) + colorama.Style.RESET_ALL)
+            exit(1)
         if not os.path.isdir(releasedir):
             print(colorama.Fore.RED + 'ERROR: This folder does not exist: ' + releasedir + colorama.Style.RESET_ALL)
             exit(1)
