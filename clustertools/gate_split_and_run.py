@@ -165,7 +165,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
                       ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ' MACRODIR=' + outputDir + \
                       ' PBS_JOBID=\"local_' + str(i) + \
-                      '\" bash ' + jobFile + " > /dev/null &";
+                      '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
         elif get_dns_domain() == 'in2p3.fr':
             command = 'qsub -o ' + outputDir + \
                       ' -e ' + outputDir + \
