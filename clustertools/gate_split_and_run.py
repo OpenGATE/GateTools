@@ -39,7 +39,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
 
     """
 
-    directoryJobFiles = os.path.dirname(os.path.abspath(__file__))
+    directoryJobFiles = os.path.dirname(os.path.realpath(__file__))
     jobFile = ""
     # Take the correct job file according to the cluster name
     if get_dns_domain() == 'in2p3.fr':
