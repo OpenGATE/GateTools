@@ -67,18 +67,6 @@ else
 	  test -d "${RELEASEDIR}" || error "can't find release"
 	  md5sum ${RELEASEDIR}/Gate
           ldd ${RELEASEDIR}/Gate
-#	  test -f ${RELEASEDIR}/libGate.so && md5sum ${RELEASEDIR}/libGate.so
-#
-#	  echo "Finding libraries"
-#	  ROOTLIBS="${RELEASEDIR}/libCore.so:${RELEASEDIR}/libCint.so:${RELEASEDIR}/libRIO.so:${RELEASEDIR}/libNet.so:${RELEASEDIR}/libHist.so:${RELEASEDIR}/libGraf.so:${RELEASEDIR}/libGraf3d.so:${RELEASEDIR}/libGpad.so:${RELEASEDIR}/libTree.so:${RELEASEDIR}/libRint.so:${RELEASEDIR}/libPostscript.so:${RELEASEDIR}/libMatrix.so:${RELEASEDIR}/libPhysics.so:${RELEASEDIR}/libMathCore.so:${RELEASEDIR}/libThread.so:"
-#	  echo "ROOTLIBS=${ROOTLIBS}"
-#	  G4LIBS="$(for library in $(find "${RELEASEDIR}" -maxdepth 1 -name 'libG4*.so'); do echo -n "${library}:"; done)"
-#	  echo "G4LIBS=${G4LIBS}"
-#	  CLHEPLIBS="$(for library in $(find "${RELEASEDIR}" -maxdepth 1 -name 'libCLHEP*.so'); do echo -n "${library}:"; done)"
-#	  echo "CLHEPLIBS=${CLHEPLIBS}"
-#	  GATELIBS=""
-#	  test -f ${RELEASEDIR}/libGate.so && GATELIBS="${RELEASEDIR}/libGate.so:"
-#	  echo "GATELIBS=${GATELIBS}"
 fi
 test -d "${MACRODIR}" && test -d "${MACRODIR}/mac" || error "invalid macro"
 
@@ -89,7 +77,6 @@ trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
 cp -r -L "${MACRODIR}"/mac .
 ln -s "${MACRODIR}"/data ./data
-#cp -r -L "${MACRODIR}"/{data,mac} .
 mkdir output
 
 # Enforce one thread
@@ -101,18 +88,7 @@ if test "$RELEASEDIR" = "NONE"
 then
 	  Gate ${PARAM} ${MACROFILE} || error "gate failed"
 else
-#	  LD_PRELOAD="${ROOTLIBS}${G4LIBS}${CLHEPLIBS}${GATELIBS}" \
-#	            G4LEVELGAMMADATA="${RELEASEDIR}/PhotonEvaporation2.1" \
-#	            G4RADIOACTIVEDATA="${RELEASEDIR}/RadioactiveDecay3.3" \
-#	            G4LEDATA="${RELEASEDIR}/G4EMLOW6.19" \
-#	            G4NEUTRONHPDATA="${RELEASEDIR}/G4NDL3.14" \
-#	            G4ABLADATA="${RELEASEDIR}/G4ABLA3.0" \
-#	            G4REALSURFACEDATA="${RELEASEDIR}/RealSurface1.0" \
-#	            G4NEUTRONXSDATA="${RELEASEDIR}/G4NEUTRONXS1.0" \
-#	            G4PIIDATA="${RELEASEDIR}/G4PII1.2" \
-#	            /usr/bin/time --format="real %es\nuser %Us\nsys %Ss\nmaxmem %Mk" \
-	            ${RELEASEDIR}/Gate ${PARAM} ${MACROFILE} \
-	      || error "gate failed"
+	 ${RELEASEDIR}/Gate ${PARAM} ${MACROFILE} || error "gate failed"
 fi
 
 date

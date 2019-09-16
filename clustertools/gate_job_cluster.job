@@ -32,10 +32,19 @@ echo "MACRODIR=${MACRODIR:?"unknown MACRODIR"}"
 echo "MACROFILE=${MACROFILE:?"unknown MACROFILE"}"
 echo "RELEASEDIR=${RELEASEDIR:?"unknown RELEASEDIR"}"
 echo "OUTPUTDIR=${OUTPUTDIR:?"unknown OUTPUTDIR"}"
+echo "ENV=${ENV:?"unknown ENV"}"
 echo "PBS_JOBID=${PBS_JOBID}"
 echo "INDEX=${INDEX}"
 echo "INDEXMAX=${INDEX}"
 echo "PARAM=${PARAM}"
+
+if test "$ENV" = "NONE"
+then
+  echo General environment
+else
+  echo Load user environment
+  source "$ENV"
+fi
 
 if test "$RELEASEDIR" = "NONE"
 then
