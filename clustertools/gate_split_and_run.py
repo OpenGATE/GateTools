@@ -26,7 +26,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--splittime', is_flag=True, help='Divide time duration into the number of jobs')
 @click.option('-o', '--output', default='', help='Output folder path (default: run.XXX)')
-@click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a exemple Lu-177 -a foo 72.3)')
+@click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a stringExemple Lu-177 -a valueExample 72.3 -a oneDifferentAliasForEachJobExample 1,2.5,3,4)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 @click.option('--qt', is_flag=True, help='Add visualisation - Be sure to have few particles')
@@ -121,7 +121,12 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
     #Parse macro files and sub-Macro
     os.makedirs(os.path.join(outputDir, 'mac'), exist_ok=True)
     parserMacro = ParserMacro()
-    parserMacro.setAlias(alias, jobs)
+    for a in alias:
+        if ',' in a[1]:
+            parserMacro.setAlias((a[0], a[1].split(",")), jobs)
+        else:
+            parserMacro.setAlias(a, jobs)
+    parserMacro.setAlias(("JOB_ID", list(range(0, jobs))), jobs)
     parserMacro.parseMainMacFiles(fullMacroDir, mainMacroFile)
     paramtogate = ''
     if qt:
