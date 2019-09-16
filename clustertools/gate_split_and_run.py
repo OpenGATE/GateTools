@@ -22,15 +22,14 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('mac', nargs=1)
 @click.option('-j', '--jobs', default=1, help='Number of jobs/core')
-@click.option('--env', default='', help='Bash script to set environment variables during job')
-@click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--splittime', is_flag=True, help='Divide time duration into the number of jobs')
 @click.option('-o', '--output', default='', help='Output folder path (default: run.XXX)')
 @click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a stringExemple Lu-177 -a valueExample 72.3 -a oneDifferentAliasForEachJobExample 1,2.5,3,4)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 @click.option('--qt', is_flag=True, help='Add visualisation - Be sure to have few particles')
-def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry, qt):
+@click.option('--env', default='', help='Bash script to set environment variables during job. This file is source at the beginning.')
+def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt):
     """
     \b
     Run Gate jobs
@@ -40,6 +39,14 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
     """
 
     directoryJobFiles = os.path.dirname(os.path.realpath(__file__))
+
+    # Source env file
+    if not env == '':
+        if not os.path.isfile(env):
+            print(colorama.Fore.RED + 'ERROR: No env found : ' + env + colorama.Style.RESET_ALL)
+            exit(1)
+        subprocess.check_output("source " + env)
+
     jobFile = ""
     # Take the correct job file according to the cluster name
     if get_dns_domain() == 'in2p3.fr':
@@ -51,26 +58,14 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
         exit(1)
 
     # Get the release of Gate used for the simulation
-    if (releasedir == ''):
-        try:
-            releasedir = os.path.dirname(find_executable('Gate'))
-        except:
-            print(colorama.Fore.RED + 'ERROR: No Gate found in PATH' + colorama.Style.RESET_ALL)
-            exit(1)
-        else:
-            print('Found Gate in folder: ' + releasedir)
-            releasedir = 'NONE'
+    try:
+        releasedir = os.path.dirname(find_executable('Gate'))
+    except:
+        print(colorama.Fore.RED + 'ERROR: No Gate found in PATH' + colorama.Style.RESET_ALL)
+        exit(1)
     else:
-        if os.path.isfile(releasedir):
-            print(colorama.Fore.RED + 'ERROR: RELEASEDIR is a file, change it to a folder: ' + releasedir + colorama.Style.RESET_ALL)
-            print(colorama.Fore.RED + 'Did you mean? ' + os.path.dirname(releasedir) + colorama.Style.RESET_ALL)
-            exit(1)
-        if not os.path.isdir(releasedir):
-            print(colorama.Fore.RED + 'ERROR: This folder does not exist: ' + releasedir + colorama.Style.RESET_ALL)
-            exit(1)
-        if not os.path.isfile(os.path.join(releasedir, 'Gate')):
-            print(colorama.Fore.RED + 'ERROR: There is no release of Gate in that folder: ' + releasedir + colorama.Style.RESET_ALL)
-            exit(1)
+        print('Found Gate in folder: ' + releasedir)
+        releasedir = 'NONE'
 
     # Get macro folder and files
     fullMacroDir = os.path.join(os.getcwd(), os.path.dirname(os.path.dirname(mac)))
@@ -180,6 +175,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
                       ' RELEASEDIR=' + releasedir + \
                       ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ' MACRODIR=' + outputDir + \
+                      ' ENV=' + env + \
                       ' PBS_JOBID=\"local_' + str(i) + \
                       '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
         elif get_dns_domain() == 'in2p3.fr':
@@ -205,6 +201,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
                       ',RELEASEDIR=' + releasedir + \
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
+                      ',ENV=' + env + \
                       '\" ' + jobFile
         paramFile.write(command)
         paramFile.write("\n")
