@@ -29,7 +29,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 @click.option('--qt', is_flag=True, help='Add visualisation - Be sure to have few particles')
 @click.option('--env', default='', help='Bash script to set environment variables during job. This file is source at the beginning.')
-def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt):
+@click.option('--jobfile', default='', help='Job file for the cluster allowing to modify submission parameters (--jobfile="current" display the path of the current job file and exit)')
+def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile):
     """
     \b
     Run Gate jobs
@@ -48,14 +49,26 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt):
         subprocess.check_output("source " + env)
 
     jobFile = ""
-    # Take the correct job file according to the cluster name
-    if get_dns_domain() == 'in2p3.fr':
-        jobFile = os.path.join(directoryJobFiles, 'gate_job_ccin2p3.job')
+    # Take the correct job file according to the cluster name and jobfile option
+    if jobfile == '' or jobfile == "current":
+        if get_dns_domain() == 'in2p3.fr':
+            jobFile = os.path.join(directoryJobFiles, 'gate_job_ccin2p3.job')
+        else:
+            jobFile = os.path.join(directoryJobFiles, 'gate_job_cluster.job')
+        if not os.path.isfile(jobFile):
+            print(colorama.Fore.RED + 'ERROR: The job file does not exist: ' + jobFile + colorama.Style.RESET_ALL)
+            exit(1)
+        if jobfile == "current":
+            print(colorama.Fore.GREEN + 'Path to the job file: ' + colorama.Style.RESET_ALL)
+            print(jobFile)
+            exit(1)
     else:
-        jobFile = os.path.join(directoryJobFiles, 'gate_job_cluster.job')
-    if not os.path.isfile(jobFile):
-        print(colorama.Fore.RED + 'ERROR: The job file does not exist: ' + jobFile + colorama.Style.RESET_ALL)
-        exit(1)
+        jobFile = jobfile
+        if not os.path.isabs(jobFile):
+          jobFile = os.path.join(os.getcwd(), jobFile)
+        if not os.path.isfile(jobFile):
+            print(colorama.Fore.RED + 'ERROR: The job file does not exist: ' + jobFile + colorama.Style.RESET_ALL)
+            exit(1)
 
     # Get the release of Gate used for the simulation
     try:
