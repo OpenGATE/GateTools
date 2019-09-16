@@ -96,12 +96,11 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
     # Create output directory
     if not outputDir == '' and os.path.isdir(outputDir):
         print(colorama.Fore.YELLOW + 'WARNING: The output folder already exist: ' + outputDir + colorama.Style.RESET_ALL)
-        print(colorama.Fore.YELLOW + 'Creation of the output folder inside it' + colorama.Style.RESET_ALL)
-        outputDir = tempfile.mkdtemp(prefix='run.', dir=outputDir)
+        print(colorama.Fore.YELLOW + 'Evereything will be overwritten' + colorama.Style.RESET_ALL)
     if outputDir == '':
         outputDir = tempfile.mkdtemp(prefix='run.', dir=fullMacroDir)
     elif not os.path.isdir(outputDir):
-        os.mkdir(outputDir)
+        os.makedirs(outputDir)
     runId = os.path.basename(outputDir)[os.path.basename(outputDir).find('.') +1:]
     if runId == '':
         runId == os.path.basename(outputDir)
@@ -120,7 +119,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
     paramFile.write('runId = ' + runId + '\n')
 
     #Parse macro files and sub-Macro
-    os.mkdir(os.path.join(outputDir, 'mac'))
+    os.makedirs(os.path.join(outputDir, 'mac'), exist_ok=True)
     parserMacro = ParserMacro()
     parserMacro.setAlias(alias, jobs)
     parserMacro.parseMainMacFiles(fullMacroDir, mainMacroFile)
@@ -134,6 +133,10 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
     if copydata:
         shutil.copytree(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
     else:
+        if os.path.islink(os.path.join(outputDir, 'data')):
+            os.unlink(os.path.join(outputDir, 'data'))
+        elif os.path.isdir(os.path.join(outputDir, 'data')):
+            shutil.rmtree(os.path.join(outputDir, 'data'))
         os.symlink(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
 
     #Manage split time option
@@ -207,7 +210,7 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
 
     paramFile.close()
     print(str(jobs) + ' jobs running')
-    print('Run folder is: run.' + runId)
+    print('Run folder is: ' + outputDir)
 
 
 if __name__ == "__main__":
