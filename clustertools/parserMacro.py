@@ -165,10 +165,15 @@ class ParserMacro:
                 self.parserAttributes["setTotalNumberOfPrimaries"] = [file, index]
 
     def setAlias(self, alias, jobs):
-        for a in alias:
-            self.parserAlias[a[0]] = str(a[1])
-            self.aliasToGate[a[0]] = jobs*[str(a[1])]
-            self.aliasNumber += 1
+        if type(alias[1]) == list:
+            if len(alias[1]) == jobs:
+              self.parserAlias[alias[0]] = str(alias[1][0])
+              tempList = list(map(lambda x: str(x), alias[1]))
+              self.aliasToGate[alias[0]] = tempList
+        else:
+            self.parserAlias[alias[0]] = str(alias[1])
+            self.aliasToGate[alias[0]] = jobs*[str(alias[1])]
+        self.aliasNumber += 1
 
     def setAttributes(self, attribute, valuesForAllJobs):
         line = self.parserAllFiles[self.parserAttributes[attribute][0]][self.parserAttributes[attribute][1]]
