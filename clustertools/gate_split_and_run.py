@@ -25,7 +25,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--env', default='', help='Bash script to set environment variables during job')
 @click.option('--releasedir', default='', help='Gate release directory for the jobs (none means Gate in PATH)')
 @click.option('--splittime', is_flag=True, help='Divide time duration into the number of jobs')
-@click.option('-o', '--output', default='', help='Output fullpath folder (default: run.XXX)')
+@click.option('-o', '--output', default='', help='Output folder path (default: run.XXX)')
 @click.option('-a', '--alias', type=(str, str), multiple=True, help='Alias (-a exemple Lu-177 -a foo 72.3)')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
@@ -89,10 +89,14 @@ def runJobs(mac, jobs, env, releasedir, splittime, output, alias, copydata, dry,
         print(colorama.Fore.RED + 'ERROR: The mac file does not exist: ' + mac + colorama.Style.RESET_ALL)
         exit(1)
 
-    # Create output directory
+    # Check output path is absolute or relative
     outputDir = output
+    if not outputDir == '' and not os.path.isabs(outputDir):
+      outputDir = os.path.join(os.getcwd(), outputDir)
+    # Create output directory
     if not outputDir == '' and os.path.isdir(outputDir):
         print(colorama.Fore.YELLOW + 'WARNING: The output folder already exist: ' + outputDir + colorama.Style.RESET_ALL)
+        print(colorama.Fore.YELLOW + 'Creation of the output folder inside it' + colorama.Style.RESET_ALL)
         outputDir = tempfile.mkdtemp(prefix='run.', dir=outputDir)
     if outputDir == '':
         outputDir = tempfile.mkdtemp(prefix='run.', dir=fullMacroDir)
