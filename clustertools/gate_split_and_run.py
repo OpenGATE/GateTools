@@ -5,7 +5,7 @@ import tempfile
 import shutil
 import click
 import socket
-from distutils.spawn import find_executable
+import subprocess
 import colorama
 import numpy as np
 import sys
@@ -42,11 +42,17 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
     directoryJobFiles = os.path.dirname(os.path.realpath(__file__))
 
     # Source env file
+    envCommand = ''
     if not env == '':
+        if not os.path.isabs(env):
+          env = os.path.join(os.getcwd(), env)
         if not os.path.isfile(env):
             print(colorama.Fore.RED + 'ERROR: No env found : ' + env + colorama.Style.RESET_ALL)
             exit(1)
-        subprocess.check_output("source " + env)
+        else:
+            envCommand = env
+    else:
+        envCommand = 'NONE'
 
     jobFile = ""
     # Take the correct job file according to the cluster name and jobfile option
@@ -70,9 +76,15 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
             print(colorama.Fore.RED + 'ERROR: The job file does not exist: ' + jobFile + colorama.Style.RESET_ALL)
             exit(1)
 
-    # Get the release of Gate used for the simulation
+    # Get the release of Gate used for the simulation using the env file if present
     try:
-        releasedir = os.path.dirname(find_executable('Gate'))
+        bashCommand = ""
+        if not env == '':
+            bashCommand = "source " + env + "; which Gate"
+        else:
+            bashCommand = "which Gate"
+        outputCommand = subprocess.check_output(['bash','-c', bashCommand])
+        releasedir = outputCommand[:-1].decode('utf-8')
     except:
         print(colorama.Fore.RED + 'ERROR: No Gate found in PATH' + colorama.Style.RESET_ALL)
         exit(1)
@@ -188,7 +200,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ' RELEASEDIR=' + releasedir + \
                       ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ' MACRODIR=' + outputDir + \
-                      ' ENV=' + env + \
+                      ' ENV=' + envCommand + \
                       ' PBS_JOBID=\"local_' + str(i) + \
                       '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
         elif get_dns_domain() == 'in2p3.fr':
@@ -202,7 +214,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',RELEASEDIR=' + releasedir + \
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
-                      ',ENV=' + env + \
+                      ',ENV=' + envCommand + \
                       '\" ' + jobFile
         else:
             command = 'qsub -N \"gatejob.' + runId + \
@@ -214,7 +226,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',RELEASEDIR=' + releasedir + \
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
-                      ',ENV=' + env + \
+                      ',ENV=' + envCommand + \
                       '\" ' + jobFile
         paramFile.write(command)
         paramFile.write("\n")
