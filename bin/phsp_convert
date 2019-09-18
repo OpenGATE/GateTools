@@ -3,7 +3,7 @@
 
 import sys
 import numpy as np
-import phsp
+import gatetools.phsp as phsp
 import click
 import os
 
@@ -64,12 +64,6 @@ def phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
     if shuffle:
         np.random.shuffle(data)
 
-    # special case
-    if 'Ekine' in keys:
-        index = keys.index('Ekine')
-        keys[index] = 'E'
-        print('Replace Ekine by E')
-            
     # write 
     phsp.save_npy(output, data, keys)
 

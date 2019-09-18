@@ -3,7 +3,7 @@
 
 import sys
 import numpy as np
-import phsp
+import gatetools.phsp as phsp
 import click
 import os
 
