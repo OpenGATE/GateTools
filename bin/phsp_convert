@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
+import numpy as np
+import phsp
+import click
+import os
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('input_filename')
+@click.option('-n', default=float(-1), help='Use -1 to read all data')
+@click.option('--output', '-o', default='AUTO', help='If AUTO, use input_filename.npy')
+@click.option('--rm_keys', '-r', help='Remove the given keys (as a str list such that "X Y Z")', default='')
+@click.option('--keys', '-k', help='Set the kept keys (as a str list such that "X Y Z")', default='')
+@click.option('--overwrite', '-f', is_flag=True, default=False, help='Overwrite file if already exist')
+@click.option('--shuffle', '-s', is_flag=True, default=False, help='Shuffle the data')
+def phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
+    '''
+    \b
+    Convert to npy
+
+    \b
+    <INPUT_FILENAME> : input PHSP root file
+    '''
+
+    if output == 'AUTO':
+        b, extension = os.path.splitext(input_filename)
+        output = b+'.npy'
+
+    if not overwrite and os.path.isfile(output):
+        print('Error output file already exist:', output)
+        exit(0)
+        
+    if os.path.isdir(output):
+        print('Error output already exist (its a dir):', output)
+        exit(0)
+
+    b, extension = os.path.splitext(output)
+    if extension != '.npy':
+        print('Error output extension must by .npy:', output)
+        exit(0)
+
+    keys = phsp.str_keys_to_array_keys(keys)
+    rm_keys = phsp.str_keys_to_array_keys(rm_keys)
+    if len(keys) > 0 and len(rm_keys) > 0:
+        print('Cannot provide both --rm_keys and --keys')
+        exit(0)
+
+    # load data keys and the total nb of values (m) ; only n values are read
+    data, read_keys, m = phsp.load(input_filename, n)
+
+    # remove or keep keys if needed
+    if len(rm_keys) > 0:
+        data, keys = phsp.remove_keys(data, read_keys, rm_keys)
+
+    if len(keys) > 0:
+        data = phsp.select_keys(data, read_keys, keys)
+    else:
+        keys = read_keys
+
+    # shuffle
+    if shuffle:
+        np.random.shuffle(data)
+
+    # special case
+    if 'Ekine' in keys:
+        index = keys.index('Ekine')
+        keys[index] = 'E'
+        print('Replace Ekine by E')
+            
+    # write 
+    phsp.save_npy(output, data, keys)
+
+
+# --------------------------------------------------------------------------
+if __name__ == '__main__':
+    phsp_convert()
+
