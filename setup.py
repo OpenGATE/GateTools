@@ -25,7 +25,6 @@ setuptools.setup(
         'tqdm',
         'colored',
         'itk',
-        'tqdm',
         'uproot',
     ],
     scripts=[
