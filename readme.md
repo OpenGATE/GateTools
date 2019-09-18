@@ -19,11 +19,11 @@ Current list of command line tools. Use the flag `-h` to get print the help of e
 | `gate_image_convert` | Convert image file format (dicom, mhd, hdr, nfty ... ) |
 | `gate_image_uncertainty`| Compute statistical uncertainty|
 | `gate_gamma_index`| Compute gamma index between images|
-| `phsp_info` | Display information about the phase space file | 
-| `phsp_convert` | Convert phase space file from root to npy| 
-| `phsp_merge` | Merge two phase space files (output npy only) | 
-| `phsp_plot` | Plot marginal  distribution form a phase space file | 
-| `phps_peaks`| Try to detect photopeaks in phase space file (experimental) | 
+| `phsp_info` | Display information about a phase space file | 
+| `phsp_convert` | Convert a phase space file from root to npy| 
+| `phsp_merge` | Merge two phase space files (output in npy only) | 
+| `phsp_plot` | Plot marginal distributions form a phase space file | 
+| `phps_peaks`| Try to detect photopeaks (experimental) | 
 
 All tools are also available to be use within your own Python script with, for example: 
 ```
