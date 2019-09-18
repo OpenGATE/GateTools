@@ -3,7 +3,7 @@
 
 import sys
 import numpy as np
-import phsp
+import gatetools.phsp as phsp
 import click
 import os
 from matplotlib import pyplot as plt
@@ -11,11 +11,14 @@ from matplotlib import pyplot as plt
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename')
-@click.option('-n', default=float(-1), help='Use -1 to read all data')
+@click.option('-n', default=float(1e5), help='Use -1 to read all data')
 @click.option('--keys', '-k', help='Plot the given keys (as a str list such that "X Y Z")', default='')
 @click.option('--quantile', '-q', default=float(0), help='Restrict histogram to quantile')
 @click.option('--nb_bins', '-b', default=int(100), help='Number of bins')
-def phsp_plot(filename, keys, n, quantile, nb_bins):
+@click.option('--plot2d',
+              type=(str, str),
+              help='Add 2D plots (key1,key2), such as --plot2d X Ekine --plot2d X Y ', multiple=True)
+def phsp_plot(filename, keys, n, quantile, nb_bins, plot2d):
     '''
     \b
     Plot histograms
@@ -37,17 +40,12 @@ def phsp_plot(filename, keys, n, quantile, nb_bins):
         data, read_keys = phsp.add_angle(data, read_keys, 'X', 'Y')
 
     # 2D figs
-    keys_2D = [
-        ['X', 'Ekine'],
-        ['X', 'Y'],
-        ['X', 'Z'],
-        ['dZ', 'dY'],
-        ['dZ', 'Ekine'],
-    ]
+    keys_2D = plot2d;
+    if keys_2D == None:
+        keys_2D = []
         
     # compute fig row/col
     nb_fig = len(keys)+len(keys_2D)
-    print(nb_fig, keys, keys_2D)
     nrow, ncol = phsp.fig_get_nb_row_col(nb_fig)
     
     # create fig
