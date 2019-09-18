@@ -19,7 +19,6 @@ Current list of command line tools. Use the flag `-h` to get print the help of e
 | `gate_image_convert` | Convert image file format (dicom, mhd, hdr, nfty ... ) |
 | `gate_image_uncertainty`| Compute statistical uncertainty|
 | `gate_gamma_index`| Compute gamma index between images|
-| ------------- | ------------- |
 | `phsp_info` | Display information about the phase space file | 
 | `phsp_convert` | Convert phase space file from root to npy| 
 | `phsp_merge` | Merge two phase space files (output npy only) | 
