@@ -30,13 +30,15 @@ setuptools.setup(
     ],
     scripts=[
         'bin/gate_info',
+        
         'bin/gate_image_uncertainty',
         'bin/gate_image_arithm',
         'bin/gate_image_convert',
         'bin/gate_gamma_index',
+        
+        'bin/phsp_info',
         'bin/phsp_convert',
         'bin/phsp_merge',
-        'bin/phsp_info',
         'bin/phsp_plot',
         'bin/phsp_peaks',
     ]

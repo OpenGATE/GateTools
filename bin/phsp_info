@@ -3,7 +3,7 @@
 
 import sys
 import numpy as np
-import phsp
+import gatetools.phsp as phsp
 import click
 import os
 
@@ -23,20 +23,20 @@ def phsp_info(filename, n):
     data, keys, m = phsp.load(filename, n)
 
     # print info
-    print('File:       ', filename)
+    print(f'File:        {filename}')
     statinfo = os.stat(filename)
-    print('Size:       ', phsp.humansize(statinfo.st_size))
+    print(f'Size:        {phsp.humansize(statinfo.st_size)}')
     b, extension = os.path.splitext(filename)
     if (extension == '.root'):
         t = 'root'
     if (extension == '.npy'):
         t = 'npy'
-    print('Type:       ', t, data.dtype)
-    print('Nb values:   {0} ({0:.2e})'.format(m))
+    print(f'Type:        {t} {data.dtype}')
+    print(f'Nb values:   {m} ({m:.2e})')
     n = len(data)
-    print('Read values: {0} ({0:.2e})'.format(n))
-    print('Nb of keys: ', len(keys))
-    print('Keys:       ', *keys)
+    print(f'Read values: {n} ({n:.2e})')
+    print(f'Nb of keys:  {len(keys)}')
+    print(f'Keys:        ', *keys)
 
     # stats info per key
     print('{:<10} {:>10} {:>10} {:>10} {:>10}'.format('key', 'min', 'max', 'mean', 'std'))
