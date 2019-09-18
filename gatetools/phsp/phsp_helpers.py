@@ -12,14 +12,12 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 
 # -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-
-''' ---------------------------------------------------------------------------
-Load a PHSP (Phase-Space) file
-Output is numpy structured array
-'''
 def load(filename, nmax=-1, random=False):
+    ''' 
+    Load a PHSP (Phase-Space) file
+    Output is numpy structured array
+    '''
+    
     b, extension = os.path.splitext(filename)
     nmax = int(nmax)
 
@@ -41,11 +39,13 @@ def load(filename, nmax=-1, random=False):
     exit(0)
 
 
-''' ---------------------------------------------------------------------------
-Load a PHSP (Phase-Space) file in root format
-Output is numpy structured array
-'''
+# -----------------------------------------------------------------------------
 def load_root(filename, nmax=-1):
+    '''
+    Load a PHSP (Phase-Space) file in root format
+    Output is numpy structured array
+    '''
+    
     nmax = int(nmax)
     # Check if file exist
     if (not os.path.isfile(filename)):
@@ -85,11 +85,13 @@ def load_root(filename, nmax=-1):
     return d, names, n
 
 
-''' ---------------------------------------------------------------------------
-Load a PHSP (Phase-Space) file in npy
-Output is numpy structured array
-'''
+# -----------------------------------------------------------------------------
 def load_npy(filename, nmax=-1, random=False):
+    '''
+    Load a PHSP (Phase-Space) file in npy
+    Output is numpy structured array
+    '''
+    
     # Check if file exist
     if (not os.path.isfile(filename)):
         print("File '"+filename+"' does not exist.")
@@ -109,10 +111,12 @@ def load_npy(filename, nmax=-1, random=False):
 
 
 
-''' ---------------------------------------------------------------------------
- https://stackoverflow.com/questions/14996453/python-libraries-to-calculate-human-readable-filesize-from-bytes
-'''
+# -----------------------------------------------------------------------------
 def humansize(nbytes):
+    '''
+    https://stackoverflow.com/questions/14996453/python-libraries-to-calculate-human-readable-filesize-from-bytes
+    '''
+
     suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
     i = 0
     while nbytes >= 1024 and i < len(suffixes)-1:
@@ -122,10 +126,11 @@ def humansize(nbytes):
     return '%s %s' % (f, suffixes[i])
 
 
-''' ---------------------------------------------------------------------------
-Write a PHSP (Phase-Space) file in npy
-'''
+# -----------------------------------------------------------------------------
 def save_npy(filename, data, keys):
+    '''
+    Write a PHSP (Phase-Space) file in npy
+    '''
 
     dtype = []
     for k in keys:
@@ -140,17 +145,17 @@ def save_npy(filename, data, keys):
     np.save(filename, r)
 
 
-''' ---------------------------------------------------------------------------
-Remove som keys
-'''
+# -----------------------------------------------------------------------------
 def remove_keys(data, keys, rm_keys):
+    '''
+    Remove som keys
+    '''
 
     cols = np.arange(len(keys))
     index = []
     if len(rm_keys) == 0:
         return data, keys
-
-    print('Before:', keys)
+    
     for k in rm_keys:
         if k not in keys:
             print('Error the key', k, 'does not exist in', keys)
@@ -158,18 +163,18 @@ def remove_keys(data, keys, rm_keys):
         i = keys.index(k)
         cols = np.delete(cols, i)
         index.append(i)
-
-    for c in index:
-        keys.pop(c)
+        for c in index:
+            keys.pop(c)
     data = data[:, cols]
-    print('After: ', keys)
     return data, keys
 
 
-''' ---------------------------------------------------------------------------
-Convert string of keys to arrays of key
-'''
+# -----------------------------------------------------------------------------
 def str_keys_to_array_keys(keys):
+    '''
+    Convert string of keys to arrays of key
+    '''
+
     if keys == None:
         return []
     dd = tokenize.tokenize(BytesIO(keys.encode('utf-8')).readline)
@@ -180,10 +185,12 @@ def str_keys_to_array_keys(keys):
     return keys
 
 
-''' ----------------------------------------------------------------------------
-Retrive the E from a dataset
----------------------------------------------------------------------------- '''
+# -----------------------------------------------------------------------------
 def get_E(data, keys):
+    '''
+    Retrive the E from a dataset
+    '''
+
     try:
         Ei = keys.index('Ekine')
     except:
@@ -195,10 +202,12 @@ def get_E(data, keys):
     return E, Ei
 
 
-''' ----------------------------------------------------------------------------
-Retrive a fig nb 
----------------------------------------------------------------------------- '''
+# -----------------------------------------------------------------------------
 def fig_get_sub_fig(ax, i):
+    '''
+    Retrive a fig nb 
+    '''
+
     # check if single fig
     if not type(ax) is np.ndarray:
         return ax
@@ -212,10 +221,12 @@ def fig_get_sub_fig(ax, i):
     return ax[index[0]][index[1]]
 
 
-''' ----------------------------------------------------------------------------
-Compute a fig with adapted row/col for n fig
----------------------------------------------------------------------------- '''
+# -----------------------------------------------------------------------------
 def fig_get_nb_row_col(nfig):
+    '''
+    Compute a fig with adapted row/col for n fig
+    '''
+    
     nrow = int(np.sqrt(nfig))
     ncol = int(nfig/nrow)
     if ncol*nrow<nfig:
@@ -223,10 +234,12 @@ def fig_get_nb_row_col(nfig):
     return nrow, ncol
 
 
-''' ----------------------------------------------------------------------------
-Remove empty plot
----------------------------------------------------------------------------- '''
+# -----------------------------------------------------------------------------
 def fig_rm_empty_plot(nfig, ax):
+    '''
+    Remove empty plot
+    '''
+
     nrow, ncol = fig_get_nb_row_col(nfig)
     r = nrow-1
     i = nfig
@@ -237,10 +250,11 @@ def fig_rm_empty_plot(nfig, ax):
 
 
 
-''' ---------------------------------------------------------------------------
-In the list of keys, toggle angleXY to XY or XY to angleXY
-'''
+# -----------------------------------------------------------------------------
 def keys_toggle_angle(keys):
+    '''
+    In the list of keys, toggle angleXY to XY or XY to angleXY
+    '''
 
     k = keys.copy()
     if 'X' in keys and 'Y' in keys:        
@@ -255,14 +269,14 @@ def keys_toggle_angle(keys):
     return k   
 
         
-'''  ---------------------------------------------------------------------------
-Keep only the given keys
-'''
+# -----------------------------------------------------------------------------
 def select_keys(data, input_keys, output_keys):
+    '''
+    Keep only the given keys
+    '''
 
     cols = np.arange(len(input_keys))
     index = []
-    print('Before:', input_keys)
     if len(output_keys) == 0:
         print('Error, select_keys is void')
         exit(0)
@@ -277,15 +291,15 @@ def select_keys(data, input_keys, output_keys):
             exit(0)
 
     data = data[:, cols]
-    print('After: ', output_keys)
     return data
 
 
-'''  ---------------------------------------------------------------------------
-Add and compute angleXY in the list of keys
- angle = atan2(k2,k1)
-'''
+# -----------------------------------------------------------------------------
 def add_angle(data, keys, k1='X', k2='Y'):
+    '''
+    Add and compute angleXY in the list of keys
+    angle = atan2(k2,k1)
+    '''
 
     if 'angleXY' in keys:
         return data, keys
@@ -300,10 +314,11 @@ def add_angle(data, keys, k1='X', k2='Y'):
  
 
 
-''' ----------------------------------------------------------------------------
-Add X and Y from angleXY
----------------------------------------------------------------------------- '''
+# -----------------------------------------------------------------------------
 def add_vector_angle(data, keys, radius, k='angleXY', k1='X', k2='Y'):
+    '''
+    Add X and Y from angleXY
+    '''
 
     # nothing to do if already exist
     if k1 in keys and k2 in keys:
@@ -324,11 +339,12 @@ def add_vector_angle(data, keys, radius, k='angleXY', k1='X', k2='Y'):
     kk.append(k2)
     return data, kk
 
-''' ----------------------------------------------------------------------------
-Add missing keys (angleXY or X+Y)
----------------------------------------------------------------------------- '''
+# -----------------------------------------------------------------------------
 def add_missing_angle(data, input_keys, output_keys, radius):
-    
+    '''
+    Add missing keys (angleXY or X+Y)
+    '''
+
     if 'angleXY' in output_keys:
         data, input_keys = add_angle(data, input_keys)
 
@@ -338,10 +354,12 @@ def add_missing_angle(data, input_keys, output_keys, radius):
     return data, input_keys
 
 
-''' ----------------------------------------------------------------------------
-Fig 2D histo
----------------------------------------------------------------------------- '''
+# -----------------------------------------------------------------------------
 def fig_histo2D(ax, data, keys, k, nbins, color='g'):
+    '''
+    Fig 2D histo
+    '''
+    
     i1 = keys.index(k[0])
     x = data[:,i1]
     i2 = keys.index(k[1])
