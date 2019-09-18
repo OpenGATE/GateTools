@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.8.1",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
-    description="Tools for GATE, see https://github.com/OpenGATE/Gate",
+    description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/OpenGATE/GateTools",
