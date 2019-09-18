@@ -20,24 +20,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--nevents','-n', help='Total numbers of events', default=0)
 
-@click.option('--counts/--not-counts', '-c', default=False,
-              help='Compute uncertainty for counts image (Poisson
-              process)')
+@click.option('--counts/--not-counts', '-c', default=False, help='Compute uncertainty for counts image (Poisson process)')
 
 @click.option('--output','-o', help='Output filename', required=True)
 
-@click.option('--by_slice/--not-by_slice', '-s', default=False,
-              help='Display mean uncertainty by slice (only with
-              --counts)')
+@click.option('--by_slice/--not-by_slice', '-s', default=False, help='Display mean uncertainty by slice (only with --counts)')
 
-@click.option('--threshold', '-t', default=0.0, help='Threshold in %,
-              do not consider pixels with value lower \ than this % of
-              the max value by slice (only with --counts)')
+@click.option('--threshold', '-t', default=0.0, help='Threshold in %, do not consider pixels with value lower \ than this % of the max value by slice (only with --counts)')
 
-@click.option('--efficiency','-e', help='Compute efficiency
-              (1/t*sigma). The time is read in the given stat
-              file. Only slice by slice for the moment',
-              default=False)
+@click.option('--efficiency','-e', help='Compute efficiency (1/t*sigma). The time is read in the given stat file. Only slice by slice for the moment', default=False)
 
 @click.option('--verbose/--no-verbose', '-v', default=False, help='Verbose')
 
