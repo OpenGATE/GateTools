@@ -33,7 +33,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--scalar','-s', help='scalar for operation', type=float)
 
 @click.option('--output','-o', help='Output filename', required=True,
-              type=click.Path(exists=False, file_okay=False, dir_okay=False,
+              type=click.Path(dir_okay=False,
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
 
