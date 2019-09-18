@@ -1,4 +1,3 @@
-
 **(Hopefully) useful tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
 
 Install with : `pip install gatetools`
@@ -38,8 +37,3 @@ Dependencies:
 - tqdm: https://github.com/tqdm/tqdm
 - colored: https://gitlab.com/dslackw/colored
 - itk: https://itk.org/
-
-
-
-
-

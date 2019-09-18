@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import sys
+import numpy as np
+import gatetools.phsp as phsp
+import click
+import os
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('input_filename')
+@click.option('-n', default=float(-1), help='Use -1 to read all data')
+@click.option('--nb_peaks', '-p', default=int(2), help='Number of peaks to find')
+@click.option('--output', '-o', default='auto', help="If 'auto', use filename_E.pth")
+@click.option('--dry_run/--no-dry_run', default=False)
+def phsp_peaks(input_filename, n, nb_peaks, dry_run, output):
+    '''
+    \b
+    Detect and separate the energy peaks. 
+
+    \b
+    <INPUT_FILENAME> : input PHSP root file
+    '''
+
+    if output == 'auto':
+        b, extension = os.path.splitext(input_filename)
+        output_filename = b
+    else:
+        output_filename = output
+    print('output', output_filename)
+
+        # load data keys and the total nb of values (m) ; only n values are read
+    data, keys, m = phsp.load(input_filename, n)
+
+    # get E 
+    E, index = phsp.get_E(data, keys)
+
+    # counts elements and sort
+    values, counts = np.unique(E,return_counts=True)
+    values = [v for _,v in sorted(zip(counts,values))]
+    counts = np.sort(counts)
+    values = values[::-1]
+    counts = counts[::-1]
+
+    # 
+    filename, extension = os.path.splitext(input_filename)
+    for i in range(nb_peaks):
+        v = values[i]
+        condition = data[:, index] == v
+        d = data[condition]
+        data = data[np.logical_not(condition)]
+        e = str(v*1000)
+        er = str(int(round(v*1000)))
+        out = output_filename+'_'+er+'.npy'
+        print('Write peak',e,'keV with', len(d), 'elements in', out)
+        if not dry_run:
+            phsp.save_npy(out, d, keys)
+
+    # write
+    out = output_filename+'_nopeak'+'.npy'
+    print('Write remaining data with', len(data), 'elements in', out)
+    if not dry_run:
+        phsp.save_npy(out, data, keys)
+
+
+# --------------------------------------------------------------------------
+if __name__ == '__main__':
+    phsp_peaks()
+

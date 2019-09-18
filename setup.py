@@ -24,15 +24,24 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk'
-      ],
+        'itk',
+        'tqdm',
+        'uproot',
+    ],
     scripts=[
         'bin/gate_info',
+        
         'bin/gate_image_uncertainty',
         'bin/gate_image_arithm',
         'bin/gate_image_convert',
         'bin/gate_gamma_index',
-        ]
+        
+        'bin/phsp_info',
+        'bin/phsp_convert',
+        'bin/phsp_merge',
+        'bin/phsp_plot',
+        'bin/phsp_peaks',
+    ]
 )
 
 
@@ -44,5 +53,3 @@ setuptools.setup(
 
 # test with
 # pip3 install --index-url https://test.pypi.org/simple/ gatetools
-
-
