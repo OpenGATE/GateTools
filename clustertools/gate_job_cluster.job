@@ -114,6 +114,7 @@ fi
 
 echo "Copying data back"
 pwd
+rm -rf "${OUTPUTDIR}/output.${PBS_JOBID%%.*}"
 mv output "${OUTPUTDIR}/output.${PBS_JOBID%%.*}"
 
 echo "Cleanup"
