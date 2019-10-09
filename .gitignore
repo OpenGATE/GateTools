@@ -6,4 +6,7 @@ src/phsp.egg-info
 GPATH
 GRTAGS
 src/__pycache__/
-
+build/*
+dist/*
+bin/temp/*
+bin/gate_image_uncertainty_old
