@@ -35,11 +35,11 @@ setuptools.setup(
         'bin/gt_image_convert',
         'bin/gt_gamma_index',
         
-        'bin/phsp_info',
-        'bin/phsp_convert',
-        'bin/phsp_merge',
-        'bin/phsp_plot',
-        'bin/phsp_peaks',
+        'bin/gt_phsp_info',
+        'bin/gt_phsp_convert',
+        'bin/gt_phsp_merge',
+        'bin/gt_phsp_plot',
+        'bin/gt_phsp_peaks',
     ]
 )
 
