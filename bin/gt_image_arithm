@@ -37,7 +37,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
 
-def gate_image_arithm_main(files, operation, scalar, output, verbose):
+def gt_image_arithm_main(files, operation, scalar, output, verbose):
     '''
     Basic pixel-wise (or voxel-wise) arithmetic operations on one or
     more images of the same type and geometry. Currently :
@@ -63,14 +63,14 @@ def gate_image_arithm_main(files, operation, scalar, output, verbose):
     \b
     Examples:
     \b
-    gate_image_arithm -O sum     -o sum.mhd  input1.mhd input2.mhd input3.mhd
-    gate_image_arithm -O sum -s 0.2 -o sum.mhd  input1.mhd input2.mhd
-    gate_image_arithm -O product -o prod.mhd input1.mhd input2.mhd
-    gate_image_arithm -O divide  -o divide.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
-    gate_image_arithm -O invert  -o invert.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
-    gate_image_arithm -O min     -o min.mhd  input1.mhd input2.mhd input3.mhd
-    gate_image_arithm -O max     -o max.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
-    gate_image_arithm -O absreldiffmax -o diff.mhd input1.mhd input2.mhd 
+    gt_image_arithm -O sum     -o sum.mhd  input1.mhd input2.mhd input3.mhd
+    gt_image_arithm -O sum -s 0.2 -o sum.mhd  input1.mhd input2.mhd
+    gt_image_arithm -O product -o prod.mhd input1.mhd input2.mhd
+    gt_image_arithm -O divide  -o divide.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
+    gt_image_arithm -O invert  -o invert.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
+    gt_image_arithm -O min     -o min.mhd  input1.mhd input2.mhd input3.mhd
+    gt_image_arithm -O max     -o max.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
+    gt_image_arithm -O absreldiffmax -o diff.mhd input1.mhd input2.mhd 
     '''
     
     try:
@@ -122,6 +122,7 @@ def gate_image_arithm_main(files, operation, scalar, output, verbose):
         sys.exit(2)
         #raise # the full traceback is scary and uninformative
 
+
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    gate_image_arithm_main()
+    gt_image_arithm_main()

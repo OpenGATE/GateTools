@@ -36,7 +36,7 @@ value in the same units as the reference and target images.''',
 @click.option('--output','-o', help='Output filename', required=True,
               type=click.Path(exists=False, file_okay=False, dir_okay=False,
                   writable=True, readable=False, resolve_path=True, allow_dash=False, path_type=None))
-def gate_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output,verbose):
+def gt_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output,verbose):
     '''
     Compute the gamma index [Daniel Low, 1998] between a reference image and a
     target image.  For every voxel i in the target image, determine the gamma
@@ -90,4 +90,4 @@ def gate_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,outp
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    gate_gamma_index_main()
+    gt_gamma_index_main()

@@ -15,7 +15,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--short/--not-short', '-s',
               default=False,
               help='If true, display Gate path only')
-def gate_info(short):
+def gt_gate_info(short):
     '''
     Print information about a Gate and the environment
     '''
@@ -23,5 +23,5 @@ def gate_info(short):
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    gate_info()
+    gt_gate_info()
 

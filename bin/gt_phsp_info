@@ -11,7 +11,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename')
 @click.option('-n', default=float(1e5), help='Use -1 to read all data')
-def phsp_info(filename, n):
+def gt_phsp_info(filename, n):
     '''
     \b
     Print information about the given PHSP phase-space file
@@ -48,5 +48,5 @@ def phsp_info(filename, n):
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
-    phsp_info()
+    gt_phsp_info()
 

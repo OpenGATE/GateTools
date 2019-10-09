@@ -18,7 +18,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--plot2d',
               type=(str, str),
               help='Add 2D plots (key1,key2), such as --plot2d X Ekine --plot2d X Y ', multiple=True)
-def phsp_plot(filename, keys, n, quantile, nb_bins, plot2d):
+def gt_phsp_plot(filename, keys, n, quantile, nb_bins, plot2d):
     '''
     \b
     Plot histograms
@@ -91,5 +91,5 @@ def phsp_plot(filename, keys, n, quantile, nb_bins, plot2d):
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
-    phsp_plot()
+    gt_phsp_plot()
 

@@ -32,7 +32,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--verbose/--no-verbose', '-v', default=False, help='Verbose')
 
-def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, verbose):
+def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, verbose):
     '''
     Compute relative statistical uncertainty image for a list of
     images. Images are summed before computing the the uncertainty.
@@ -54,13 +54,13 @@ def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, thresho
     of the max value in the image.
 
     Example1:
-    gate_image_uncertainty run.XYZ/output_*/dose-Edep.mhd -o u.mhd -N 100000000
+    gt_image_uncertainty run.XYZ/output_*/dose-Edep.mhd -o u.mhd -N 100000000
 
     Example2:
-    gate_image_uncertainty output/projection.mhd -c -o u.mhd -s -t 0.1
+    gt_image_uncertainty output/projection.mhd -c -o u.mhd -s -t 0.1
 
     Example3:
-    gate_image_uncertainty output/projection.mhd -c -o u.mhd -s -t 0.1 -e output/stats.txt
+    gt_image_uncertainty output/projection.mhd -c -o u.mhd -s -t 0.1 -e output/stats.txt
 
     (Not yet implemented: efficiency image)
     
@@ -136,4 +136,4 @@ def gate_image_uncertainty(filenames, nevents, output, counts, by_slice, thresho
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    gate_image_uncertainty()
+    gt_image_uncertainty()

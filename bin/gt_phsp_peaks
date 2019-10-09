@@ -14,7 +14,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--nb_peaks', '-p', default=int(2), help='Number of peaks to find')
 @click.option('--output', '-o', default='auto', help="If 'auto', use filename_E.pth")
 @click.option('--dry_run/--no-dry_run', default=False)
-def phsp_peaks(input_filename, n, nb_peaks, dry_run, output):
+def gt_phsp_peaks(input_filename, n, nb_peaks, dry_run, output):
     '''
     \b
     Detect and separate the energy peaks. 
@@ -66,5 +66,5 @@ def phsp_peaks(input_filename, n, nb_peaks, dry_run, output):
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
-    phsp_peaks()
+    gt_phsp_peaks()
 

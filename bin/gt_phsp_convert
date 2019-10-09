@@ -16,7 +16,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--keys', '-k', help='Set the kept keys (as a str list such that "X Y Z")', default='')
 @click.option('--overwrite', '-f', is_flag=True, default=False, help='Overwrite file if already exist')
 @click.option('--shuffle', '-s', is_flag=True, default=False, help='Shuffle the data')
-def phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
+def gt_phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
     '''
     \b
     Convert to npy
@@ -70,5 +70,5 @@ def phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle):
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
-    phsp_convert()
+    gt_phsp_convert()
 

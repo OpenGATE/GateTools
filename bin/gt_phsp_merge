@@ -11,7 +11,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('input_filenames', nargs=-1)
 @click.option('--output', '-o', required=True)
-def phsp_merge(input_filenames, output):
+def gt_phsp_merge(input_filenames, output):
     '''
     \b
     Merge several npy PHSP files
@@ -45,5 +45,5 @@ def phsp_merge(input_filenames, output):
 
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
-    phsp_merge()
+    gt_phsp_merge()
 
