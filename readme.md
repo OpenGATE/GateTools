@@ -1,6 +1,8 @@
 **(Hopefully) useful tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
 
-Install with : `pip install gatetools`
+**STILL WORK IN PROGRESS : will be released before end 2019**
+
+Install with : `pip install gatetools` 
 
 Example of usage: 
 ```
