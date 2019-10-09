@@ -28,18 +28,18 @@ setuptools.setup(
         'uproot',
     ],
     scripts=[
-        'bin/gate_info',
+        'bin/gt_gate_info',
         
-        'bin/gate_image_uncertainty',
-        'bin/gate_image_arithm',
-        'bin/gate_image_convert',
-        'bin/gate_gamma_index',
+        'bin/gt_image_uncertainty',
+        'bin/gt_image_arithm',
+        'bin/gt_image_convert',
+        'bin/gt_gamma_index',
         
-        'bin/phsp_info',
-        'bin/phsp_convert',
-        'bin/phsp_merge',
-        'bin/phsp_plot',
-        'bin/phsp_peaks',
+        'bin/gt_phsp_info',
+        'bin/gt_phsp_convert',
+        'bin/gt_phsp_merge',
+        'bin/gt_phsp_plot',
+        'bin/gt_phsp_peaks',
     ]
 )
 
