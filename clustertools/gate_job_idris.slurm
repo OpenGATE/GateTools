@@ -1,5 +1,4 @@
-#! /usr/local/bin/bash -lx
-#
+#!/bin/bash
 #SBATCH --nodes=1                   # nombre de noeuds
 #SBATCH --ntasks-per-node=1         # nombre de taches MPI par noeud
 #SBATCH --time=15:00:00             # temps d execution maximum demande (HH:MM:SS)
