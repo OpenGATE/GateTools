@@ -66,7 +66,7 @@ test -d "${MACRODIR}" && test -d "${MACRODIR}/mac" || error "invalid macro"
 
 echo "Copying inputs"
 cd $SCRATCH/../commun
-LOCALMACRODIR=$(mktemp -d)
+LOCALMACRODIR=$(mktemp -d -p .)
 trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
 cp -r -L "${MACRODIR}"/mac .
