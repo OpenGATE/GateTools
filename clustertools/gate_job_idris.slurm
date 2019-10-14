@@ -37,10 +37,11 @@ echo "MACROFILE=${MACROFILE:?"unknown MACROFILE"}"
 echo "RELEASEDIR=${RELEASEDIR:?"unknown RELEASEDIR"}"
 echo "OUTPUTDIR=${OUTPUTDIR:?"unknown OUTPUTDIR"}"
 echo "ENV=${ENV:?"unknown ENV"}"
-echo "JOB_ID=${JOBID}"
+echo "JOB_ID=$SLURM_JOB_ID"
 echo "INDEX=${INDEX}"
 echo "INDEXMAX=${INDEX}"
-echo "PARAM=${PARAM}"
+PARAM=`cat ${PARAM}`
+echo "PARAM= ${PARAM}"
 
 if test "$ENV" = "NONE"
 then
