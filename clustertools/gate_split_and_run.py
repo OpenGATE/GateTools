@@ -59,6 +59,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
     if jobfile == '' or jobfile == "current":
         if get_dns_domain() == 'in2p3.fr':
             jobFile = os.path.join(directoryJobFiles, 'gate_job_ccin2p3.job')
+        elif get_dns_domain() == 'idris.fr':
+            jobFile = os.path.join(directoryJobFiles, 'gate_job_idris.slurm')
         else:
             jobFile = os.path.join(directoryJobFiles, 'gate_job_cluster.job')
         if not os.path.isfile(jobFile):
@@ -192,18 +194,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
         for aliasMac in parserMacro.aliasToGate:
             paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
 
-        if qsub is None:
-            command = 'PARAM=\" ' + paramtogateJob + \
-                      '\" INDEX=' + str(i) + \
-                      ' INDEXMAX=' + str(jobs) + \
-                      ' OUTPUTDIR=' + outputDir + \
-                      ' RELEASEDIR=' + releasedir + \
-                      ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
-                      ' MACRODIR=' + outputDir + \
-                      ' ENV=' + envCommand + \
-                      ' PBS_JOBID=\"local_' + str(i) + \
-                      '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
-        elif get_dns_domain() == 'in2p3.fr':
+        if get_dns_domain() == 'in2p3.fr':
             command = 'qsub -o ' + outputDir + \
                       ' -e ' + outputDir + \
                       ' -l sps=1 -N \"gate.' + runId + \
@@ -216,6 +207,30 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',MACRODIR=' + outputDir + \
                       ',ENV=' + envCommand + \
                       '\" ' + jobFile
+        elif get_dns_domain() == 'idis.fr':
+            command = 'sbatch= -o ' + outputDir + \
+                      ' -e ' + outputDir + \
+                      ' -l sps=1 -J \"gate.' + runId + \
+                      ' --export=ALL,\"PARAM=\\\"' + paramtogateJob + \
+                      '\\\",INDEX=' + str(i) + \
+                      ',INDEXMAX=' + str(jobs) + \
+                      ',OUTPUTDIR=' + outputDir + \
+                      ',RELEASEDIR=' + releasedir + \
+                      ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
+                      ',MACRODIR=' + outputDir + \
+                      ',ENV=' + envCommand + \
+                      '\" ' + jobFile
+        elif qsub is None:
+            command = 'PARAM=\" ' + paramtogateJob + \
+                      '\" INDEX=' + str(i) + \
+                      ' INDEXMAX=' + str(jobs) + \
+                      ' OUTPUTDIR=' + outputDir + \
+                      ' RELEASEDIR=' + releasedir + \
+                      ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
+                      ' MACRODIR=' + outputDir + \
+                      ' ENV=' + envCommand + \
+                      ' PBS_JOBID=\"local_' + str(i) + \
+                      '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
         else:
             command = 'qsub -N \"gatejob.' + runId + \
                       ' -o ' + outputDir + \
