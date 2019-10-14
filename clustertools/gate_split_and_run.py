@@ -131,7 +131,9 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
     # Find qsub
     qsub = shutil.which('qsub')
     if qsub is None:
-        print('No qsub, run Gate on multiple cores.')
+        qsub = shutil.which('sbatch')
+        if qsub is None:
+            print('No qsub, run Gate on multiple cores.')
 
     # Parameter files
     paramFileName = os.path.join(outputDir, 'run.log')
@@ -207,8 +209,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',MACRODIR=' + outputDir + \
                       ',ENV=' + envCommand + \
                       '\" ' + jobFile
-        elif get_dns_domain() == 'idis.fr':
-            command = 'sbatch= -o ' + outputDir + \
+        elif get_dns_domain() == 'idris.fr':
+            command = 'sbatch -o ' + outputDir + \
                       ' -e ' + outputDir + \
                       ' -l sps=1 -J \"gate.' + runId + \
                       ' --export=ALL,\"PARAM=\\\"' + paramtogateJob + \
