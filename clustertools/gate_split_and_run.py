@@ -211,7 +211,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       '\" ' + jobFile
         elif get_dns_domain() == 'idris.fr':
             command = 'sbatch -J \"gate.' + runId + \
-                      ' --export=ALL,\"PARAM=\\\"' + paramtogateJob + \
+                      ' --export=ALL,PARAM=\\\"' + paramtogateJob + \
                       '\\\",INDEX=' + str(i) + \
                       ',INDEXMAX=' + str(jobs) + \
                       ',OUTPUTDIR=' + outputDir + \
@@ -219,7 +219,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
                       ',ENV=' + envCommand + \
-                      '\" ' + jobFile
+                      ' ' + jobFile
         elif qsub is None:
             command = 'PARAM=\" ' + paramtogateJob + \
                       '\" INDEX=' + str(i) + \
