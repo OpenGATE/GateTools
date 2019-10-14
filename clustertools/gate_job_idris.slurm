@@ -40,7 +40,8 @@ echo "ENV=${ENV:?"unknown ENV"}"
 echo "JOB_ID=$SLURM_JOB_ID"
 echo "INDEX=${INDEX}"
 echo "INDEXMAX=${INDEX}"
-PARAM=`cat ${PARAM}`
+PARAMFILE=${PARAM}
+PARAM=`cat ${PARAMFILE}`
 echo "PARAM= ${PARAM}"
 
 if test "$ENV" = "NONE"
