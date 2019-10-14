@@ -210,7 +210,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',ENV=' + envCommand + \
                       '\" ' + jobFile
         elif get_dns_domain() == 'idris.fr':
-            tempParamFile = tempfile.NamedTemporaryFile(delete=False, prefix='var.', dir=outputDir)
+            tempParamFile = tempfile.NamedTemporaryFile(mode='w+t', delete=False, prefix='var.', dir=outputDir)
             tempParamFile.write(paramtogateJob)
             tempParamFile.close()
             command = 'sbatch -J gate.' + runId + \
