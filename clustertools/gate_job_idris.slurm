@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 #SBATCH --nodes=1                   # nombre de noeuds
 #SBATCH --ntasks-per-node=1         # nombre de taches MPI par noeud
 #SBATCH --time=15:00:00             # temps d execution maximum demande (HH:MM:SS)
@@ -65,6 +65,7 @@ test -d "${MACRODIR}" && test -d "${MACRODIR}/mac" || error "invalid macro"
 
 
 echo "Copying inputs"
+cd $SCRATCH/../commun
 LOCALMACRODIR=$(mktemp -d)
 trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
@@ -85,6 +86,7 @@ else
 fi
 
 date
+rm $PARAMFILE
 transferJobData
 date
 
