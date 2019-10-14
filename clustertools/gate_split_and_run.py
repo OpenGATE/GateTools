@@ -214,7 +214,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
             tempParamFile.write(paramtogateJob)
             tempParamFile.close()
             command = 'sbatch -J gate.' + runId + \
-                      ' --export=ALL,PARAM=\"' + tempParamFileName.name + \
+                      ' --export=ALL,PARAM=\"' + tempParamFile.name + \
                       '\",INDEX=' + str(i) + \
                       ',INDEXMAX=' + str(jobs) + \
                       ',OUTPUTDIR=' + outputDir + \
