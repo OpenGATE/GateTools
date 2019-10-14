@@ -10,8 +10,8 @@ function transferJobData {
     echo "Copying data back"
     pwd
     echo ${OUTPUTDIR}
-    mkdir "${OUTPUTDIR}/output.${JOB_ID%%.*}"
-    rsync -av --remove-source-files output/ "${OUTPUTDIR}/output.${JOB_ID%%.*}"
+    mkdir "${OUTPUTDIR}/output.$SLURM_JOB_ID"
+    rsync -av --remove-source-files output/ "${OUTPUTDIR}/output.$SLURM_JOB_ID"
     echo "Cleanup"
     unlink "${LOCALMACRODIR}"/data
     rm -r ${LOCALMACRODIR}
