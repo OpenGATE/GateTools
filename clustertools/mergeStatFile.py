@@ -6,7 +6,7 @@ import re
 import datetime
 
 linere = re.compile(r'''^#\s+([a-zA-Z]+)\s+=\s(.*)$''')
-mergedlines = ['NumberOfRun', 'NumberOfEvents', 'NumberOfTracks', 'NumberOfSteps', 'NumberOfGeometricalSteps', 'NumberOfPhysicalSteps', 'ElapsedTimeWoInit', 'ElapsedTime', 'StartDate', 'EndDate']
+mergedlines = ['NumberOfRun', 'NumberOfEvents', 'NumberOfTracks', 'NumberOfSteps', 'NumberOfGeometricalSteps', 'NumberOfPhysicalSteps', 'ElapsedTimeWoInit', 'ElapsedTime', 'StartDate', 'EndDate',  'NumberOfMergedJobs', 'MeanPPS', 'MeanElapsedTime', 'MinElapsedTime', 'MaxElapsedTime']
 
 assert(len(sys.argv)==7)
 assert(sys.argv[1]=="-i")
@@ -43,6 +43,73 @@ def merge_keys(ikeys,jkeys):
     for line in mergedlines:
         value = None
 
+        if line == 'NumberOfMergedJobs':
+            try:
+                ivalue = int(ikeys['NumberOfMergedJobs'])
+                ivalue += 1
+                value = str(ivalue)
+            except KeyError:
+                value = str(2)
+
+        if line == 'MeanPPS':
+            try:
+                NumberOfEvents = int(keys['NumberOfEvents'])
+                ElapsedTime = float(keys['ElapsedTime'])
+                pps = NumberOfEvents/ElapsedTime
+                value = str(pps)
+            except ValueError:
+                pass
+
+        if line == 'MeanElapsedTime':
+            try:
+                ElapsedTime = float(keys['ElapsedTime'])
+                NumberOfMergedJobs = int(keys['NumberOfMergedJobs'])
+                MeanElapsedTime = ElapsedTime/NumberOfMergedJobs
+                value = str(MeanElapsedTime)
+            except ValueError:
+                pass
+
+        if line == 'MinElapsedTime':
+            try:
+                jElapsedTime = float(jkeys['ElapsedTime'])
+                iElapsedTime = float(ikeys['MinElapsedTime'])
+                MinElapsedTime = min(iElapsedTime, jElapsedTime)
+                value = str(MinElapsedTime)
+            except KeyError:
+                try:
+                  jElapsedTime = float(jkeys['ElapsedTime'])
+                  iElapsedTime = float(ikeys['ElapsedTime'])
+                  MinElapsedTime = min(iElapsedTime, jElapsedTime)
+                  value = str(MinElapsedTime)
+                except ValueError:
+                    pass
+
+        if line == 'MaxElapsedTime':
+            try:
+                jElapsedTime = float(jkeys['ElapsedTime'])
+                iElapsedTime = float(ikeys['MaxElapsedTime'])
+                MaxElapsedTime = max(iElapsedTime, jElapsedTime)
+                value = str(MaxElapsedTime)
+            except KeyError:
+                try:
+                  jElapsedTime = float(jkeys['ElapsedTime'])
+                  iElapsedTime = float(ikeys['ElapsedTime'])
+                  MaxElapsedTime = max(iElapsedTime, jElapsedTime)
+                  value = str(MaxElapsedTime)
+                except ValueError:
+                    pass
+
+        if line == 'StartDate' or line == 'EndDate':
+                ivalue = datetime.datetime.strptime(ikeys[line],"%a %b %d %H:%M:%S %Y")
+                jvalue = datetime.datetime.strptime(jkeys[line],"%a %b %d %H:%M:%S %Y")
+                if line=="StartDate":
+                    value = min(ivalue,jvalue)
+                    mindate = value
+                if line=="EndDate":
+                    value = max(ivalue,jvalue)
+                    maxdate = value
+                value = value.strftime("%a %b %d %H:%M:%S %Y")
+
         if value is None:
             try:
                 ivalue = int(ikeys[line])
@@ -60,17 +127,6 @@ def merge_keys(ikeys,jkeys):
                 value = str(value)
             except ValueError:
                 pass
-
-        if value is None:
-                ivalue = datetime.datetime.strptime(ikeys[line],"%a %b %d %H:%M:%S %Y")
-                jvalue = datetime.datetime.strptime(jkeys[line],"%a %b %d %H:%M:%S %Y")
-                if line=="StartDate":
-                    value = min(ivalue,jvalue)
-                    mindate = value
-                if line=="EndDate":
-                    value = max(ivalue,jvalue)
-                    maxdate = value
-                value = value.strftime("%a %b %d %H:%M:%S %Y")
 
         assert(value is not None)
         keys[line] = value
