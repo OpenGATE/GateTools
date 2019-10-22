@@ -28,12 +28,14 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d):
 
     WARNING: if several filenames, they must have the same keys
     '''
-    
+
     f = None
+
+    q = {}
 
     for filename in filenames:
         print(filename)
-    
+
         # load data
         data, read_keys, m = phsp.load(filename, n)
 
@@ -67,12 +69,13 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d):
             x = data[:,index]
             q1 = quantile
             q2 = 1.0-quantile
-            q = (np.quantile(x, q1), np.quantile(x, q2))
+            if filename == filenames[0]:
+                q[k] = (np.quantile(x, q1), np.quantile(x, q2))
             label = ' {} $\mu$={:.2f} $\sigma$={:.2f}'.format(k, np.mean(x), np.std(x))
             a.hist(x, nb_bins,
-                   # density=True,
+                   #density=True,
                    histtype='stepfilled',
-                   range=q,
+                   range=q[k],
                    # facecolor='g',
                    alpha=0.5,
                    label=label)
@@ -100,4 +103,3 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d):
 # --------------------------------------------------------------------------
 if __name__ == '__main__':
     gt_phsp_plot()
-
