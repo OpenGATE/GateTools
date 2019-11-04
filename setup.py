@@ -32,8 +32,11 @@ setuptools.setup(
         
         'bin/gt_image_uncertainty',
         'bin/gt_image_arithm',
+        'bin/gt_image_crop',
         'bin/gt_image_convert',
         'bin/gt_gamma_index',
+
+        'bin/gt_dicom_rt_struct_to_image',
         
         'bin/gt_phsp_info',
         'bin/gt_phsp_convert',

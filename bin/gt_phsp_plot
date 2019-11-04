@@ -30,7 +30,7 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d):
     '''
 
     f = None
-
+    nb_fig = 0
     q = {}
 
     for filename in filenames:
@@ -89,6 +89,9 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d):
             a = phsp.fig_get_sub_fig(ax,i)
             phsp.fig_histo2D(a, data, read_keys, k, nb_bins, 'g')
             i = i+1
+
+    if nb_fig==0:
+        return
 
     # remove empty plot
     phsp.fig_rm_empty_plot(nb_fig, ax)
