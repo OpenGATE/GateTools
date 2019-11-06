@@ -1,14 +1,100 @@
 """
-This module contains a function named `dcm_pbs_rt_plan_to_gate_conversion`, which can be
-used to convert DICOM radiotherapy plan files for pencil beam scanning to the text format
-that Gate uses to read in the spot specifications.
+This module contains a function named `dicom_rt_pbs_plan_to_gate_conversion`,
+which can be used to convert DICOM radiotherapy plan files for pencil beam
+scanning to the text format that Gate uses to read in the spot specifications.
 """
-import os, sys, re
-import pydicom
-import numpy as np
-import datetime
 
-def _check_rp_dicom_stuff(rp_filepath,verbose=False):
+import numpy as np
+
+def dicom_rt_pbs_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbose=False):
+    """
+    Function to create GATE plan description corresponding to DICOM plan file.
+
+    * :param dcm_input: string with the file path of the input DICOM plan file
+    * :param txt_output: string with the file path of the output Gate PBS spot specification text file (suffix .txt or .dat)
+    """
+    planname = _check_output_filename(txt_output,verbose)
+    nspots_written = 0
+    nlayers_written = 0
+    nspots_ignored = 0
+    nlayers_ignored = 0
+    rp,mswtots,beamnrs,iso_Cs,g_angles,p_angles = _read_and_check_dicom_plan_file(dcm_input,verbose)
+    filehandle=open(txt_output,"w")
+    # FILE HEADER
+    filehandle.write(_file_header.format(name=planname,nfields=len(rp.IonBeamSequence)))
+    for beamnr in beamnrs:
+        filehandle.write("###FieldsID\n{}\n".format(beamnr))
+    filehandle.write("#TotalMetersetWeightOfAllFields\n{0:f}\n\n".format(sum(mswtots)))
+    for ion_beam,beamnr,mswtot,iso_C,g_angle,p_angle in zip(rp.IonBeamSequence,
+                                                           beamnrs,
+                                                           mswtots,
+                                                           iso_Cs,
+                                                           g_angles,
+                                                           p_angles):
+        nspots_list=list()
+        mask_list=list()
+        weights_list=list()
+        for icp in ion_beam.IonControlPointSequence:
+            nspots_nominal = int(icp.NumberOfScanSpotPositions)
+            if nspots_nominal == 1:
+                w_all = np.array([float(icp.ScanSpotMetersetWeights)])
+            else:
+                w_all = np.array([float(w) for w in icp.ScanSpotMetersetWeights])
+            mask = (w_all>=0.) if allow0 else (w_all>0.)
+            nspots_list.append(np.sum(mask))
+            mask_list.append(mask)
+            weights_list.append(w_all)
+
+        filehandle.write(_beam_header.format(fid=beamnr,
+                                             mswtot=mswtot,
+                                             g_angle=g_angle,
+                                             p_angle=p_angle,
+                                             isox=iso_C[0],
+                                             isoy=iso_C[1],
+                                             isoz=iso_C[2],
+                                             ncp=np.sum(np.array(nspots_list)>0)))
+        msw_cumsum = 0.
+        for cpi,(icp,nspots,mask,w_all) in enumerate(zip(ion_beam.IonControlPointSequence,nspots_list,mask_list,weights_list)):
+            nspots_nominal = int(icp.NumberOfScanSpotPositions)
+            if nspots == 0:
+                nlayers_ignored += 1
+                nspots_ignored += nspots_nominal
+                continue
+            xy = np.array([float(pos) for pos in icp.ScanSpotPositionMap]).reshape(nspots_nominal,2)
+            nspots_ignored += nspots_nominal-nspots
+            w=w_all[mask]
+            x=xy[mask,0]
+            y=xy[mask,1]
+            msw=np.sum(w_all[mask])
+            energy = float(icp.NominalBeamEnergy)
+            # Maybe we should emit noisy warnings if the tune ID is missing?
+            tuneID = "0.0" if not "ScanSpotTuneID" in icp else str(icp.ScanSpotTuneID)
+            # TODO: what if all spot weights in this ICP are zero?
+            filehandle.write(_layer_header.format(cpi=cpi,stid=tuneID,mswtot=msw_cumsum,energy=energy,nspots=nspots))
+            for spotx,spoty,spotw in zip(x,y,w):
+                filehandle.write("{0:g} {1:g} {2:g}\n".format(spotx,spoty,spotw))
+            nspots_written += nspots
+            nlayers_written += 1
+            msw_cumsum+=msw
+    filehandle.close()
+    if verbose:
+        print("Converted DICOM file {} to Gate PBS spot specification text file {}".format(dcm_input,txt_output))
+        print("# beams = {}".format(len(rp.IonBeamSequence)))
+        print("# control points written = {}".format(nlayers_written))
+        print("# spots written = {}".format(nspots_written))
+        if not allow0:
+            # number of beams ignored, because msw<=0 for all spots? :-)
+            print("# control points ignored (because msw<=0 for all spots) = {}".format(nlayers_ignored))
+            print("# spots ignored (because msw<=0) = {}".format(nspots_ignored))
+
+###############################################################################
+# IMPLEMENTATION DETAILS                                                      #
+###############################################################################
+
+import os, re
+import pydicom
+
+def _check_rp_dicom_file(rp_filepath,verbose=False):
     """
     Auxiliary implementation function.
 
@@ -16,16 +102,13 @@ def _check_rp_dicom_stuff(rp_filepath,verbose=False):
     """
     # if the input file path is not readable as a DICOM file, then pydicom will throw an appropriate exception
     rp = pydicom.dcmread(rp_filepath)
-    for attr in [ 'SOPClassUID', "NumberOfBeams", "IonBeamSequence" ] :
+    for attr in [ 'SOPClassUID', "IonBeamSequence" ] :
         if attr not in rp:
             raise IOError("bad DICOM file {},\nmissing '{}'".format(rp_filepath,attr))
-    sop_class_name = pydicom.uid.UID_dictionary[rp.SOPClassUID][0]
-    if sop_class_name != 'RT Ion Plan Storage':
-        raise IOError("bad plan file {},\nwrong SOPClassUID: {}='{}',\nexpecting an 'RT Ion Plan Storage' file instead.".format(rp_filepath,rp.SOPClassUID,sop_class_name))
-    n_ion_beams=int(rp.NumberOfBeams)
+    if rp.SOPClassUID.name != 'RT Ion Plan Storage':
+        raise IOError("bad plan file {},\nwrong SOPClassUID: {}='{}',\nexpecting an 'RT Ion Plan Storage' file instead.".format(rp_filepath,rp.SOPClassUID,rp.SOPClassUID.name))
+    n_ion_beams=len(rp.IonBeamSequence)
     ion_beams=rp.IonBeamSequence
-    if len(ion_beams) != n_ion_beams:
-        raise IOError("bad plan file {},\n'NumberOfBeams'={} inconsistent with length {} of 'IonBeamSequence'.".format(rp_filepath,n_ion_beams,len(ion_beams)))
     for ion_beam in ion_beams:
         for attr in [ 'BeamNumber', "IonControlPointSequence"]:
             if attr not in ion_beam:
@@ -54,7 +137,7 @@ def _get_beam_numbers(rp,verbose=False):
     """
     number_list = list()
     input_beam_numbers_are_ok = True
-    n_ion_beams=int(rp.NumberOfBeams)
+    n_ion_beams=len(rp.IonBeamSequence)
     for ion_beam in rp.IonBeamSequence:
         if input_beam_numbers_are_ok:
             nr = int(ion_beam.BeamNumber)
@@ -127,7 +210,7 @@ def _get_angles_and_isoCs(rp,verbose):
                     # I got a DICOM plan file once that specified IsocenterPosition as a single number (-1).
                     fakeiso=True
                     if verbose:
-                        "Got corrupted isocenter = '{}'; assuming [0,0,0] for now, keep fingers crossed.".format(self._icp0.IsocenterPosition)
+                        "Got corrupted isocenter = '{}'; assuming [0,0,0] for now, keep fingers crossed.".format(icp0.IsocenterPosition)
             else:
                 fakeiso=True
                 if verbose:
@@ -166,7 +249,7 @@ def _read_and_check_dicom_plan_file(rp_filepath,verbose=False):
     problematic "plan files".
     """
     # Crude checks of DICOM file structure.
-    rp = _check_dicom_stuff(rp_filepath,verbose)
+    rp = _check_rp_dicom_file(rp_filepath,verbose)
     # Get mswtot of each beam.
     mswtot_list = _get_mswtot_list(rp,verbose)
     # Get 'number' of each beam.
@@ -186,71 +269,16 @@ def _check_output_filename(txt_output,verbose):
     """
     if txt_output[-4:].lower() != ".txt" and txt_output[-4:].lower() != ".dat":
         raise IOError("Output file name should have a '.txt' or '.dat' suffix.")
-    if len(txt_output)<5:
+    base_txt_output = os.path.basename(txt_output)
+    if len(base_txt_output)<5:
         raise IOError("Output file name should have at least one charachter before the txt/dat suffix.")
     if os.path.exists(txt_output) and verbose:
         print("WARNING: going to overwrite existing file {}".format(txt_output))
     badchars=re.compile("[^a-zA-Z0-9_]")
-    planname = re.sub(badchars,"_",txt_output[:-4])
+    planname = re.sub(badchars,"_",base_txt_output[:-4])
     if verbose:
         print("using plan name '{}'".format(planname))
     return planname
-
-def dcm_pbs_rt_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbose=False):
-    """
-    Function to create GATE plan description corresponding to DICOM plan file.
-
-    * :param dcm_input: string with the file path of the input DICOM plan file
-    * :param txt_output: string with the file path of the output Gate PBS spot specification text file (suffix .txt)
-    """
-    planname = _check_output_filename(txt_output,verbose)
-    nspots_written = 0
-    msw_cumsum = 0.
-    nlayers = 0
-    nspots_ignored = 0
-    rp,mswtots,beamnrs,iso_Cs,g_angles,p_angles = _read_and_check_dicom_plan_file(dcm_input,verbose)
-    filehandle=open(txt_output,"w")
-    # FILE HEADER
-    filehandle.write(_file_header.format(name=planname,fields=int(rp.NumberOfBeams)))
-    for beamnr in beamnrs:
-        filehandle.write("###FieldsID\n{}\n".format(beamnr))
-    filehandle.write("#TotalMetersetWeightOfAllFields\n{0:f}\n\n".format(sum(mswtots)))
-    for ionbeam,beamnr,mswtot,iso_C,g_angle,p_angle in zip(rp.IonBeamSequence,nrs,mswtots,iso_Cs,g_angles,p_angles):
-        filehandle.write(_beam_header.format(fid=beamnr,mswtot=mswtot,ga=ga,psa=psa,isox=iso_C[0],isoy=iso_C[1],isoz=iso_C[2],ncp=len(ion.IonControlPointSequence)))
-        msw_cumsum = 0.
-        for cpi,icp in enumerate(ionbeam.IonControlPointSequence):
-            nspot_nominal = int(icp.NumberOfScanSpotPositions)
-            # TODO: some TPS insert spots with weight 0, which only has meaning for the beam delivery system software. Remove them?
-            xy = np.array([float(pos) for pos in icp.ScanSpotPositionMap]).reshape(nspot_nominal,2)
-            if nspot_nominal == 1:
-                w_all = np.array([float(icp.ScanSpotMetersetWeights)])
-            else:
-                w_all = np.array([float(w) for w in icp.ScanSpotMetersetWeights])
-            if allow0:
-                nspot = nspot_nominal
-                w=w_all
-                x=xy[:,0]
-                y=xy[:,1]
-            else:
-                mask=(w_all>0.)
-                nspot = np.sum(mask)
-                nspot_ignored += nspot_nominal-nspot
-                w=w_all[mask]
-                x=xy[mask,0]
-                y=xy[mask,1]
-            energy = float(self._cp.NominalBeamEnergy)
-            tuneID = "0.0" if not "ScanSpotTuneID" in icp else str(icp.ScanSpotTuneID) # Maybe we should emit noisy warnings if this is missing?
-            filehandle.write(_layer_header.format(cpi=cpi,stid=tuneID,mswtot=msw_cumsum,energy=energy,nspot=nspot))
-            for spotx,spoty,spotw in zip(x,y,w):
-                self.filehandle.write("{0:g} {1:g} {2:g}\n".format(spotx,spoty,spotw))
-            nspots_written += nspots
-    if verbose:
-        print("Converted DICOM file {} to Gate PBS spot specification text file {}".format(dcm_input,txt_output))
-        print("# beams = {}".format(len(rp.IonBeamSequence)))
-        print("# control points = {}".format(nlayers))
-        print("# spots written = {}".format(nspots))
-        if not allow0:
-            print("# spots ignored (because msw<=0) = {}".format(nspot_ignored))
 
 
 
@@ -271,9 +299,9 @@ _beam_header="""#FIELD-DESCRIPTION
 ###FinalCumulativeMeterSetWeight
 {mswtot:g}
 ###GantryAngle (in degrees)
-{ga:g}
+{g_angle:g}
 ###PatientSupportAngle
-{psa}
+{p_angle}
 ###IsocenterPosition
 {isox:g} {isoy:g} {isoz:g}
 ###NumberOfControlPoints
@@ -290,7 +318,7 @@ _layer_header="""####ControlPointIndex
 ####Energy (MeV)
 {energy:g}
 ####NbOfScannedSpots
-{nspot:g}
+{nspots:g}
 ####X Y Weight (spot position at isocenter in mm, with weight in MU (default) or number of protons "setSpotIntensityAsNbProtons true")
 """
 
@@ -299,6 +327,8 @@ _layer_header="""####ControlPointIndex
 ################################################################################
 
 import unittest
+import sys
+import datetime
 
 class _tmp_test_plan_writer:
     def __init__(self,fname,spotspecs=None,uid=None,verbose=False):
@@ -390,8 +420,8 @@ class test_small_normal_plan(unittest.TestCase):
                      controlpoints=[dict(SSW=[0.42],E=100.,T="3.0",
                                          SSP=[(2.,1)])])
         beam5 = dict(Nm="bar", Nr=5, G=30., P=45., I=(100.,150.,-140.),
-                     controlpoints=[dict(SSW=[0.4,0.6],E=100.,T="3.0",
-                                         SSP=[(2.,1),(3.,4.)])])
+                     controlpoints=[dict(SSW=[0.,0.4,0.,0.6],E=100.,T="3.0",
+                                         SSP=[(2.,1.),(2.,1),(3.,4.),(3.,4.)])])
         beam6 = dict(Nm="baz", Nr=6, G=60., P=30., I=(-10.,-150.,40.),
                      controlpoints=[dict(SSW=[0.4,0.6,0.8],E=70.,T="3.1",
                                          SSP=[(2.,1),(3.,4.),(6.,5.)]),
@@ -407,7 +437,7 @@ class test_small_normal_plan(unittest.TestCase):
         """
         Self consistency check for test dicom file.
         """
-        test_rp = _check_rp_dicom_stuff("test.dcm",self.verbose)
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
         self.assertEqual(3,len(test_rp.IonBeamSequence))
         self.assertEqual(4,int(test_rp.IonBeamSequence[0].BeamNumber))
         self.assertEqual(5,int(test_rp.IonBeamSequence[1].BeamNumber))
@@ -415,23 +445,24 @@ class test_small_normal_plan(unittest.TestCase):
         self.assertEqual("3.0",test_rp.IonBeamSequence[1].IonControlPointSequence[0].ScanSpotTuneID)
         self.assertAlmostEqual(120.0,test_rp.IonBeamSequence[2].IonControlPointSequence[1].NominalBeamEnergy)
         self.assertAlmostEqual(0.42,test_rp.IonBeamSequence[0].IonControlPointSequence[0].ScanSpotMetersetWeights)
-        self.assertAlmostEqual(0.6,test_rp.IonBeamSequence[1].IonControlPointSequence[0].ScanSpotMetersetWeights[1])
+        self.assertAlmostEqual(0.0,test_rp.IonBeamSequence[1].IonControlPointSequence[0].ScanSpotMetersetWeights[0])
+        self.assertAlmostEqual(0.6,test_rp.IonBeamSequence[1].IonControlPointSequence[0].ScanSpotMetersetWeights[3])
         self.assertAlmostEqual(0.4,test_rp.IonBeamSequence[2].IonControlPointSequence[1].ScanSpotMetersetWeights[0])
         self.assertAlmostEqual(45.,test_rp.IonBeamSequence[1].IonControlPointSequence[0].PatientSupportAngle)
         self.assertAlmostEqual(60.,test_rp.IonBeamSequence[2].IonControlPointSequence[0].GantryAngle)
     def test_mswtot(self):
-        test_rp = _check_rp_dicom_stuff("test.dcm",self.verbose)
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
         mswtot_list = _get_mswtot_list(test_rp,self.verbose)
         self.assertEqual(3,len(mswtot_list))
         self.assertAlmostEqual(0.42,mswtot_list[0])
         self.assertAlmostEqual(1.0,mswtot_list[1])
         self.assertAlmostEqual(2.7,mswtot_list[2])
     def test_beam_numbers(self):
-        test_rp = _check_rp_dicom_stuff("test.dcm",self.verbose)
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
         numbers = _get_beam_numbers(test_rp,self.verbose)
         self.assertEqual([4,5,6],numbers)
     def test_angles_and_iscoCs(self):
-        test_rp = _check_rp_dicom_stuff("test.dcm",self.verbose)
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
         gantry_angles, patient_angles, iso_centers = _get_angles_and_isoCs(test_rp,self.verbose)
         for g,p,i,b in zip(gantry_angles, patient_angles, iso_centers, self.beams):
             self.assertAlmostEqual(g,b["G"])
@@ -447,8 +478,12 @@ class test_small_normal_plan(unittest.TestCase):
         with self.assertRaisesRegex(IOError,"at least one charachter"):
             _check_output_filename(".txT",self.verbose)
         self.assertEqual("abc",_check_output_filename("abc.txt",self.verbose))
+        self.assertEqual("abc",_check_output_filename("/foo/bar/abc.txt",self.verbose))
         self.assertEqual("ab_c",_check_output_filename("ab.c.txt",self.verbose))
         self.assertEqual("_",_check_output_filename(" .txt",self.verbose))
         self.assertEqual("_Box_6__0__0__25___Rashi",_check_output_filename("_Box 6 (0, 0, 25) ^Rashi.txt",self.verbose))
+    def test_the_whole_thing_already(self):
+        dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_tolerance.txt",allow0=True,verbose=self.verbose)
+        dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_nontolerance.txt",allow0=False,verbose=self.verbose)
 
 # vim: set et ts=4 ai sw=4:
