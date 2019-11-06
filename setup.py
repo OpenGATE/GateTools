@@ -37,6 +37,7 @@ setuptools.setup(
         'bin/gt_gamma_index',
 
         'bin/gt_dicom_rt_struct_to_image',
+        'bin/gt_dicom_rt_pbs2gate',
         
         'bin/gt_phsp_info',
         'bin/gt_phsp_convert',
