@@ -25,6 +25,12 @@ def dicom_rt_pbs_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbo
     for beamnr in beamnrs:
         filehandle.write("###FieldsID\n{}\n".format(beamnr))
     filehandle.write("#TotalMetersetWeightOfAllFields\n{0:f}\n\n".format(sum(mswtots)))
+    # stupidity check...
+    assert(len(rp.IonBeamSequence)== len(beamnrs))
+    assert(len(rp.IonBeamSequence)== len(mswtots))
+    assert(len(rp.IonBeamSequence)== len(iso_Cs))
+    assert(len(rp.IonBeamSequence)== len(g_angles))
+    assert(len(rp.IonBeamSequence)== len(p_angles))
     for ion_beam,beamnr,mswtot,iso_C,g_angle,p_angle in zip(rp.IonBeamSequence,
                                                            beamnrs,
                                                            mswtots,
@@ -54,9 +60,12 @@ def dicom_rt_pbs_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbo
                                              isoz=iso_C[2],
                                              ncp=np.sum(np.array(nspots_list)>0)))
         msw_cumsum = 0.
-        for cpi,(icp,nspots,mask,w_all) in enumerate(zip(ion_beam.IonControlPointSequence,nspots_list,mask_list,weights_list)):
+        cpi=0
+        for icp,nspots,mask,w_all in zip(ion_beam.IonControlPointSequence,nspots_list,mask_list,weights_list):
             nspots_nominal = int(icp.NumberOfScanSpotPositions)
             if nspots == 0:
+                if allow0:
+                    print("WARNING: this should not happen, nspots_nominal={}",format(nspots_nominal))
                 nlayers_ignored += 1
                 nspots_ignored += nspots_nominal
                 continue
@@ -76,6 +85,7 @@ def dicom_rt_pbs_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbo
             nspots_written += nspots
             nlayers_written += 1
             msw_cumsum+=msw
+            cpi+=1
     filehandle.close()
     if verbose:
         print("Converted DICOM file {} to Gate PBS spot specification text file {}".format(dcm_input,txt_output))
@@ -155,7 +165,7 @@ def _get_beam_numbers(rp,verbose=False):
     if not input_beam_numbers_are_ok:
         if verbose:
             print("WARNING: will use simple enumeration of beams instead of the (apparently corrupt) dicom beam numbers.")
-        number_list = np.arange(n_ion_beams)
+        number_list = np.arange(1,n_ion_beams+1).tolist()
     return number_list
 
 def _get_mswtot_list(rp,verbose=False):
@@ -196,45 +206,35 @@ def _get_angles_and_isoCs(rp,verbose):
     gantry_angle_list = list()
     patient_angle_list = list()
     iso_center_list = list()
-    # each of these quantities may be missing
-    fakeiso=False
-    fakegantry=False
-    fakepatient=False
-    for ion_beam in rp.IonBeamSequence:
+    n_ion_beams=len(rp.IonBeamSequence)
+    dubious = False
+    for i,ion_beam in enumerate(rp.IonBeamSequence):
+        # each of these quantities may be missing
+        beamname = str(i) if not hasattr(ion_beam,"BeamName") else str(ion_beam.BeamName)
         icp0 = ion_beam.IonControlPointSequence[0]
-        if not fakeiso:
-            if "IsocenterPosition" in icp0:
-                if len(icp0.IsocenterPosition) == 3.:
-                    iso_center_list.append(np.array([float(v) for v in icp0.IsocenterPosition]))
-                else:
-                    # I got a DICOM plan file once that specified IsocenterPosition as a single number (-1).
-                    fakeiso=True
-                    if verbose:
-                        "Got corrupted isocenter = '{}'; assuming [0,0,0] for now, keep fingers crossed.".format(icp0.IsocenterPosition)
-            else:
-                fakeiso=True
-                if verbose:
-                    "No isocenter specified in treatment plan; assuming [0,0,0] for now, keep fingers crossed."
-        if not fakegantry:
-            if "GantryAngle" in icp0:
-                gantry_angle_list.append(float(icp0.GantryAngle))
-            else:
-                fakegantry=True
-                if verbose:
-                    "No gantry angle specified in treatment plan; assuming 0. for now, keep fingers crossed."
-        if not fakepatient:
-            if "PatientSupportAngle" in icp0:
-                patient_angle_list.append(float(icp0.PatientSupportAngle))
-            else:
-                fakepatient=True
-                if verbose:
-                    "No patient support angle specified in treatment plan; assuming 0. for now, keep fingers crossed."
-    if fakeiso:
-        iso_center_list = [np.zeros(3)]*n_ion_beams
-    if fakegantry:
-        gantry_angle_list = np.zeros(n_ion_beams)
-    if fakepatient:
-        patient_angle_list = np.zeros(n_ion_beams)
+        # check isocenter
+        if "IsocenterPosition" in icp0 and len(icp0.IsocenterPosition)==3:
+            iso_center_list.append(np.array([float(icp0.IsocenterPosition[j]) for j in range(3)]))
+        else:
+            print("WARNING: absent/corrupted isocenter for beam '{}'; assuming [0,0,0] for now, please fix this manually.".format(beamname))
+            iso_center_list.append(np.zeros(3,dtype=float))
+            dubious = True
+        # check gantry angle
+        if "GantryAngle" in icp0:
+            gantry_angle_list.append(float(icp0.GantryAngle))
+        else:
+            print("WARNING: no gantry angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
+            gantry_angle_list.append(0.)
+            dubious = True
+        # check couch angle
+        if "PatientSupportAngle" in icp0:
+            patient_angle_list.append(float(icp0.PatientSupportAngle))
+        else:
+            print("WARNING: no patient support angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
+            patient_angle_list.append(0.)
+            dubious = True
+    if verbose and not dubious:
+        print("patient/gantry angles and isocenters all seem fine.")
     return gantry_angle_list, patient_angle_list, iso_center_list
 
 def _read_and_check_dicom_plan_file(rp_filepath,verbose=False):
@@ -351,8 +351,6 @@ class _tmp_test_plan_writer:
 
         # File meta info data elements
         file_meta = pydicom.Dataset()
-        #file_meta.FileMetaInformationGroupLength = 200 # arbitrary?
-        #file_meta.FileMetaInformationVersion = b'\x00\x01'
         file_meta.MediaStorageSOPClassUID = str(classUID)
         file_meta.MediaStorageSOPInstanceUID = str(instanceUID)
         file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
@@ -379,9 +377,14 @@ class _tmp_test_plan_writer:
                 for i,icpdata in enumerate(beamdata["controlpoints"]):
                    icp=pydicom.Dataset()
                    if i==0:
-                       icp.GantryAngle = beamdata.get('G',-1.)
-                       icp.PatientSupportAngle = beamdata.get('P',-1.)
-                       icp.IsocenterPosition = list([str(v) for v in beamdata.get('I',(0.,0.,0.))])
+                       if 'G' in beamdata:
+                           icp.GantryAngle = beamdata['G']
+                       if 'P' in beamdata:
+                           icp.PatientSupportAngle = beamdata['P']
+                       if "I" in beamdata:
+                           icp.IsocenterPosition = list([str(v) for v in beamdata.get('I')])
+                       else:
+                           icp.IsocenterPosition = ""
                    icp.NominalBeamEnergy = icpdata.get('E',100.)
                    if 'T' in icpdata:
                        icp.ScanSpotTuneID = icpdata['T']
@@ -427,9 +430,10 @@ class test_small_normal_plan(unittest.TestCase):
                                          SSP=[(2.,1),(3.,4.),(6.,5.)]),
                                     dict(SSW=[0.4,0.5],E=120.,T="3.1",
                                          SSP=[(7.,8.),(3.,4.)])])
-        self.beams = [beam4,beam5,beam6]
-        self.verbose = True
-        self.helper = _tmp_test_plan_writer("test.dcm",spotspecs=[beam4,beam5,beam6])
+        self.testbeams = [beam4,beam5,beam6]
+        # while debugging, set this to True
+        self.verbose = False
+        self.helper = _tmp_test_plan_writer("test.dcm",spotspecs=self.testbeams)
         #self.helper = _test_plan_creator("test.dcm",spotspecs=[beam0])
     def tearDown(self):
         del self.helper
@@ -464,7 +468,11 @@ class test_small_normal_plan(unittest.TestCase):
     def test_angles_and_iscoCs(self):
         test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
         gantry_angles, patient_angles, iso_centers = _get_angles_and_isoCs(test_rp,self.verbose)
-        for g,p,i,b in zip(gantry_angles, patient_angles, iso_centers, self.beams):
+        nbeams=len(self.testbeams)
+        self.assertEqual(len(gantry_angles),nbeams)
+        self.assertEqual(len(patient_angles),nbeams)
+        self.assertEqual(len(iso_centers),nbeams)
+        for g,p,i,b in zip(gantry_angles, patient_angles, iso_centers, self.testbeams):
             self.assertAlmostEqual(g,b["G"])
             self.assertAlmostEqual(p,b["P"])
             self.assertEqual(3,len(i))
@@ -484,6 +492,87 @@ class test_small_normal_plan(unittest.TestCase):
         self.assertEqual("_Box_6__0__0__25___Rashi",_check_output_filename("_Box 6 (0, 0, 25) ^Rashi.txt",self.verbose))
     def test_the_whole_thing_already(self):
         dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_tolerance.txt",allow0=True,verbose=self.verbose)
+        dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_nontolerance.txt",allow0=False,verbose=self.verbose)
+
+class test_workarounds(unittest.TestCase):
+    """
+    Check that the workarounds for missing information are indeed working.
+    """
+    def setUp(self):
+        self.testbeams = list()
+        # now all beams have the same name and number
+        # (I saw this in an actual treatment plan, not for a patient but used in commissioning / beam delivery verification.)
+        self.testbeams.append(dict(Nm="foo", Nr=-1, # G=90., P=90., I=-1.,
+                                   # let's remove the tune ID
+                                   controlpoints=[dict(SSW=[0.42e9],E=100., # T="3.0",
+                                                       SSP=[(2.,1)])]))
+        self.testbeams.append(dict(Nm="foo", Nr=-1, #G=90., P=90., I=-1,
+                                   # half of the spots have zero weight
+                                   controlpoints=[dict(SSW=[0.,0.4e9,0.,0.6e9],E=110.,T="3.0",
+                                                       SSP=[(2.,1.),(2.,1),(3.,4.),(3.,4.)])]))
+        self.testbeams.append(dict(Nm="foo", Nr=-1, #G=90., P=90., I=-1,
+                                   # All spots in first control point have zero weight
+                                   # This actually happens in actual patient plans as well.
+                                   controlpoints=[dict(SSW=[0.0,0.0,0.0],E=120.,T="3.1",
+                                                       SSP=[(2.,1),(3.,4.),(6.,5.)]),
+                                                  dict(SSW=[0.4e9,0.5e9,0.6e9],E=120.,T="3.1",
+                                                       SSP=[(2.,1),(3.,4.),(6.,5.)])]))
+        # while debugging, set this to True
+        self.verbose = False
+        self.helper = _tmp_test_plan_writer("test.dcm",spotspecs=self.testbeams)
+        #self.helper = _test_plan_creator("test.dcm",spotspecs=[beam0])
+    def tearDown(self):
+        del self.helper
+    def test_dicom(self):
+        """
+        Self consistency check for test dicom file.
+        """
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
+        self.assertEqual( 3,len(test_rp.IonBeamSequence))
+        self.assertEqual(-1,int(test_rp.IonBeamSequence[0].BeamNumber))
+        self.assertEqual(-1,int(test_rp.IonBeamSequence[1].BeamNumber))
+        self.assertEqual(-1,int(test_rp.IonBeamSequence[2].BeamNumber))
+        self.assertEqual("3.1",test_rp.IonBeamSequence[2].IonControlPointSequence[1].ScanSpotTuneID)
+        self.assertEqual("",test_rp.IonBeamSequence[0].IonControlPointSequence[0].IsocenterPosition)
+        self.assertEqual("",test_rp.IonBeamSequence[1].IonControlPointSequence[0].IsocenterPosition)
+        self.assertEqual("",test_rp.IonBeamSequence[2].IonControlPointSequence[0].IsocenterPosition)
+        self.assertAlmostEqual(120.0   ,test_rp.IonBeamSequence[2].IonControlPointSequence[1].NominalBeamEnergy)
+        self.assertAlmostEqual(  0.42e9,test_rp.IonBeamSequence[0].IonControlPointSequence[0].ScanSpotMetersetWeights)
+        self.assertAlmostEqual(  0.0   ,test_rp.IonBeamSequence[1].IonControlPointSequence[0].ScanSpotMetersetWeights[0])
+        self.assertAlmostEqual(  0.6e9 ,test_rp.IonBeamSequence[1].IonControlPointSequence[0].ScanSpotMetersetWeights[3])
+        self.assertAlmostEqual(  0.5e9 ,test_rp.IonBeamSequence[2].IonControlPointSequence[1].ScanSpotMetersetWeights[1])
+        self.assertFalse( hasattr(test_rp.IonBeamSequence[1].IonControlPointSequence[0], "PatientSupportAngle"))
+        self.assertFalse( hasattr(test_rp.IonBeamSequence[2].IonControlPointSequence[0], "GantryAngle"))
+    def test_mswtot(self):
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
+        mswtot_list = _get_mswtot_list(test_rp,self.verbose)
+        self.assertEqual(3,len(mswtot_list))
+        self.assertAlmostEqual(0.42e9,mswtot_list[0])
+        self.assertAlmostEqual(1.0e9,mswtot_list[1])
+        self.assertAlmostEqual(1.5e9,mswtot_list[2])
+    def test_beam_numbers(self):
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
+        numbers = _get_beam_numbers(test_rp,self.verbose)
+        # These numbers are now fixed, right?
+        self.assertEqual([1,2,3],numbers)
+    def test_angles_and_iscoCs(self):
+        test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
+        # The "unittest" module has an "assertWarning" test, maybe we should apply that here.
+        print("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
+        gantry_angles, patient_angles, iso_centers = _get_angles_and_isoCs(test_rp,self.verbose)
+        for g,p,i in zip(gantry_angles, patient_angles, iso_centers):
+            # missing in input, therefore all zero!
+            self.assertEqual(g,0.)
+            self.assertEqual(p,0.)
+            self.assertEqual(3,len(i))
+            for j in range(3):
+                self.assertEqual(i[j],0.)
+    def test_the_whole_thing_already(self):
+        # "unittest" has an "assertWarning" test, maybe we should apply that here.
+        print("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
+        dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_tolerance.txt",allow0=True,verbose=self.verbose)
+        # "unittest" has an "assertWarning" test, maybe we should apply that here.
+        print("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
         dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_nontolerance.txt",allow0=False,verbose=self.verbose)
 
 # vim: set et ts=4 ai sw=4:
