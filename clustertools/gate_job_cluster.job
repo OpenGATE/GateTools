@@ -84,7 +84,8 @@ if [[ "$unamestr" == 'Darwin' ]]; then
     ## cp is slightly different on OSX
     cp -R -L "${MACRODIR}"/{data,mac} .
 else
-    cp -r -L "${MACRODIR}"/{data,mac} .
+    cp -r -L "${MACRODIR}"/mac .
+    ln -s "${MACRODIR}"/data ./data
 fi
 mkdir output
 
