@@ -190,32 +190,19 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
     paramFile.write('\ncommands: \n')
 
     # Run jobs
-    for i in range(0, jobs):
-        #Set paramtogate with alias for each job
-        paramtogateJob = paramtogate + ' -a [JOB_ID,' + str(i) + ']'
-        for aliasMac in parserMacro.aliasToGate:
-            paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
-
-        if get_dns_domain() == 'in2p3.fr':
-            command = 'qsub -o ' + outputDir + \
-                      ' -e ' + outputDir + \
-                      ' -l sps=1 -N \"gate.' + runId + \
-                      '\" -v \"PARAM=\\\"' + paramtogateJob + \
-                      '\\\",INDEX=' + str(i) + \
-                      ',INDEXMAX=' + str(jobs) + \
-                      ',OUTPUTDIR=' + outputDir + \
-                      ',RELEASEDIR=' + releasedir + \
-                      ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
-                      ',MACRODIR=' + outputDir + \
-                      ',ENV=' + envCommand + \
-                      '\" ' + jobFile
-        elif get_dns_domain() == 'idris.fr':
+    # if idris, run job by array
+    if  get_dns_domain() == 'idris.fr':
+            #Set paramtogate
+            paramtogateJob = paramtogate + ' -a '
+            for aliasMac in parserMacro.aliasToGate:
+                paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
             tempParamFile = tempfile.NamedTemporaryFile(mode='w+t', delete=False, prefix='var.', dir=outputDir)
             tempParamFile.write(paramtogateJob)
             tempParamFile.close()
             command = 'sbatch -J gate.' + runId + \
+                      ' --array=0-5000%100' \
                       ' --export=ALL,PARAM=\"' + tempParamFile.name + \
-                      '\",INDEX=' + str(i) + \
+                      '\",INDEX=' + str(jobs) + \
                       ',INDEXMAX=' + str(jobs) + \
                       ',OUTPUTDIR=' + outputDir + \
                       ',RELEASEDIR=' + releasedir + \
@@ -223,35 +210,61 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',MACRODIR=' + outputDir + \
                       ',ENV=' + envCommand + \
                       ' ' + jobFile
-        elif qsub is None:
-            command = 'PARAM=\" ' + paramtogateJob + \
-                      '\" INDEX=' + str(i) + \
-                      ' INDEXMAX=' + str(jobs) + \
-                      ' OUTPUTDIR=' + outputDir + \
-                      ' RELEASEDIR=' + releasedir + \
-                      ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
-                      ' MACRODIR=' + outputDir + \
-                      ' ENV=' + envCommand + \
-                      ' PBS_JOBID=\"local_' + str(i) + \
-                      '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
-        else:
-            command = 'qsub -N \"gatejob.' + runId + \
-                      ' -o ' + outputDir + \
-                      ' -v \"PARAM=\\\"' + paramtogateJob + \
-                      '\\\",INDEX=' + str(i) + \
-                      ',INDEXMAX=' + str(jobs) + \
-                      ',OUTPUTDIR=' + outputDir + \
-                      ',RELEASEDIR=' + releasedir + \
-                      ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
-                      ',MACRODIR=' + outputDir + \
-                      ',ENV=' + envCommand + \
-                      '\" ' + jobFile
-        paramFile.write(command)
-        paramFile.write("\n")
-        if dry:
-            print(command)
-        else:
-            os.system(command)
+            paramFile.write(command)
+            paramFile.write("\n")
+            if dry:
+                print(command)
+            else:
+                os.system(command)
+    else:
+        for i in range(0, jobs):
+            #Set paramtogate with alias for each job
+            paramtogateJob = paramtogate + ' -a [JOB_ID,' + str(i) + ']'
+            for aliasMac in parserMacro.aliasToGate:
+                paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
+
+            if get_dns_domain() == 'in2p3.fr':
+                command = 'qsub -o ' + outputDir + \
+                          ' -e ' + outputDir + \
+                          ' -l sps=1 -N \"gate.' + runId + \
+                          '\" -v \"PARAM=\\\"' + paramtogateJob + \
+                          '\\\",INDEX=' + str(i) + \
+                          ',INDEXMAX=' + str(jobs) + \
+                          ',OUTPUTDIR=' + outputDir + \
+                          ',RELEASEDIR=' + releasedir + \
+                          ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
+                          ',MACRODIR=' + outputDir + \
+                          ',ENV=' + envCommand + \
+                          '\" ' + jobFile
+            elif qsub is None:
+                command = 'PARAM=\" ' + paramtogateJob + \
+                          '\" INDEX=' + str(i) + \
+                          ' INDEXMAX=' + str(jobs) + \
+                          ' OUTPUTDIR=' + outputDir + \
+                          ' RELEASEDIR=' + releasedir + \
+                          ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
+                          ' MACRODIR=' + outputDir + \
+                          ' ENV=' + envCommand + \
+                          ' PBS_JOBID=\"local_' + str(i) + \
+                          '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
+            else:
+                command = 'qsub -N \"gatejob.' + runId + \
+                          ' -o ' + outputDir + \
+                          ' -v \"PARAM=\\\"' + paramtogateJob + \
+                          '\\\",INDEX=' + str(i) + \
+                          ',INDEXMAX=' + str(jobs) + \
+                          ',OUTPUTDIR=' + outputDir + \
+                          ',RELEASEDIR=' + releasedir + \
+                          ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
+                          ',MACRODIR=' + outputDir + \
+                          ',ENV=' + envCommand + \
+                          '\" ' + jobFile
+            paramFile.write(command)
+            paramFile.write("\n")
+            if dry:
+                print(command)
+            else:
+                os.system(command)
 
     paramFile.close()
     print(str(jobs) + ' jobs running')
