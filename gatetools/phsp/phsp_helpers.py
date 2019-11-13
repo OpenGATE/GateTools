@@ -376,3 +376,31 @@ def fig_histo2D(ax, data, keys, k, nbins, color='g'):
     plt.colorbar(im, ax=ax)
     ax.set_xlabel(k[0])
     ax.set_ylabel(k[1])
+
+# -----------------------------------------------------------------------------
+import unittest
+import hashlib
+class Test_Phsp(unittest.TestCase):
+    def test_phsp_convert(self):
+        print('Test_Phsp test_phsp_convert')
+        testfilesPath = os.path.dirname(os.path.realpath(__file__))
+        testfilesPath = os.path.join(testfilesPath, "testphsp")
+        data, read_keys, m = load(os.path.join(testfilesPath, "phsp.root"), -1)
+        save_npy(os.path.join(testfilesPath, "testphsp.npy"), data, read_keys)
+        fnew = open(os.path.join(testfilesPath, "testphsp.npy"),"rb")
+        bytesNew = fnew.read()
+        new_hash = hashlib.sha256(bytesNew).hexdigest()
+        os.remove(os.path.join(testfilesPath, "testphsp.npy"))
+        self.assertTrue("cec796ec5764d039b02e15d504e80ccf2b2c35e0e5380985245262faf0ff0892" == new_hash)
+
+    def test_phsp_info(self):
+        print('Test_Phsp test_phsp_info')
+        testfilesPath = os.path.dirname(os.path.realpath(__file__))
+        testfilesPath = os.path.join(testfilesPath, "testphsp")
+        data, read_keys, m = load(os.path.join(testfilesPath, "phsp.root"), -1)
+        self.assertTrue("17.27 MB" == humansize(os.stat(os.path.join(testfilesPath, "phsp.root")).st_size))
+        self.assertTrue(np.float32 == data.dtype)
+        self.assertTrue(782127 == m)
+        self.assertTrue(7 == len(read_keys))
+        self.assertTrue(np.allclose(131.69868, np.amax(data[:,2])))
+
