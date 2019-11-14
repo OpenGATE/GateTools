@@ -12,15 +12,16 @@ import click
 import itk
 import pydicom
 import os
+from tqdm import tqdm
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename_struct', type=str, required=True)
-@click.argument('filename_img', type=str, required=True)
+@click.argument('filename_img', type=str, required=False)
 @click.option('--list_roi', '-l', help='List all ROI names only', is_flag=True)
-@click.option('--no_crop', '-n', help='Do not crop output mask image', is_flag=True)
+@click.option('--crop', '-c', help='Crop output mask image', is_flag=True)
 @click.option('--roi', '-r', help='Convert the ROI with this name', multiple=True)
-def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, no_crop):
+def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, crop):
     '''
     \b
     Convert Dicom RT Struct into mask images
@@ -40,22 +41,30 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, no
         print(s)
         exit(0)
 
+    # filename_img is required (except if list_roi)
+    if filename_img == None:
+        print('filename_img is required')
+        exit(0)
+
     if len(roi) == 0:
         roi = roi_names
 
     img = itk.imread(filename_img)
     base_filename, extension = os.path.splitext(filename_img)
+    pbar = tqdm(total=len(roi), leave=False)
     for r in roi:
         roiname = r
         try:
             aroi = gt.region_of_interest(structset, roiname)
             mask = aroi.get_mask(img, corrected=False)
-            if not no_crop:
+            if crop:
                 mask = gt.image_crop(mask)
             output_filename = base_filename+'_'+roiname+'.mhd';
             itk.imwrite(mask, output_filename)
+            pbar.update(1)
         except Exception as e:
             print(e)
+    pbar.close()
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':

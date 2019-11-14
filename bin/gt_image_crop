@@ -5,23 +5,61 @@ import sys
 import gatetools as gt
 import click
 import itk
+import numpy as np
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('input_filename')
-@click.option('--output', '-o', help='Output filename')
-@click.option('--bg', help='Value of the backgroup to autocrop', default='0')
-def gt_image_crop(input_filename, output, bg):
+@click.option('--output', '-o', help='Output filename', required=True)
+@click.option('--bg', help='Value of the backgroup to autocrop', default=None)
+@click.option('--bb', default=None,
+              help="Bounding Box with 6 ints (voxel), separated with comma 'x1,y1,z1,x2,y2,z2'")
+@click.option('--verbose/--quiet','-v/-q',
+              help='Be verbose (-v) or keep quiet (-q, default)', default=False)
+def gt_image_crop(input_filename, output, bg, bb, verbose):
     '''
     \b
     Crop an image according to a background value.
+
+    If --bg : crop is performed automatically according to the background value
+    If --bb : manual crop in mm. 
 
     \b
     <INPUT_FILENAME> : input image
     '''
 
-    img = itk.imread(input_filename)
-    o = gt.image_crop(img, bg)
+    # check exclusive options
+    if bg == None and bb == None:
+        bg = 0
+    if bg != None and bb != None:
+        print('Use --bg or --bb not both')
+        exit(0)
+
+    # read img
+    try:
+        img = itk.imread(input_filename)
+    except:
+        print(f'ERROR: cannot read {input_filename}')
+        exit(0)
+    dims = np.array(img.GetLargestPossibleRegion().GetSize())
+    
+    if verbose:
+        print(f'Input image size: {input_filename} {dims}')
+
+    # autocrop
+    if bg != None:
+        o = gt.image_auto_crop(img, bg)
+
+    # manual crop
+    if bb != None:
+        bb = [float(x) for x in bb.split(',')]
+        bb = gt.bounding_box(xyz=bb)
+        o = gt.image_crop_with_bb(img, bb)
+
+    # final write
+    dims = np.array(o.GetLargestPossibleRegion().GetSize())
+    if verbose:
+        print(f'Output image size: {output} {dims}')
     itk.imwrite(o, output)
 
 # --------------------------------------------------------------------------
