@@ -61,9 +61,9 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
                 mask = gt.image_crop(mask)
             output_filename = base_filename+'_'+roiname+'.mhd';
             itk.imwrite(mask, output_filename)
-            pbar.update(1)
         except Exception as e:
-            print(e)
+            tqdm.write(str(e))
+        pbar.update(1)
     pbar.close()
 
 # -----------------------------------------------------------------------------
