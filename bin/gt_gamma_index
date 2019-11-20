@@ -33,10 +33,15 @@ value in the same units as the reference and target images.''',
 @click.option('--dta','-r', help='"Distance To Agreement" [same unit as used for the voxel spacing]', default=3.)
 @click.option('--threshold','-T', help='Threshold dose value (exclusive) [same unit as ref/target input files].', default=0.)
 @click.option('--defvalue','-D', help='Default value for voxels that are outside of the overlap region with the reference image, or that have dose less than the th.', default=-1.)
-@click.option('--output','-o', help='Output filename', required=True,
+@click.option('--debugging_logfile',
+              help='Path of debugging log file. Default: empty (no log file is written). If you specify "auto" then an informative logfile name will be generated automatically.', required=False, default="")
+@click.option('--output','-o',
+              help='Output filename',
+              required=True,
               type=click.Path(exists=False, file_okay=False, dir_okay=False,
-                  writable=True, readable=False, resolve_path=True, allow_dash=False, path_type=None))
-def gt_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output,verbose):
+                              writable=True, readable=False, resolve_path=True,
+                              allow_dash=False, path_type=None))
+def gt_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output,verbose,debugging_logfile):
     '''
     Compute the gamma index [Daniel Low, 1998] between a reference image and a
     target image.  For every voxel i in the target image, determine the gamma
@@ -77,6 +82,9 @@ def gt_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output
     
     gate_gamma_index data/tps_dose.mhd result.XYZ/gate-DoseToWater.mhd -o gamma.mhd --dd 2 --dta 2.5 -u "%" -T 0.2
     '''
+
+    # logger
+    gt.logging_conf(verbose,debugging_logfile)
 
     # compute gamma
     ref_img=itk.imread(reference)
