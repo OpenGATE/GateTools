@@ -47,6 +47,8 @@ import numpy as np
 from functools import reduce
 import operator
 import ctypes # needed for definition of "unsigned long", as np.uint32 is not recognized as such
+import logging
+logger=logging.getLogger(__name__)
 
 def _image_size(img):
     # FIXME
@@ -202,10 +204,11 @@ def image_invert(input_list=[],output_file=None):
 import unittest
 import sys
 from datetime import datetime
+from .logging_conf import LoggedTestCase
 
-class Test_Sum(unittest.TestCase):
+class Test_Sum(LoggedTestCase):
     def test_five_2D_images(self):
-        print('Test_Sum test_five_2D_images')
+        logger.info('Test_Sum test_five_2D_images')
         nx,ny = 4,5
         hundred = 100
         thousand = 1000
@@ -221,9 +224,9 @@ class Test_Sum(unittest.TestCase):
             imgF.SetSpacing( spacing )
             imgF.SetOrigin( origin )
         imgsumF = image_sum(input_list=imglistF)
-        #print("got image with spacing {}".format(imgsumF.GetSpacing()))
+        logger.debug("got image with spacing {}".format(imgsumF.GetSpacing()))
         index = imgsumF.GetLargestPossibleRegion().GetSize() -1
-        #print("get sum value {} while expecting {}".format(imgsumF.GetPixel(index),4.*5. -1.))
+        logger.debug("get sum value {} while expecting {}".format(imgsumF.GetPixel(index),4.*5. -1.))
         self.assertTrue( np.allclose(itk.GetArrayViewFromImage(imgsumF),nx*ny-1.+(nx*ny-1.)*hundred +thousand) ) # floats: approximate equality
         self.assertTrue( itk.GetArrayFromImage(imgsumF).shape == (nx,ny))
         self.assertTrue( np.allclose(imgsumF.GetSpacing(),spacing))
@@ -243,14 +246,14 @@ class Test_Sum(unittest.TestCase):
             imgUS.SetSpacing( spacing )
             imgUS.SetOrigin( origin )
         imgsumUS = image_sum(input_list=imglistUS)
-        #print("got image with spacing {}".format(imgCui.GetSpacing()))
-        #print("get sum value {} while expecting {}".format(imgsumUS.GetPixel(index),40*50-1+10*40*50-10+13))
+        logger.debug("got image with spacing {}".format(imgsumUS.GetSpacing()))
+        logger.debug("get sum value {} while expecting {}".format(imgsumUS.GetPixel(index),40*50-1+10*40*50-10+13))
         self.assertTrue( (itk.GetArrayViewFromImage(imgsumUS)==nx*ny-1+ten*nx*ny-ten+thirteen).all() ) # ints: exact equality
         self.assertTrue( itk.GetArrayFromImage(imgsumUS).shape == (nx,ny))
         self.assertTrue( np.allclose(imgsumUS.GetSpacing(),spacing))
         self.assertTrue( np.allclose(imgsumUS.GetOrigin(),origin))
     def test_five_3D_images(self):
-        print('Test_Sum test_five_3D_images')
+        logger.info('Test_Sum test_five_3D_images')
         nx,ny,nz = 3,4,5
         hundred = 100
         thirteen = 13.333
@@ -284,16 +287,16 @@ class Test_Sum(unittest.TestCase):
             imgUS.SetSpacing( spacing )
             imgUS.SetOrigin( origin )
         imgsumUS = image_sum(input_list=imglistUS)
-        #print("got image with spacing {}".format(imgsumUS.GetSpacing()))
+        logger.debug("got sum image with spacing {}".format(imgsumUS.GetSpacing()))
         self.assertTrue( (itk.GetArrayViewFromImage(imgsumUS)==nx*ny*nz-1+nz-1+thirteen).all() )
         self.assertTrue( np.allclose(imgsumUS.GetSpacing(),spacing) )
         self.assertTrue( np.allclose(imgsumUS.GetOrigin(),origin) )
         self.assertTrue( itk.GetArrayFromImage(imgsumUS).shape == (nx,ny,nz))
 
-class Test_Product(unittest.TestCase):
+class Test_Product(LoggedTestCase):
     # TODO: also test correct behavior in case of NAN, zero, etc
     def test_three_float_3D_images(self):
-        print('Test_Product test_three_float_3D_images')
+        logger.info('Test_Product test_three_float_3D_images')
         nx,ny,nz = 2,3,4
         minlog,maxlog=-5.,5.
         spacing = (421.,214.,142.)
@@ -312,7 +315,7 @@ class Test_Product(unittest.TestCase):
         self.assertTrue( np.allclose(imgprodF.GetOrigin(),origin))
         self.assertTrue( type(imgprodF) == itk.Image[itk.F,3])
     def test_five_int_3D_images(self):
-        print('Test_Product test_five_int_3D_images')
+        logger.info('Test_Product test_five_int_3D_images')
         nx,ny,nz = 30,40,50
         spacing = (321.,213.,132.)
         origin = (321321.,213213.,132132.)
@@ -337,9 +340,9 @@ class Test_Product(unittest.TestCase):
         self.assertTrue( np.allclose(imgprodUS.GetSpacing(),spacing) )
         self.assertTrue( np.allclose(imgprodUS.GetOrigin(),origin) )
 
-class Test_MinMax(unittest.TestCase):
+class Test_MinMax(LoggedTestCase):
     def test_eight_3D_images(self):
-        print('Test_MinMax test_eight_3D_images')
+        logger.info('Test_MinMax test_eight_3D_images')
         nx,ny,nz = 30,40,50
         dmin,dmax = np.float32(-20.5), np.float32(31230.5)
         spacing = (321.,213.,132.)
@@ -365,9 +368,9 @@ class Test_MinMax(unittest.TestCase):
         self.assertTrue( np.allclose(imgmin.GetOrigin(),origin))
         self.assertTrue( np.allclose(imgmax.GetOrigin(),origin))
 
-class Test_Divide(unittest.TestCase):
-    def test_nine_3D_images(self):
-        print('Test_Divide test_nine_3D_images')
+class Test_Divide(LoggedTestCase):
+    def test_three_3D_images(self):
+        logger.info('Test_Divide test_nine_3D_images')
         nx,ny,nz = 30,40,50
         spacing = (321.,213.,132.)
         origin = (321321.,213213.,132132.)
@@ -383,9 +386,9 @@ class Test_Divide(unittest.TestCase):
         self.assertTrue( np.allclose(imgdivide.GetSpacing(),spacing))
         self.assertTrue( np.allclose(imgdivide.GetOrigin(),origin))
 
-class Test_Invert(unittest.TestCase):
-    def test_ten_3D_images(self):
-        print('Test_Invert test_ten_3D_images')
+class Test_Invert(LoggedTestCase):
+    def test_three_3D_images(self):
+        logger.info('Test_Invert test_ten_3D_images')
         nx, ny, nz = 30, 40, 50
         spacing = (321., 213., 132.)
         origin = (321321., 213213., 132132.)
