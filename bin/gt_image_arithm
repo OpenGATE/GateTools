@@ -10,6 +10,8 @@ import gatetools as gt
 import itk
 import click
 import sys
+import logging
+logger=logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -29,6 +31,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--verbose/--quiet','-v/-q',
               help='Be verbose (-v) or keep quiet (-q, default)', default=False)
+@click.option('--debugging_logfile',
+              help='Path of debugging log file. Default: empty (no log file is written). If you specify "auto" then an informative logfile name will be generated automatically.', required=False, default="")
 
 @click.option('--scalar','-s', help='scalar for operation', type=float)
 
@@ -37,7 +41,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
 
-def gt_image_arithm_main(files, operation, scalar, output, verbose):
+def gt_image_arithm_main(files, operation, scalar, output, verbose, debugging_logfile):
     '''
     Basic pixel-wise (or voxel-wise) arithmetic operations on one or
     more images of the same type and geometry. Currently :
@@ -72,13 +76,16 @@ def gt_image_arithm_main(files, operation, scalar, output, verbose):
     gt_image_arithm -O max     -o max.mhd  input1.mhd input2.mhd input3.mhd input4.mhd
     gt_image_arithm -O absreldiffmax -o diff.mhd input1.mhd input2.mhd 
     '''
+
+    # logger
+    gt.logging_conf(verbose,debugging_logfile)
     
     try:
         input_images = [itk.imread(fpath) for fpath in files]
     except KeyError as ke:
-        print("Looks like you are trying to read images of a type that are not supported by the ITK python bindings on your system.")
-        print("This 'KeyError' was raised by ITK: {}".format(ke))
-        print("Sorry!")
+        logger.error("Looks like you are trying to read images of a type that are not supported by the ITK python bindings on your system.")
+        logger.error("This 'KeyError' was raised by ITK: {}".format(ke))
+        logger.error("Sorry!")
         sys.exit(1)
         #raise # the full traceback is scary and uninformative
         
@@ -97,8 +104,7 @@ def gt_image_arithm_main(files, operation, scalar, output, verbose):
         
     n = len(input_images)    
     if n == 1 and operation != "invert":
-        if verbose:
-            print("Only one input file => output is equal to input !")
+        logger.info("Only one input file => output is equal to input !")
         itk.imwrite(input_images[0], output)
         return
     
@@ -110,15 +116,14 @@ def gt_image_arithm_main(files, operation, scalar, output, verbose):
                    ("divide",gt.image_divide),
                    ("invert", gt.image_invert)])
 
-    if verbose:
-        prefix="\n - "
-        print("Compute {} of input files:{}{}".format(operation,prefix,prefix.join(files)))
-        print("Output will be written to: {}".format(output))
+    prefix="\n - "
+    logger.info("Compute {} of input files:{}{}".format(operation,prefix,prefix.join(files)))
+    logger.info("Output will be written to: {}".format(output))
     try:
         opdict[operation](input_list=input_images,output_file=output)
     except TypeError as te:
-        print("Looks like the input files had incompatible types and/or geometries.")
-        print("Specifically: '{}'".format(te))
+        logger.error("Looks like the input files had incompatible types and/or geometries.")
+        logger.error("Specifically: '{}'".format(te))
         sys.exit(2)
         #raise # the full traceback is scary and uninformative
 

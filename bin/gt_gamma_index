@@ -9,6 +9,8 @@
 import gatetools as gt
 import itk
 import click
+import logging
+logger=logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -85,6 +87,16 @@ def gt_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output
 
     # logger
     gt.logging_conf(verbose,debugging_logfile)
+    logger.debug(f"reference: {reference}")
+    logger.debug(f"target: {target}")
+    logger.debug(f"dd: {dd}")
+    logger.debug(f"ddunit: {ddunit}")
+    logger.debug(f"dta: {dta}")
+    logger.debug(f"threshold: {threshold}")
+    logger.debug(f"defvalue: {defvalue}")
+    logger.debug(f"output: {output}")
+    logger.debug(f"verbose: {verbose}")
+    logger.debug(f"debugging_logfile: '{debugging_logfile}'")
 
     # compute gamma
     ref_img=itk.imread(reference)
