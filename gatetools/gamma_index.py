@@ -2,6 +2,9 @@
 
 import numpy as np
 import itk
+import logging
+from tqdm import tqdm
+logger=logging.getLogger(__name__)
 
 def _reldiff2(dref,dtarget,ddref):
     """
@@ -23,7 +26,7 @@ def get_gamma_index(ref,target,**kwargs):
     * ddpercent is a flag, True (default) means that dd is given in percent, False means that dd is absolute.
     * dta indicates distance scale ("distance to agreement") in millimeter (e.g. 3mm)
     * threshold indicates minimum dose value (exclusive) for calculating gamma values
-    * verbose is a flag, True will result in some chatter, False will keep the computation quiet.
+    * verbose is a flag, True will result in a progress bar. All other chatter goes to the "debug" level.
     Returns an image with the same geometry as the target image.
     For all target voxels in the overlap between ref and target that have d>dmin, a gamma index value is given.
     For all other voxels the "defvalue" is given.
@@ -33,12 +36,10 @@ def get_gamma_index(ref,target,**kwargs):
     if (np.allclose(ref.GetOrigin(),target.GetOrigin())) and \
        (np.allclose(ref.GetSpacing(),target.GetSpacing())) and \
        (ref.GetLargestPossibleRegion().GetSize() == ref.GetLargestPossibleRegion().GetSize() ):
-        if kwargs.get('verbose',False):
-            print("Images with equal geometry, using the slightly faster implementation.")
+        logger.debug("Images with equal geometry, using the slightly faster implementation.")
         return gamma_index_3d_equal_geometry(ref_img,target_img,**kwargs)
     else:
-        if kwargs.get('verbose',False):
-            print("Images with different geometry, using the slightly slower implementation.")
+        logger.debug("Images with different geometry, using the slightly slower implementation.")
         return gamma_index_3d_unequal_geometry(ref,target,**kwargs)
 
 
@@ -75,10 +76,10 @@ def gamma_index_3d_equal_geometry(imgref,imgtarget,dta=3.,dd=3., ddpercent=True,
     nx,ny,nz = atarget.shape
     ntot = nx*ny*nz
     nmask = np.sum(mask)
-    ndone = 0
     if verbose:
-        print("Both images have {} x {} x {} = {} voxels.".format(nx,ny,nz,ntot))
-        print("{} target voxels have a dose > {}.".format(nmask,threshold))
+        pbar = tqdm(total=nmask, leave=False)
+    logger.debug("Both images have {} x {} x {} = {} voxels.".format(nx,ny,nz,ntot))
+    logger.debug("{} target voxels have a dose > {}.".format(nmask,threshold))
     g2 = np.zeros((nx,ny,nz),dtype=float)
     for x in range(nx):
         for y in range(ny):
@@ -103,17 +104,15 @@ def gamma_index_3d_equal_geometry(imgref,imgtarget,dta=3.,dd=3., ddpercent=True,
                     g2mesh += ((relspacing[1]*(iy-y)))**2
                     g2mesh += ((relspacing[2]*(iz-z)))**2
                     g2[x,y,z] = np.min(g2mesh)
-                ndone += 1
-                if verbose and ((ndone % 1000) == 0):
-                    print("{0:.1f}% done...\r".format(ndone*100.0/nmask),end='')
+                if verbose:
+                    pbar.update(1)
     g=np.sqrt(g2)
     g[np.logical_not(mask)]=defvalue
     # ITK does not support double precision images by default => cast down to float32.
     # Also: only the first few digits of gamma index values are interesting.
     gimg=itk.GetImageFromArray(g.swapaxes(0,2).astype(np.float32).copy())
     gimg.CopyInformation(imgtarget)
-    if verbose:
-        print("100% done!     ")
+    logger.debug(f"Computed {nmask} gamma values assuming EQUAL geometry in target and reference")
     return gimg
 
 # FIXME: should this function remain public or be made private (by prefixing it with an _underscore)?
@@ -154,7 +153,7 @@ def gamma_index_3d_unequal_geometry(imgref,imgtarget,dta=3.,dd=3.,ddpercent=True
     mask  = atarget>threshold
     nmask=np.sum(mask)
     if nmask==0:
-        print("WARNING: target has no dose over threshold.")
+        logger.error("target has no dose over threshold.")
         dummy = itk.GetImageFromArray((np.ones(atarget.shape)*defvalue).swapaxes(0,2).copy())
         dummy.CopyInformation(imgtarget)
         return dummy
@@ -173,16 +172,16 @@ def gamma_index_3d_unequal_geometry(imgref,imgtarget,dta=3.,dd=3.,ddpercent=True
     noverlap = np.sum(overlap)
     nmask=np.sum(mask)
     if nmask==0:
-        print("WARNING: images do not seem to overlap.")
+        logger.error("images do not seem to overlap.")
         dummy = itk.GetImageFromArray((np.ones(atarget.shape)*defvalue).swapaxes(0,2).copy())
         dummy.CopyInformation(imgtarget)
         return dummy
+    logger.debug("Reference image has {} x {} x {} = {} voxels.".format(mx,my,mz,mtot))
+    logger.debug("Target image has {} x {} x {} = {} voxels.".format(nx,ny,nz,ntot))
+    logger.debug("{} target voxels are in the intersection of target and reference image.".format(noverlap))
+    logger.debug("{} of these have dose > {}.".format(nmask,threshold))
     if verbose:
-        print("Reference image has {} x {} x {} = {} voxels.".format(mx,my,mz,mtot))
-        print("Target image has {} x {} x {} = {} voxels.".format(nx,ny,nz,ntot))
-        print("{} target voxels are in the intersection of target and reference image.".format(noverlap))
-        print("{} of these have dose > {}.".format(nmask,threshold))
-    ndone = 0
+        pbar = tqdm(total=nmask, leave=False)
     # grid of "close points" in reference image
     xref = areforigin[0]+ixref*arefspacing[0]
     yref = areforigin[1]+iyref*arefspacing[1]
@@ -217,54 +216,53 @@ def gamma_index_3d_unequal_geometry(imgref,imgtarget,dta=3.,dd=3.,ddpercent=True
         g2near += (areforigin[1]+miynear*arefspacing[1]-targetpos[1])**2/dta2
         g2near += (areforigin[2]+miznear*arefspacing[2]-targetpos[2])**2/dta2
         g2[mixtarget,miytarget,miztarget] = np.min(g2near)
-        ndone += 1
-        if verbose and ((ndone % 1000) == 0):
-            print("{0:.1f}% done...\r".format(ndone*100.0/nmask),end='')
+        if verbose:
+            pbar.update(1)
     g=np.sqrt(g2)
     g[np.logical_not(mask)]=defvalue
     # ITK does not support double precision images by default => cast down to float32.
     # Also: only the first few digits of gamma index values are interesting.
     gimg=itk.GetImageFromArray(g.swapaxes(0,2).astype(np.float32).copy())
     gimg.CopyInformation(imgtarget)
-    if verbose:
-        print("100% done!     ")
+    logger.debug(f"Computed {nmask} gamma values assuming UNEQUAL geometry in target and reference")
     return gimg
 
 #####################################################################################
 # TODO: include the unit test in implementation (like here), or have it in a separate test directory?
 #####################################################################################
 import unittest
-import sys
+import os,sys
 from datetime import datetime
+from .logging_conf import LoggedTestCase
 
-class Test_GammaIndex3dIdenticalMesh(unittest.TestCase):
+class Test_GammaIndex3dIdenticalMesh(LoggedTestCase):
     def test_identity(self):
         # two identical images should give gamma=0.0 in all voxels
-        #print("test identity")
-        print('Test_GammaIndex3dIdenticalMesh test_identity')
+        logger.debug("test identity")
+        logger.debug('Test_GammaIndex3dIdenticalMesh test_identity')
         np.random.seed(1234567)
         a_rnd = np.random.uniform(0.,10.,(4,5,6))
         img1 = itk.GetImageFromArray(a_rnd)
         img2 = itk.GetImageFromArray(a_rnd)
         img_gamma = gamma_index_3d_equal_geometry(img1,img2,dd=3.,dta=2.0)
         self.assertTrue( (itk.GetArrayViewFromImage(img_gamma) == 0.).all())
-        #print("DONE test identity")
+        logger.debug("DONE test identity")
     def test_scaling(self):
-        #print("test scaling small")
+        logger.debug("test scaling small")
         # two images identical up to a scaling factor 1.03 should give gamma(3%)<=1.0 in all voxels
-        print('Test_GammaIndex3dIdenticalMesh test_scaling')
+        logger.debug('Test_GammaIndex3dIdenticalMesh test_scaling')
         np.random.seed(1234567)
         a_rnd = np.random.uniform(0.,10.,(4,5,6))
         img1 = itk.GetImageFromArray(a_rnd)
         img2 = itk.GetImageFromArray(1.03*a_rnd)
         img_gamma = gamma_index_3d_equal_geometry(img1,img2,dd=3.,dta=2.0)
         self.assertTrue( (itk.GetArrayViewFromImage(img_gamma) < 1.0001).all())
-        #print("DONE test scaling")
+        logger.debug("DONE test scaling")
     def test_checkerboards(self):
-        #print("test 3D checkerboards: have D=0.25 in even voxels and D=0.75 in odd voxels for ref image, vice versa for test image.")
+        logger.debug("test 3D checkerboards: have D=0.25 in even voxels and D=0.75 in odd voxels for ref image, vice versa for test image.")
         #for every voxel in the target image, the neighboring voxels in the ref image has the same dose
         #therefore the gamma index should be equal to spacing/dta for all voxels.
-        print('Test_GammaIndex3dIdenticalMesh test_checkerboards')
+        #logger.debug('Test_GammaIndex3dIdenticalMesh test_checkerboards')
         nx,ny,nz=4,5,6
         ix,iy,iz = np.meshgrid(np.arange(nx,dtype=int),np.arange(ny,dtype=int),np.arange(nz,dtype=int),indexing='ij')
         a_odd  = 0.5*(((ix+iy+iz) % 2) == 1).astype(float)+0.25
@@ -275,29 +273,29 @@ class Test_GammaIndex3dIdenticalMesh(unittest.TestCase):
         img_gamma_odd_even = gamma_index_3d_equal_geometry(img_odd,img_even,dd=10.,dta=2.)
         self.assertTrue(np.allclose(itk.GetArrayViewFromImage(img_gamma_odd_even),itk.GetArrayViewFromImage(img_gamma_even_odd)))
         self.assertTrue(np.allclose(itk.GetArrayViewFromImage(img_gamma_odd_even),0.5))
-        #print("DONE test checkerboards")
+        logger.debug("DONE test checkerboards")
     def test_large_image(self):
-        print('Test_GammaIndex3dIdenticalMesh test_large_image')
+        logger.debug('Test_GammaIndex3dIdenticalMesh test_large_image')
         for N in [1,2,5,10,20]:
-        #for N in [1,2,5,10,20,50]:
-        #for N in [1,2,5,10,20,50,100]:
+        #for N in [1,2,5,10,20,50]: # requires more patience
+        #for N in [1,2,5,10,20,50,100]: # requires even more patience
             tgen = datetime.now()
             img_ref = itk.GetImageFromArray(np.ones((N,N,N),dtype=float))
             img_target = itk.GetImageFromArray(np.random.normal(1.,0.02,(N,N,N)))
             tbefore = datetime.now()
-            #print("{}^3 voxels generating images took {}".format(N,tbefore-tgen))
+            logger.debug("{}^3 voxels generating images took {}".format(N,tbefore-tgen))
             img_NNN_gamma = gamma_index_3d_equal_geometry(img_ref,img_target,dd=2.,dta=2.0)
             tafter = datetime.now()
-            print("{}^3 voxels calculating gamma took {}".format(N,tafter-tbefore))
+            logger.debug("{}^3 voxels calculating gamma took {}".format(N,tafter-tbefore))
 
-class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
+class Test_GammaIndex3dUnequalMesh(LoggedTestCase):
     def test_EqualMesh(self):
         # For equal meshes, the "unequalmesh" implementation should give the
         # same results as "equal mesh" implementation.
-        print('Test_GammaIndex3dUnequalMesh test_EqualMesh')
+        logger.debug('Test_GammaIndex3dUnequalMesh test_EqualMesh')
         np.random.seed(71234567)
         for i in range(5):
-            #print("{}. comparing implementations with 'equal' and 'unequal' geometry assumptions".format(i))
+            logger.debug("{}. comparing implementations with 'equal' and 'unequal' geometry assumptions".format(i))
             nxyz=np.random.randint(25,35,3)
             oxyz=np.random.uniform(-100.,100.,3)
             sxyz=np.random.uniform(0.5,2.5,3)
@@ -310,28 +308,28 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
             t0 = datetime.now()
             img_gamma_equal = gamma_index_3d_equal_geometry(img_ref,img_target,dd=3.,dta=2.0)
             t1 = datetime.now()
-            print("{}. equal implementation with {} voxels took {}".format(i,np.prod(nxyz),t1-t0))
+            logger.debug("{}. equal implementation with {} voxels took {}".format(i,np.prod(nxyz),t1-t0))
             img_gamma_unequal = gamma_index_3d_unequal_geometry(img_ref,img_target,dd=3.,dta=2.0)
             t2 = datetime.now()
-            print("{}. unequal implementation with {} voxels took {}".format(i,np.prod(nxyz),t2-t1))
+            logger.debug("{}. unequal implementation with {} voxels took {}".format(i,np.prod(nxyz),t2-t1))
             aeq = itk.GetArrayViewFromImage(img_gamma_equal)
             auneq = itk.GetArrayViewFromImage(img_gamma_unequal)
-            #print("eq min/median/mean/max={}/{}/{}/{}".format(np.min(aeq),np.median(aeq),np.mean(aeq),np.max(aeq)))
-            #print("uneq min/median/mean/max={}/{}/{}/{}".format(np.min(auneq),np.median(auneq),np.mean(auneq),np.max(auneq)))
-            #print("{} out of {} are close".format(np.sum(np.isclose(aeq,auneq)),np.prod(aeq.shape)))
-            #print("eq first 2x2x2: {}".format(aeq[:2,:2,:2]))
-            #print("uneq first 2x2x2: {}".format(auneq[:2,:2,:2]))
-            #print("eq last 2x2x2: {}".format(aeq[-2:,-2:,-2:]))
-            #print("uneq last 2x2x2: {}".format(auneq[-2:,-2:,-2:]))
+            logger.debug("eq min/median/mean/max={}/{}/{}/{}".format(np.min(aeq),np.median(aeq),np.mean(aeq),np.max(aeq)))
+            logger.debug("uneq min/median/mean/max={}/{}/{}/{}".format(np.min(auneq),np.median(auneq),np.mean(auneq),np.max(auneq)))
+            logger.debug("{} out of {} are close".format(np.sum(np.isclose(aeq,auneq)),np.prod(aeq.shape)))
+            logger.debug("eq first 2x2x2: {}".format(aeq[:2,:2,:2]))
+            logger.debug("uneq first 2x2x2: {}".format(auneq[:2,:2,:2]))
+            logger.debug("eq last 2x2x2: {}".format(aeq[-2:,-2:,-2:]))
+            logger.debug("uneq last 2x2x2: {}".format(auneq[-2:,-2:,-2:]))
             self.assertTrue( np.allclose(aeq,auneq) )
-            print("Yay!")
+            logger.debug("Yay!")
     def test_Shift(self):
         # two images identical up to a translation less than half the spacing should yield a gamma index 
         # equal to the ratio of the length of the translation vector and the DTA.
-        print('Test_GammaIndex3dUnequalMesh test_Shift')
+        logger.debug('Test_GammaIndex3dUnequalMesh test_Shift')
         np.random.seed(1234568)
         for i in range(5):
-            #print("shift image no. {}".format(i))
+            logger.debug("shift image no. {}".format(i))
             nxyz=np.random.randint(5,15,3)
             oxyz=np.random.uniform(-100.,100.,3)
             sxyz=np.random.uniform(0.5,2.5,3)
@@ -349,14 +347,14 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
             agamma = itk.GetArrayViewFromImage(img_gamma).swapaxes(0,2)
             gval_expected = np.sqrt( np.sum( (txyz/dta)**2 ) )
             self.assertTrue( np.allclose(agamma,gval_expected) )
-            #print("ok #voxels={} gval_exp={}".format(np.prod(nxyz),gval_expected) )
+            logger.debug("ok #voxels={} gval_exp={}".format(np.prod(nxyz),gval_expected) )
     def test_Gradient(self):
         # Let ref and target be two 3D images that are effectively 1D images (only vary in X)
         # and ref has a much smaller spacing, but its volume includes the target volume.
         # Now it's easy to compute 'by hand' the min(gamma(i,j)) for each target voxel.
         # This tests that the gamma calculation is done correctly wehn it needs
         # to "travel" more than one voxel to get to the "minimum".
-        print('Test_GammaIndex3dUnequalMesh test_Gradient')
+        logger.debug('Test_GammaIndex3dUnequalMesh test_Gradient')
         refN=(100,10,10)
         refO=(-50.,0.,0.)
         refS=(1.,1.,1.)
@@ -364,7 +362,7 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
                                         np.arange(refN[1]),
                                         np.arange(refN[2]),
                                         indexing='ij')
-        #print("ixref shape is {}".format(ixref.shape))
+        logger.debug("ixref shape is {}".format(ixref.shape))
         targetN=(10,3,3)
         ixtarget,iytarget,iztarget = np.meshgrid(np.arange(targetN[0]),
                                                  np.arange(targetN[1]),
@@ -372,7 +370,7 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
                                                  indexing='ij')
         np.random.seed(1234569)
         for i in range(5):
-            #print("{}th gradient test".format(i))
+            logger.debug("{}th gradient test".format(i))
             ###################
             # generate random REF data
             ###################
@@ -421,16 +419,10 @@ class Test_GammaIndex3dUnequalMesh(unittest.TestCase):
                     # calculate gamma gamma_index_3d_unequal_geometry
                     #################################################
                     img_gamma = gamma_index_3d_unequal_geometry(img_ref,img_target,dd=ddp,dta=dta)
-                    #print(type(img_gamma))
+                    logger.debug(type(img_gamma))
                     agamma = itk.GetArrayViewFromImage(img_gamma).swapaxes(0,2)
-                    #for jx in range(targetN[0]):
-                    #    print("{} {}".format(gamma_1d[jx],agamma[jx,0,0]))
                     self.assertTrue( np.allclose(agamma,gamma_all) )
-                    #print("ok ddp={} dta={} refGRAD={} targetGRAD={}".format(ddp,dta,refGRAD,targetGRAD))
-            #print("{}th gradient test finished".format(i))
-
-#if __name__ == '__main__':
-#    logging.basicConfig(level=logging.DEBUG)
-#    unittest.main()
+                    logger.debug("ok ddp={} dta={} refGRAD={} targetGRAD={}".format(ddp,dta,refGRAD,targetGRAD))
+            logger.debug("{}th gradient test finished".format(i))
 
 # vim: set et ts=4 ai sw=4:
