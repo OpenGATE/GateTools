@@ -32,10 +32,22 @@ Instead of using print, please use the following logging system. Consider a comm
     logger.error('This is printed and fail')
     
     
-    # For debug, increase manually the verbose level with: 
-    
-    logger.setLevel(logging.DEBUG)
+    # For debugging, run your tool with a logfile:
+    $ gt_my_cool_tool --logfile=foobar.log
+
+    # In the log file you will find the output from all log messages, including the logger.debug(..) ones.
+    #
+    # Note that if you provide the name of an already existing log file, the
+    # new logging information will be *appended*, it will not overwrite the old logfile.
+    #
+    # If you do not like the dual logging setup and prefer to get all logging
+    # messages to standard output, then you can simply replace the
+    # `gt.logging_conf(**kwargs)` line with:
+    logging.basicConfig(level=logging.DEBUG)
     
 ```
 
 
+# Logging
+
+Unit tests. We need some text here about how to write unit tests.
