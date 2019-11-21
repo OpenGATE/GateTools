@@ -20,10 +20,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.argument('filename_struct', type=str, required=True)
 @click.argument('filename_img', type=str, required=False)
 @click.option('--list_roi', '-l', help='List all ROI names only', is_flag=True)
-@click.option('--verbose/--quiet','-v/-q', help='Be verbose (-v) or keep quiet (-q, default)', default=False)
-@click.option('--logfile', help='Path of debugging log file. Default: empty (no log file is written). If you specify "auto" then an informative logfile name will be generated automatically.', required=False, default="")
 @click.option('--crop', '-c', help='Crop output mask image', is_flag=True)
 @click.option('--roi', '-r', help='Convert the ROI with this name', multiple=True)
+@gt.add_options(gt.common_options)
 def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, crop,verbose,logfile):
     '''
     \b
@@ -35,7 +34,7 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
     '''
 
     # logger
-    gt.logging_conf(verbose or list_roi,logfile)
+    gt.logging_conf(verbose=(verbose or list_roi),logfile=logfile)
 
     # read dicom struct
     structset = pydicom.read_file(filename_struct)
