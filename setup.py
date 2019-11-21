@@ -20,6 +20,7 @@ setuptools.setup(
     ),
     install_requires=[
         'uproot',
+        'matplotlib',
         'click',
         'pydicom',
         'tqdm',
