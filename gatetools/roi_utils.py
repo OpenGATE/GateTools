@@ -439,11 +439,58 @@ class region_of_interest(object):
             vol += cvol
             logger.debug("{}. got volume = dz * area = {} * {} = {}, sum={}".format(i,self.dz,area,cvol,vol))
         return vol
-    def get_mask(self,img,zrange=None, corrected=True):
+    def get_ncorners(self,img,zrange=None):
         """
-        For a given image, compute for every voxel whether it is inside the ROI or not.
-        The `zrange` can be used to limit the z-range of the ROI.
-        If specified, the `zrange` should be contained in the z-range of the given image.
+        Auxiliary method for using `get_mask` in a command line application.
+
+        This computes the "number of corners", which should serve as a measure
+        of complexity of the ROI, the CPU time needed to compute a mask should
+        be roughly proportional with this number.
+        """
+        if not self.have_mask():
+            logger.warn("Irregular z-values, masking not yet supported")
+            return 0
+        dims=np.array(img.GetLargestPossibleRegion().GetSize())
+        if len(dims)!=3:
+            logger.error("ERROR only 3d images supported")
+            return 0
+        orig = img.GetOrigin()
+        space = img.GetSpacing()
+        zmin = orig[2] - 0.5*space[2]
+        zmax = orig[2] + (dims[2]-0.5)*space[2]
+        if zrange is None:
+            zrange=(zmin,zmax)
+        z0 = self.contour_layers[0].z
+        ncorners=0
+        for iz in range(dims[2]):
+            z = orig[2]+space[2]*iz # z coordinate in image/mask
+            if z<zrange[0] or z>zrange[1]:
+                continue
+            icz = int(np.round((z-z0)/self.dz)) # layer index
+            if icz>=0 and icz<len(self.contour_layers):
+                ncorners_in = sum([len(contour) for contour in self.contour_layers[icz].inclusion])
+                ncorners_ex = sum([len(contour) for contour in self.contour_layers[icz].exclusion])
+                logger.debug(f'roiname {self.roiname} corner counting: icz={icz} z={z:.3f} #inclusion={ncorners_in} #exclusion={ncorners_ex}')
+                ncorners += ncorners_in + ncorners_ex
+        return ncorners
+    def get_mask(self,img,zrange=None, corrected=True,pbar=None):
+        """
+        For a given image, compute for every voxel whether it is inside the ROI
+        or not.  The `zrange` can be used to limit the z-range of the ROI.  If
+        specified, the `zrange` should be contained in the z-range of the given
+        image.
+
+        For large images and nontrivial ROI shapes, it can take a minute or two
+        to obtain this mask, even on a fast machine.  When this method is
+        called in a command line application that wishes to display a tqdm
+        progress bar, then the progress bar object can be passed via the pbar
+        argument and it will be updated for z-layer in the image with "the
+        number of corners" (number of points in the ROI curves, some curves may
+        be used multiple times if the image spacing is different from the curve
+        spacing) that are encountered in the computation of this mask.  In
+        order to know the total number of corners for a given combination of
+        ROI and image before calling this method, use the `get_ncorners`
+        method.
         """
         if not self.have_mask():
             logger.warn("Irregular z-values, masking not yet supported")
@@ -475,9 +522,9 @@ class region_of_interest(object):
             contained &= (int(np.round(rmin-o)/s) in range(d))
             contained &= (int(np.round(rmax-o)/s) in range(d))
         if not contained:
-            logger.warn('DUIZEND BOMMEN EN GRANATEN orig={} space={} dims={} bbroi={}'.format(orig,space,dims,self.bb))
+            logger.warn(f'ROI {self.roiname} is not contained in CT image: CTorig={orig} CTspace={space} CTdims={dims} BBroi={self.bb}')
         else:
-            logger.debug('YAY: roi "{}" is contained in image'.format(self.roiname))
+            logger.debug(f'YAY: roi "{self.roiname}" is contained in image')
         #logger.debug("copied infor orig={} spacing={}".format(orig,space))
         # ITK: the "origin" has the coordinates of the *center* of the corner voxel
         # zmin and zmax are the z coordinates of the boundary of the volume
@@ -527,18 +574,16 @@ class region_of_interest(object):
                             continue
                         ix = iflat % dims[0]
                         iy = iflat // dims[0]
-                        #x = orig[0]+space[0]*ix # x coordinate in image/mask
-                        #y = orig[1]+space[1]*iy # y coordinate in image/mask
-                        #assert(self.contour_layers[icz].contains_point(point=(x,y)))
-                        try:
-                            # print(b, type(b))
-                            roimask[ix,iy,iz]=b
-                        except IndexError as inderr:
-                            logger.error("iflat={} ix={} iy={} iz={}, error={}".format(iflat,ix,iy,iz,inderr))
-                            raise
+                        roimask[ix,iy,iz]=b
                 else:
                     flatmask = flatmask.astype(int)
                     aroimask[iz,:,:] = flatmask.reshape(dims[1],dims[0])[:,:]
+                if bool(pbar):
+                    ncorners_in = sum([len(contour) for contour in self.contour_layers[icz].inclusion])
+                    ncorners_ex = sum([len(contour) for contour in self.contour_layers[icz].exclusion])
+                    ncorners = ncorners_in + ncorners_ex
+                    if ncorners>0:
+                        pbar.update(ncorners)
             elif icz<0:
                 logger.debug("BELOWroi: z index mask/image iz={} (z={}) layer index icz={} (z0={} dz={})".format(iz,z,icz,z0,self.dz))
             else:
