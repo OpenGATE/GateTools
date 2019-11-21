@@ -82,13 +82,13 @@ def gt_image_arithm_main(files, operation, scalar, output, verbose, debugging_lo
     
     try:
         input_images = [itk.imread(fpath) for fpath in files]
-    except KeyError as ke:
+    except Exception as ke:
         logger.error("Looks like you are trying to read images of a type that are not supported by the ITK python bindings on your system.")
-        logger.error("This 'KeyError' was raised by ITK: {}".format(ke))
+        logger.error("This Exception was raised by ITK: {}".format(ke))
         logger.error("Sorry!")
         sys.exit(1)
         #raise # the full traceback is scary and uninformative
-        
+
     if not scalar == None:
         duplicator = itk.ImageDuplicator.New(input_images[0])
         duplicator.Update()
