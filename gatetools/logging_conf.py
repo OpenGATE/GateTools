@@ -20,7 +20,7 @@ import click
 
 _logging_is_already_configured = False
 
-def logging_conf(**kwargs):
+def logging_conf(verbose=False,logfile="")
     """
     This function is supposed to be called only once, inside the main function
     of your application.
@@ -28,20 +28,21 @@ def logging_conf(**kwargs):
     By default, the logging level is high (i.e. low verbosity) and no logging file
     will be produced.
 
-    You can choose to increase the terminal output (verbose=True). This lowers the
-    log level to "INFO". This is not the lowest possible logging level. With "debugging"
-    off, the logging messages will be displayed without any prefix, i.e. as if they
-    were printed with the "print()" function. With "debugging" on, you get a lengthy
-    prefix that shows you details like the module name, line number, date and time.
-    Terminal output and logging file get the same prefix, in order to facilitate
-    finding back events in the log file.
+    You can choose to increase the terminal output (verbose=True). This lowers
+    the log level to "INFO". This is not the lowest possible logging level.
+    With debugging mode off, the logging messages will be displayed without any
+    prefix, i.e. as if they were printed with the "print()" function. With
+    debugging mode on, then you get a lengthy prefix that shows you details
+    like the module name, line number, date and time.  Terminal output and
+    logging file get the same prefix, in order to facilitate finding back
+    events in the log file.
 
-    The debugging mode is enabled when the `debugging` argument is a non-empty
+    The debugging mode is enabled when the `logfile` argument is a non-empty
     string containing the desired file path the log file (in a directory where
     the user should have write permissions). If the file already exists, then
-    the logging information will be *appended*. If the the file path is "auto"
-    then a log file name in the current working directory will be generated,
-    composed of the basename of the main script and a prefix
+    the logging information will be *appended*. If the `logfile` argument is
+    equal to "auto" then a log file name in the current working directory will
+    be generated, composed of the basename of the main script and a prefix
     ".PID.YYMMDD.HHMMSS.log", where PID, YYMMDD and HHMMSS are the process ID,
     date and time, respectively.
 
@@ -52,11 +53,8 @@ def logging_conf(**kwargs):
     if _logging_is_already_configured:
         return
 
-    verbose = kwargs['verbose']
-    debugging = kwargs['logfile']
-
-    stdout_loglevel = logging.INFO if verbose else logging.WARN
-    if not bool(debugging):
+    stdout_loglevel = logging.INFO if verbose else logging.WARNING
+    if not bool(logfile):
         logging.basicConfig(format='%(message)s',level=stdout_loglevel)
     else:
         logger = logging.getLogger() # get root logger
@@ -69,13 +67,13 @@ def logging_conf(**kwargs):
         sh.setLevel(stdout_loglevel)
         logger.addHandler(sh)
         # log file
-        if debugging == "auto":
+        if logfile == "auto":
             logfiledir = os.path.realpath(os.getcwd())
             logfilename = os.path.basename(sys.argv[0])
             logfilename += "."+str(os.getpid())+datetime.now().strftime(".%Y%m%d.%H%M%S.log")
             logfilepath = os.path.join(logfiledir,logfilename)
         else:
-            logfilepath = os.path.realpath(debugging)
+            logfilepath = os.path.realpath(logfile)
         # check disk space before trying to open log file ("df" = "disk free")
         # TODO: if it turns out that `psutil` is available on practically all systems
         # then we can maybe use that here too, it has a nicer interface.
