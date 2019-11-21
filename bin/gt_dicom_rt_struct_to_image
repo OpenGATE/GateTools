@@ -78,7 +78,7 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
         try:
             mask = aroi.get_mask(img, corrected=False,pbar=pbar)
             if crop:
-                mask = gt.image_crop(mask)
+                mask = gt.image_auto_crop(mask, bg=0)
             output_filename = base_filename+'_'+roiname+'.mhd';
             itk.imwrite(mask, output_filename)
         except Exception as e:
