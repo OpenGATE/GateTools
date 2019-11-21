@@ -13,6 +13,7 @@ import itk
 import pydicom
 import os
 from tqdm import tqdm
+logger=logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -21,7 +22,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--list_roi', '-l', help='List all ROI names only', is_flag=True)
 @click.option('--crop', '-c', help='Crop output mask image', is_flag=True)
 @click.option('--roi', '-r', help='Convert the ROI with this name', multiple=True)
-def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, crop):
+@gt.add_options(gt.common_options)
+def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, crop,verbose,logfile):
     '''
     \b
     Convert Dicom RT Struct into mask images
@@ -31,6 +33,9 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
     <FILENAME_IMG>    : input ct associated image (mask will have the same size than this image)
     '''
 
+    # logger
+    gt.logging_conf(verbose=(verbose or list_roi),logfile=logfile)
+
     # read dicom struct
     structset = pydicom.read_file(filename_struct)
 
@@ -38,12 +43,12 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
     roi_names = gt.list_roinames(structset)
     if list_roi:
         s = ' / '.join(roi_names)
-        print(s)
+        logger.info(s)
         exit(0)
 
     # filename_img is required (except if list_roi)
     if filename_img == None:
-        print('filename_img is required')
+        logger.error('filename_img is required')
         exit(0)
 
     if len(roi) == 0:
@@ -51,20 +56,34 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
 
     img = itk.imread(filename_img)
     base_filename, extension = os.path.splitext(filename_img)
-    pbar = tqdm(total=len(roi), leave=False)
+
+    roi_objs=list()
+    npbar=0
+    pbar = None
     for r in roi:
-        roiname = r
         try:
-            aroi = gt.region_of_interest(structset, roiname)
-            mask = aroi.get_mask(img, corrected=False)
+            aroi = gt.region_of_interest(structset, r)
+            if not aroi.have_mask():
+                raise ValueError(f"mask for {r} not possible")
+            roi_objs.append(aroi)
+            if verbose:
+                npbar += aroi.get_ncorners(img)
+        except Exception as e:
+            logger.error(f"something is wrong with ROI '{r}'")
+            roi.remove(r)
+    if npbar>0:
+        pbar = tqdm(total=npbar, leave=False)
+    for roiname,aroi in zip(roi,roi_objs):
+        try:
+            mask = aroi.get_mask(img, corrected=False,pbar=pbar)
             if crop:
                 mask = gt.image_auto_crop(mask, bg=0)
             output_filename = base_filename+'_'+roiname+'.mhd';
             itk.imwrite(mask, output_filename)
         except Exception as e:
             tqdm.write(str(e))
-        pbar.update(1)
-    pbar.close()
+    if npbar>0:
+        pbar.close()
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
