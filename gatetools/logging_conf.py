@@ -53,7 +53,7 @@ def logging_conf(**kwargs):
         return
 
     verbose = kwargs['verbose']
-    debugging = kwargs['log']
+    debugging = kwargs['logfile']
 
     stdout_loglevel = logging.INFO if verbose else logging.WARN
     if not bool(debugging):
@@ -72,7 +72,7 @@ def logging_conf(**kwargs):
         if debugging == "auto":
             logfiledir = os.path.realpath(os.getcwd())
             logfilename = os.path.basename(sys.argv[0])
-            logfilename += "."+str(os.getpid())+datetime.now().strftime("%Y%m%d.%H%M%S.log")
+            logfilename += "."+str(os.getpid())+datetime.now().strftime(".%Y%m%d.%H%M%S.log")
             logfilepath = os.path.join(logfiledir,logfilename)
         else:
             logfilepath = os.path.realpath(debugging)
@@ -140,7 +140,7 @@ def add_options(options):
 common_options= [
     click.option('--verbose/--quiet','-v/-q', default=False,
                  help='Be verbose (-v) or keep quiet (-q, default)'),
-    click.option('--log', required=False, default="",
+    click.option('--logfile', required=False, default="",
                  help='Path of debugging log file. Default: empty (no log file is written). If you specify "auto" then an informative logfile name will be generated automatically.')
 ]
 
