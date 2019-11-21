@@ -36,7 +36,7 @@ def gt_image_convert(input, output, pixeltype):
 
     #Read input
     if len(input) == 1 and not input[0].endswith(".dcm"):
-        inputImage = itk.imread(input)
+        inputImage = itk.imread(input[0])
     elif len(input) > 1:
         inputImage = gt.read_dicom(input)
     elif len(input) == 1 and input[0].endswith(".dcm"):
