@@ -29,11 +29,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                                  'divide', 'invert',
                                  'min', 'max', 'absreldiffmax']))
 
-@click.option('--verbose/--quiet','-v/-q',
-              help='Be verbose (-v) or keep quiet (-q, default)', default=False)
-@click.option('--debugging_logfile',
-              help='Path of debugging log file. Default: empty (no log file is written). If you specify "auto" then an informative logfile name will be generated automatically.', required=False, default="")
-
 @click.option('--scalar','-s', help='scalar for operation', type=float)
 
 @click.option('--output','-o', help='Output filename', required=True,
@@ -41,7 +36,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
 
-def gt_image_arithm_main(files, operation, scalar, output, verbose, debugging_logfile):
+@gt.add_options(gt.common_options)
+def gt_image_arithm_main(files, operation, scalar, output, **kwargs):
     '''
     Basic pixel-wise (or voxel-wise) arithmetic operations on one or
     more images of the same type and geometry. Currently :
@@ -78,7 +74,7 @@ def gt_image_arithm_main(files, operation, scalar, output, verbose, debugging_lo
     '''
 
     # logger
-    gt.logging_conf(verbose,debugging_logfile)
+    gt.logging_conf(**kwargs)
     
     try:
         input_images = [itk.imread(fpath) for fpath in files]
