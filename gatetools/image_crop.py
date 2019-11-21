@@ -18,7 +18,7 @@ import numpy as np
 
 def image_auto_crop(img, bg=0):
     """
-    Crop an image according to a background value
+    Crop an image according to a background value. Only for integer PixelType
     """
 
     # Img image type
