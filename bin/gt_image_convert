@@ -30,8 +30,9 @@ def gt_image_convert(input, output, pixeltype):
     To convert Dicom to another format, set the folder fullpath
     containing the .dcm files as input, eg:
 
-        -i ~/path/to/dcm/*dcm
-        -i ~/path/to/dcm/toto.dcm
+       ~/path/to/dcm/*dcm
+       or
+       ~/path/to/dcm/toto.dcm
     '''
 
     #Read input
