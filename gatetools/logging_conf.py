@@ -7,6 +7,7 @@ your own logging configuration.
 
 import logging
 import os, sys
+from datetime import datetime
 
 _logging_is_already_configured = False
 
@@ -58,7 +59,7 @@ def logging_conf(verbose=False,debugging=""):
         if debugging == "auto":
             logfiledir = os.path.realpath(os.getcwd())
             logfilename = os.path.basename(sys.argv[0])
-            logfilename += "."+str(os.getpid())+datetime.now().strftime("%Y%m%d.%H%M%S.log")
+            logfilename += "."+str(os.getpid())+datetime.now().strftime(".%Y%m%d.%H%M%S.log")
             logfilepath = os.path.join(logfiledir,logfilename)
         else:
             logfilepath = os.path.realpath(debugging)
