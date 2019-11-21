@@ -9,6 +9,7 @@
 import gatetools as gt
 import click
 import itk
+import os
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -34,6 +35,12 @@ def gt_image_convert(input, output, pixeltype):
        or
        ~/path/to/dcm/toto.dcm
     '''
+
+    #Check if input is available
+    for inputFile in input:
+        if not os.path.isfile(inputFile):
+            print("ERROR: no existing input: " + inputFile)
+            return
 
     #Read input
     if len(input) == 1 and not input[0].endswith(".dcm"):
