@@ -6,6 +6,8 @@ import gatetools as gt
 import click
 import itk
 import numpy as np
+import logging
+logger=logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -14,19 +16,21 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--bg', help='Value of the backgroup to autocrop', default=None)
 @click.option('--bb', default=None,
               help="Bounding Box with 6 ints (voxel), separated with comma 'x1,y1,z1,x2,y2,z2'")
-@click.option('--verbose/--quiet','-v/-q',
-              help='Be verbose (-v) or keep quiet (-q, default)', default=False)
-def gt_image_crop(input_filename, output, bg, bb, verbose):
+@gt.add_options(gt.common_options)
+def gt_image_crop(input_filename, output, bg, bb, **kwargs):
     '''
     \b
-    Crop an image according to a background value.
+    Crop an image.
 
-    If --bg : crop is performed automatically according to the background value
+    If --bg : auto crop according to the given background value
     If --bb : manual crop in mm. 
 
     \b
     <INPUT_FILENAME> : input image
     '''
+
+    # logger
+    gt.logging_conf(**kwargs)
 
     # check exclusive options
     if bg == None and bb == None:
@@ -43,23 +47,24 @@ def gt_image_crop(input_filename, output, bg, bb, verbose):
         exit(0)
     dims = np.array(img.GetLargestPossibleRegion().GetSize())
     
-    if verbose:
-        print(f'Input image size: {input_filename} {dims}')
+    logger.info(f'Input image: {input_filename} {dims}')
 
     # autocrop
     if bg != None:
+        logger.info(f'Auto crop with background {bg}')
         o = gt.image_auto_crop(img, bg)
 
     # manual crop
     if bb != None:
         bb = [float(x) for x in bb.split(',')]
         bb = gt.bounding_box(xyz=bb)
+        logger.info(f'Crop with bounding box {bb}')
         o = gt.image_crop_with_bb(img, bb)
 
     # final write
     dims = np.array(o.GetLargestPossibleRegion().GetSize())
-    if verbose:
-        print(f'Output image size: {output} {dims}')
+    
+    logger.info(f'Output image: {output} {dims}')
     itk.imwrite(o, output)
 
 # --------------------------------------------------------------------------

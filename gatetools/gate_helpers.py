@@ -27,7 +27,7 @@ def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
     else:
         result = subprocess.run(['Gate', '--version'], stdout=subprocess.PIPE)
         output = result.stdout.decode("utf-8").splitlines()[0]
-        
+
     if short_verbose:
         print(path)
         return
@@ -52,5 +52,3 @@ def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
             print('{:<19} {}'.format(g, os.environ[g]))
         except:
             print('{:<19} NOT FOUND'.format(g))
-
-
