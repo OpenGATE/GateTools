@@ -20,7 +20,7 @@ import click
 
 _logging_is_already_configured = False
 
-def logging_conf(verbose=False,logfile="")
+def logging_conf(verbose=False,logfile=""):
     """
     This function is supposed to be called only once, inside the main function
     of your application.
