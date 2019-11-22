@@ -15,7 +15,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--output', '-o', help='Output filename', required=True)
 @click.option('--bg', help='Value of the backgroup to autocrop', default=None)
 @click.option('--bb', default=None,
-              help="Bounding Box with 6 ints (voxel), separated with comma 'x1,y1,z1,x2,y2,z2'")
+              help="Bounding Box with 6 ints (voxel), separated with comma 'x1,x2,y1,y2,z1,z2'")
 @gt.add_options(gt.common_options)
 def gt_image_crop(input_filename, output, bg, bb, **kwargs):
     '''
@@ -23,7 +23,7 @@ def gt_image_crop(input_filename, output, bg, bb, **kwargs):
     Crop an image.
 
     If --bg : auto crop according to the given background value
-    If --bb : manual crop in mm. 
+    If --bb : manual crop in voxel.
 
     \b
     <INPUT_FILENAME> : input image
