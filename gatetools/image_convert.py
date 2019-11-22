@@ -190,3 +190,24 @@ def image_convert(inputImage, pixeltype=None):
         return castFilter
 
     return inputImage
+
+#####################################################################################
+import unittest
+import hashlib
+import os
+from .logging_conf import LoggedTestCase
+
+class Test_Convert(LoggedTestCase):
+    def test_convert(self):
+        x = np.arange(-10, 10, 1)
+        y = np.arange(-12, 15, 1)
+        z = np.arange(-13, 10, 1)
+        xx, yy, zz = np.meshgrid(x, y, z)
+        image = itk.image_from_array(np.float32(xx))
+        convertedImage = image_convert(image, "unsigned char")
+        itk.imwrite(convertedImage, "testConvert.mha")
+        with open("testConvert.mha","rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            os.remove("testConvert.mha")
+            self.assertTrue("da57bf05ec62b9b5ee2aaa71aacbf7dbca8acbf2278553edc499a3af8007dd44" == new_hash)
