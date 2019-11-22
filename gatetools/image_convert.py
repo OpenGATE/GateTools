@@ -203,7 +203,7 @@ class Test_Convert(LoggedTestCase):
         y = np.arange(-12, 15, 1)
         z = np.arange(-13, 10, 1)
         xx, yy, zz = np.meshgrid(x, y, z)
-        image = itk.image_from_array(np.float32(xx))
+        image = itk.GetImageFromArray(np.float32(xx))
         convertedImage = image_convert(image, "unsigned char")
         itk.imwrite(convertedImage, "testConvert.mha")
         with open("testConvert.mha","rb") as fnew:
