@@ -117,3 +117,50 @@ def image_crop_with_bb(img, bb):
     cropper.SetRegionOfInterest(region)
     cropper.Update()
     return cropper.GetOutput()
+
+#####################################################################################
+import unittest
+from .logging_conf import LoggedTestCase
+
+class Test_Crop(LoggedTestCase):
+    def test_auto_crop(self):
+        Dimension = 3
+        PixelType = itk.ctype('unsigned char')
+        ImageType = itk.Image[PixelType, Dimension]
+
+        image = ImageType.New()
+        start = itk.Index[Dimension]()
+        start[0] = 0
+        start[1] = 0
+        start[2] = 0
+        size = itk.Size[Dimension]()
+        size[0] = 200
+        size[1] = 200
+        size[2] = 200
+        region = itk.ImageRegion[Dimension]()
+        region.SetSize(size)
+        region.SetIndex(start)
+        image.SetRegions(region)
+        image.Allocate()
+        image.FillBuffer(0)
+        npView = itk.array_from_image(image)
+        npView[10:52, 42:192, 124:147] =1
+        image = itk.image_from_array(npView)
+        autoCrop = image_auto_crop(image)
+        autoCropSize = autoCrop.GetLargestPossibleRegion().GetSize()
+        self.assertTrue(np.allclose(autoCropSize[0], 23))
+        self.assertTrue(np.allclose(autoCropSize[1], 150))
+        self.assertTrue(np.allclose(autoCropSize[2], 42))
+        self.assertTrue(np.allclose(itk.array_from_image(autoCrop)[0, 0, 0], 1))
+    def test_crop(self):
+        x = np.arange(-10, 10, 0.1)
+        y = np.arange(-12, 15, 0.1)
+        z = np.arange(-13, 10, 0.1)
+        xx, yy, zz = np.meshgrid(x, y, z)
+        image = itk.image_from_array(np.float32(xx))
+        croppedImage = image_crop_with_bb(image, gt.bounding_box(xyz=[10.0, 12.0, 0.0, 7.0, 6.0, 15.0]))
+        croppedImageSize = croppedImage.GetLargestPossibleRegion().GetSize()
+        self.assertTrue(np.allclose(croppedImageSize[0], 3))
+        self.assertTrue(np.allclose(croppedImageSize[1], 8))
+        self.assertTrue(np.allclose(croppedImageSize[2], 10))
+        self.assertTrue(np.allclose(itk.array_from_image(croppedImage)[0, 0, 0], -10))
