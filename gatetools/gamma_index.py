@@ -76,11 +76,11 @@ def gamma_index_3d_equal_geometry(imgref,imgtarget,dta=3.,dd=3., ddpercent=True,
     nx,ny,nz = atarget.shape
     ntot = nx*ny*nz
     nmask = np.sum(mask)
-    if verbose:
-        pbar = tqdm(total=nmask, leave=False)
     logger.debug("Both images have {} x {} x {} = {} voxels.".format(nx,ny,nz,ntot))
     logger.debug("{} target voxels have a dose > {}.".format(nmask,threshold))
     g2 = np.zeros((nx,ny,nz),dtype=float)
+    if verbose:
+        pbar = tqdm(total=nmask, leave=False)
     for x in range(nx):
         for y in range(ny):
             for z in range(nz):
@@ -106,6 +106,8 @@ def gamma_index_3d_equal_geometry(imgref,imgtarget,dta=3.,dd=3., ddpercent=True,
                     g2[x,y,z] = np.min(g2mesh)
                 if verbose:
                     pbar.update(1)
+    if verbose:
+        pbar.close()
     g=np.sqrt(g2)
     g[np.logical_not(mask)]=defvalue
     # ITK does not support double precision images by default => cast down to float32.
