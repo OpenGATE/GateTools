@@ -37,7 +37,7 @@ def get_gamma_index(ref,target,**kwargs):
        (np.allclose(ref.GetSpacing(),target.GetSpacing())) and \
        (ref.GetLargestPossibleRegion().GetSize() == ref.GetLargestPossibleRegion().GetSize() ):
         logger.debug("Images with equal geometry, using the slightly faster implementation.")
-        return gamma_index_3d_equal_geometry(ref_img,target_img,**kwargs)
+        return gamma_index_3d_equal_geometry(ref,target,**kwargs)
     else:
         logger.debug("Images with different geometry, using the slightly slower implementation.")
         return gamma_index_3d_unequal_geometry(ref,target,**kwargs)
