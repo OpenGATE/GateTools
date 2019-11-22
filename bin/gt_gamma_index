@@ -85,6 +85,9 @@ def gt_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output
 
     # logger
     gt.logging_conf(**kwargs)
+
+    verbose=kwargs["verbose"]
+    logfile=kwargs["logfile"]
     logger.debug(f"reference: {reference}")
     logger.debug(f"target: {target}")
     logger.debug(f"dd: {dd}")
@@ -94,7 +97,7 @@ def gt_gamma_index_main(reference,target,dd,ddunit,dta,threshold,defvalue,output
     logger.debug(f"defvalue: {defvalue}")
     logger.debug(f"output: {output}")
     logger.debug(f"verbose: {verbose}")
-    logger.debug(f"debugging_logfile: '{debugging_logfile}'")
+    logger.debug(f"debugging_logfile: '{logfile}'")
 
     # compute gamma
     ref_img=itk.imread(reference)
