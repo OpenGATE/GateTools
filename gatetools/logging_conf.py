@@ -148,5 +148,5 @@ import unittest
 class LoggedTestCase(unittest.TestCase):
     def __init__(self,*args,**kwargs):
         logfilename=f'unittest.{os.getpid()}.log'
-        logging_conf(verbose=False, log=logfilename)
+        logging_conf(verbose=False, logfile=logfilename)
         unittest.TestCase.__init__(self,*args,**kwargs)
