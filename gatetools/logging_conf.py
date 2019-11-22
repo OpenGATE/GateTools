@@ -51,11 +51,14 @@ def logging_conf(verbose=False,logfile=""):
     """
     global _logging_is_already_configured
     if _logging_is_already_configured:
+        logger=logging.getLogger(__name__)
+        logger.debug("attempt to re-configure logging ignored...")
         return
 
     stdout_loglevel = logging.INFO if verbose else logging.WARNING
     if not bool(logfile):
         logging.basicConfig(format='%(message)s',level=stdout_loglevel)
+        return
     else:
         logger = logging.getLogger() # get root logger
         logger.setLevel(logging.DEBUG)
@@ -148,5 +151,5 @@ import unittest
 class LoggedTestCase(unittest.TestCase):
     def __init__(self,*args,**kwargs):
         logfilename=f'unittest.{os.getpid()}.log'
-        logging_conf(verbose=False, log=logfilename)
+        logging_conf(verbose=False, logfile=logfilename)
         unittest.TestCase.__init__(self,*args,**kwargs)
