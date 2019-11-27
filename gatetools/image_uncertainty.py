@@ -75,15 +75,15 @@ def image_uncertainty(img_list=[], img_squared_list=[], N=0, threshold=0):
     img_sq_sum = gt.image_sum(img_squared_list)
 
     # View as np
-    np_sum = itk.GetArrayViewFromImage(img_sum)
-    np_sq_sum = itk.GetArrayViewFromImage(img_sq_sum)
+    np_sum = itk.array_view_from_image(img_sum)
+    np_sq_sum = itk.array_view_from_image(img_sq_sum)
 
     # Compute relative uncertainty [Chetty 2006]
     t = np.max(np_sum)*threshold
     uncertainty = relative_uncertainty(np_sum, np_sq_sum, N, t)
 
     # create and return itk image
-    img_uncertainty = itk.GetImageFromArray(uncertainty)
+    img_uncertainty = itk.image_from_array(uncertainty)
     img_uncertainty.CopyInformation(img_sum)
     return img_uncertainty
 
@@ -96,14 +96,14 @@ def image_uncertainty_by_slice(img_list=[], img_squared_list=[], N=0, threshold=
     img_sq_sum = gt.image_sum(img_squared_list)
 
     # View as np
-    np_sum = itk.GetArrayViewFromImage(img_sum)
-    np_sq_sum = itk.GetArrayViewFromImage(img_sq_sum)
+    np_sum = itk.array_view_from_image(img_sum)
+    np_sq_sum = itk.array_view_from_image(img_sq_sum)
 
     # compute uncertainty
     uncertainty, means, nb = relative_uncertainty_by_slice(np_sum, threshold, np_sq_sum, N)
 
     # create and return itk image
-    img_uncertainty = itk.GetImageFromArray(uncertainty)
+    img_uncertainty = itk.image_from_array(uncertainty)
     img_uncertainty.CopyInformation(img_sum)
     return img_uncertainty, means, nb
 
@@ -113,7 +113,7 @@ def image_uncertainty_Poisson(img_list=[], threshold=0):
     img_sum = gt.image_sum(img_list)
 
     # View as np
-    np_sum = itk.GetArrayViewFromImage(img_sum)
+    np_sum = itk.array_view_from_image(img_sum)
 
     # Convert to float
     np_sum = np_sum.astype(np.float64)
@@ -129,7 +129,7 @@ def image_uncertainty_Poisson(img_list=[], threshold=0):
     uncertainty = uncertainty.astype(np.float32)
 
     # create and return itk image
-    img_uncertainty = itk.GetImageFromArray(uncertainty)
+    img_uncertainty = itk.image_from_array(uncertainty)
     img_uncertainty.CopyInformation(img_sum)
     return img_uncertainty
 
@@ -139,7 +139,7 @@ def image_uncertainty_Poisson_by_slice(img_list=[], threshold=0):
     img_sum = gt.image_sum(img_list)
 
     # View as np
-    np_sum = itk.GetArrayViewFromImage(img_sum)
+    np_sum = itk.array_view_from_image(img_sum)
 
     # Convert to float
     np_sum = np_sum.astype(np.float64)
@@ -151,6 +151,6 @@ def image_uncertainty_Poisson_by_slice(img_list=[], threshold=0):
     uncertainty = uncertainty.astype(np.float32)
 
     # create and return itk image
-    img_uncertainty = itk.GetImageFromArray(uncertainty)
+    img_uncertainty = itk.image_from_array(uncertainty)
     img_uncertainty.CopyInformation(img_sum)
     return img_uncertainty, means, nb

@@ -44,7 +44,7 @@ def image_auto_crop(img, bg=0):
         exit(0)
 
     # special case for negative value
-    img_array = itk.GetArrayViewFromImage(img)
+    img_array = itk.array_view_from_image(img)
     minv = np.min(img_array)
     bg = int(bg)
     if minv<0:
@@ -86,7 +86,7 @@ def image_auto_crop(img, bg=0):
 
     # Offset if negative
     if minv<0:
-        img_array = itk.GetArrayViewFromImage(output)
+        img_array = itk.array_view_from_image(output)
         img_array += minv
 
     return output
@@ -143,24 +143,24 @@ class Test_Crop(LoggedTestCase):
         image.SetRegions(region)
         image.Allocate()
         image.FillBuffer(0)
-        npView = itk.GetArrayFromImage(image)
+        npView = itk.array_from_image(image)
         npView[10:52, 42:192, 124:147] =1
-        image = itk.GetImageFromArray(npView)
+        image = itk.image_from_array(npView)
         autoCrop = image_auto_crop(image)
         autoCropSize = autoCrop.GetLargestPossibleRegion().GetSize()
         self.assertTrue(np.allclose(autoCropSize[0], 23))
         self.assertTrue(np.allclose(autoCropSize[1], 150))
         self.assertTrue(np.allclose(autoCropSize[2], 42))
-        self.assertTrue(np.allclose(itk.GetArrayFromImage(autoCrop)[0, 0, 0], 1))
+        self.assertTrue(np.allclose(itk.array_from_image(autoCrop)[0, 0, 0], 1))
     def test_crop(self):
         x = np.arange(-10, 10, 0.1)
         y = np.arange(-12, 15, 0.1)
         z = np.arange(-13, 10, 0.1)
         xx, yy, zz = np.meshgrid(x, y, z)
-        image = itk.GetImageFromArray(np.float32(xx))
+        image = itk.image_from_array(np.float32(xx))
         croppedImage = image_crop_with_bb(image, gt.bounding_box(xyz=[10.0, 12.0, 0.0, 7.0, 6.0, 15.0]))
         croppedImageSize = croppedImage.GetLargestPossibleRegion().GetSize()
         self.assertTrue(np.allclose(croppedImageSize[0], 3))
         self.assertTrue(np.allclose(croppedImageSize[1], 8))
         self.assertTrue(np.allclose(croppedImageSize[2], 10))
-        self.assertTrue(np.allclose(itk.GetArrayFromImage(croppedImage)[0, 0, 0], -10))
+        self.assertTrue(np.allclose(itk.array_from_image(croppedImage)[0, 0, 0], -10))
