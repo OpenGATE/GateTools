@@ -25,7 +25,7 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk',
+        'itk>=5',
         'uproot',
     ],
     scripts=[

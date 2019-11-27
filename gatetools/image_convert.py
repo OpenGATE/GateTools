@@ -85,7 +85,7 @@ def read_dicom(dicomFiles):
         img3d[i, :, :] = img2d
     img3d = rs*img3d+ri
 
-    img_result = itk.GetImageFromArray(np.float32(img3d))
+    img_result = itk.image_from_array(np.float32(img3d))
     img_result.SetSpacing(spacing)
     img_result.SetOrigin(origin)
     arrayDirection = np.zeros([3,3], np.float64)
@@ -150,7 +150,7 @@ def read_3d_dicom(dicomFile):
     img3d[:, :, :] = slices[0].pixel_array
     img3d = rs*img3d+ri
 
-    img_result = itk.GetImageFromArray(np.float32(img3d))
+    img_result = itk.image_from_array(np.float32(img3d))
     img_result.SetSpacing(spacing)
     img_result.SetOrigin(origin)
     arrayDirection = np.zeros([3,3], np.float64)
@@ -203,7 +203,7 @@ class Test_Convert(LoggedTestCase):
         y = np.arange(-12, 15, 1)
         z = np.arange(-13, 10, 1)
         xx, yy, zz = np.meshgrid(x, y, z)
-        image = itk.GetImageFromArray(np.float32(xx))
+        image = itk.image_from_array(np.float32(xx))
         convertedImage = image_convert(image, "unsigned char")
         itk.imwrite(convertedImage, "testConvert.mha")
         with open("testConvert.mha","rb") as fnew:

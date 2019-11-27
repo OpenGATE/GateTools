@@ -506,7 +506,7 @@ class region_of_interest(object):
         else:
             logger.debug("{} going to get mask with 'uncorrected' binary weights".format(self.roiname))
             aroimask = np.zeros(dims[::-1],dtype=np.uint8)
-        roimask = itk.GetImageFromArray(aroimask)
+        roimask = itk.image_from_array(aroimask)
         roimask.CopyInformation(img)
         orig = roimask.GetOrigin()
         space = roimask.GetSpacing()
@@ -590,9 +590,9 @@ class region_of_interest(object):
                 logger.debug("ABOVE roi: z index mask/image iz={} (z={}) layer index icz={} (z0={} dz={} nlayer={})".format(iz,z,icz,z0,self.dz,len(self.contour_layers)))
         logger.debug("got mask with {} enabled voxels out of {}".format(np.sum(aroimask>0),np.prod(aroimask.shape)))
         if not corrected:
-            roimask = itk.GetImageFromArray(aroimask)
+            roimask = itk.image_from_array(aroimask)
             roimask.CopyInformation(img)
-            #achk = sitk.GetArrayFromImage(roimask)
+            #achk = sitk.array_from_image(roimask)
             #ndiff = np.sum(achk!=aroimask)
             #nsame = np.sum(achk==aroimask)
             #nboth = np.sum((achk>0)*(aroimask>0))
@@ -610,7 +610,7 @@ class region_of_interest(object):
             logger.error("ERROR only 3d images supported")
             return None
         logger.debug("got size = {}".format(dims.tolist()))
-        aimg = itk.GetArrayFromImage(img)
+        aimg = itk.array_from_image(img)
         logger.debug("got array with shape {}".format(list(aimg.shape)))
         img_params = [img.GetOrigin(), img.GetSpacing(), np.array(img.GetLargestPossibleRegion().GetSize()), zrange]
         itkmask = self.get_mask_from_parameters(img_params)
@@ -619,7 +619,7 @@ class region_of_interest(object):
         else:
             itkmask=self.get_mask(img,zrange)
         logger.debug("got mask with size {}".format(itkmask.GetLargestPossibleRegion().GetSize()))
-        amask=(itk.GetArrayFromImage(itkmask))
+        amask=(itk.array_from_image(itkmask))
 
         if dmin is None:
             dmin=np.min(aimg)
@@ -726,12 +726,12 @@ def get_intersection_volume(roilist,xvoxel=1.,yvoxel=1.):
     bb.add_margins(2*spacing)
     dimsize = np.array(np.round((bb.maxcorner-bb.mincorner)/spacing),dtype=int)
     #img = sitk.Image(dimsize,sitk.sitkUInt8)
-    img = itk.GetImageFromArray(np.zeros(dimsize[::-2],dtype=np.uint8))
+    img = itk.image_from_array(np.zeros(dimsize[::-2],dtype=np.uint8))
     img.SetOrigin(bb.mincorner)
     img.SetSpacing(spacing)
-    itkmask = itk.GetArrayFromImage(roilist[0].get_mask(img))
+    itkmask = itk.array_from_image(roilist[0].get_mask(img))
     for roi in roilist[1:]:
-        itkmask *= itk.GetArrayFromImage(roi.get_mask(img))
+        itkmask *= itk.array_from_image(roi.get_mask(img))
     return np.sum(itkmask)*np.prod(spacing)
 
 def intersect_segments(S1, S2, eps = 1e-10):
