@@ -752,3 +752,33 @@ def intersect_segments(S1, S2, eps = 1e-10):
     if(tI < 0 or tI > 1):
         return np.array([])
     return(S1[0] + sI * u)
+
+#####################################################################################
+import unittest
+import hashlib
+import os
+import pydicom
+import hashlib
+from .logging_conf import LoggedTestCase
+
+class Test_ROI(LoggedTestCase):
+    def test_roi(self):
+        testfilesPath = os.path.dirname(os.path.realpath(__file__))
+        testfilesPath = os.path.join(testfilesPath, "testroi")
+        structset = pydicom.read_file(os.path.join(testfilesPath, "rtstruct.dcm"))
+
+        # roi names
+        roi_names = list_roinames(structset)
+        img = itk.imread(os.path.join(testfilesPath, "ct.mha"))
+        self.assertTrue(len(roi_names) == 11)
+        self.assertTrue(roi_names[0] == 'External')
+
+        #Convert PTV
+        aroi = region_of_interest(structset, roi_names[6])
+        mask = aroi.get_mask(img, corrected=False)
+        itk.imwrite(mask, "testPTV.mha")
+        with open("testPTV.mha","rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            os.remove("testPTV.mha")
+            self.assertTrue("7fc957af4cc082330cf5d430bb4d0d09a7e3be9918472580db32b5a636d8c147" == new_hash)
