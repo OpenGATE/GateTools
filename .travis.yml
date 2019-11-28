@@ -11,8 +11,7 @@ python:
 #  - "3.7"
 #  - "3.8"
 install:
-  - cd OpenGATE/GateTools
-  - pip install -e gatetools
+  - pip install -e .
 script: 
   - python -m unittest gatetools -v
   - python -m unittest gatetools.phsp -v
