@@ -11,7 +11,12 @@ python:
 #  - "3.7"
 #  - "3.8"
 install:
+  - echo $TRAVIS_PYTHON_VERSION
+  - "if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then pip install scikit-build; fi"
   - pip install -e .
 script: 
   - python -m unittest gatetools -v
   - python -m unittest gatetools.phsp -v
+
+notifications:
+  email: false
