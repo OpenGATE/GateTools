@@ -19,6 +19,8 @@ import gatetools as gt
 from functools import reduce
 import operator
 import numpy as np
+import logging
+logger=logging.getLogger(__name__)
 
 def relative_uncertainty_Poisson(x, threshold=0):
     sigma = np.sqrt(x)

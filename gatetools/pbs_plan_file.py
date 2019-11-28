@@ -5,6 +5,8 @@ scanning to the text format that Gate uses to read in the spot specifications.
 """
 
 import numpy as np
+import logging
+logger=logging.getLogger(__name__)
 
 def dicom_rt_pbs_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbose=False):
     """
@@ -65,7 +67,7 @@ def dicom_rt_pbs_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbo
             nspots_nominal = int(icp.NumberOfScanSpotPositions)
             if nspots == 0:
                 if allow0:
-                    print("WARNING: this should not happen, nspots_nominal={}",format(nspots_nominal))
+                    logger.warning("this should not happen, nspots_nominal={}",format(nspots_nominal))
                 nlayers_ignored += 1
                 nspots_ignored += nspots_nominal
                 continue
@@ -88,14 +90,14 @@ def dicom_rt_pbs_plan_to_gate_conversion(dcm_input,txt_output,allow0=False,verbo
             cpi+=1
     filehandle.close()
     if verbose:
-        print("Converted DICOM file {} to Gate PBS spot specification text file {}".format(dcm_input,txt_output))
-        print("# beams = {}".format(len(rp.IonBeamSequence)))
-        print("# control points written = {}".format(nlayers_written))
-        print("# spots written = {}".format(nspots_written))
+        logger.info("Converted DICOM file {} to Gate PBS spot specification text file {}".format(dcm_input,txt_output))
+        logger.info("# beams = {}".format(len(rp.IonBeamSequence)))
+        logger.info("# control points written = {}".format(nlayers_written))
+        logger.info("# spots written = {}".format(nspots_written))
         if not allow0:
             # number of beams ignored, because msw<=0 for all spots? :-)
-            print("# control points ignored (because msw<=0 for all spots) = {}".format(nlayers_ignored))
-            print("# spots ignored (because msw<=0) = {}".format(nspots_ignored))
+            logger.info("# control points ignored (because msw<=0 for all spots) = {}".format(nlayers_ignored))
+            logger.info("# spots ignored (because msw<=0) = {}".format(nspots_ignored))
 
 ###############################################################################
 # IMPLEMENTATION DETAILS                                                      #
@@ -128,7 +130,7 @@ def _check_rp_dicom_file(rp_filepath,verbose=False):
                 if attr not in icp:
                     raise IOError("bad DICOM file {},\nmissing '{}' in {}th ion control point".format(rp_filepath,attr,cpi))
     if verbose:
-        print("Input DICOM file seems to be a legit 'RT Ion Plan Storage' file.")
+        logger.info("Input DICOM file seems to be a legit 'RT Ion Plan Storage' file.")
     return rp
 
 def _get_beam_numbers(rp,verbose=False):
@@ -154,17 +156,17 @@ def _get_beam_numbers(rp,verbose=False):
             if nr < 0:
                 input_beam_numbers_are_ok = False
                 if verbose:
-                    print("CORRUPT INPUT: found a negative beam number {}.".format(nr))
+                    logger.info("CORRUPT INPUT: found a negative beam number {}.".format(nr))
             elif nr in number_list:
                 input_beam_numbers_are_ok = False
                 if verbose:
-                    print("CORRUPT INPUT: found same beam number {} for multiple beams.".format(nr))
+                    logger.info("CORRUPT INPUT: found same beam number {} for multiple beams.".format(nr))
             else:
                 # still good, keep fingers crossed...
                 number_list.append(nr)
     if not input_beam_numbers_are_ok:
         if verbose:
-            print("WARNING: will use simple enumeration of beams instead of the (apparently corrupt) dicom beam numbers.")
+            logger.warning("will use simple enumeration of beams instead of the (apparently corrupt) dicom beam numbers.")
         number_list = np.arange(1,n_ion_beams+1).tolist()
     return number_list
 
@@ -216,25 +218,25 @@ def _get_angles_and_isoCs(rp,verbose):
         if "IsocenterPosition" in icp0 and len(icp0.IsocenterPosition)==3:
             iso_center_list.append(np.array([float(icp0.IsocenterPosition[j]) for j in range(3)]))
         else:
-            print("WARNING: absent/corrupted isocenter for beam '{}'; assuming [0,0,0] for now, please fix this manually.".format(beamname))
+            logger.warning("absent/corrupted isocenter for beam '{}'; assuming [0,0,0] for now, please fix this manually.".format(beamname))
             iso_center_list.append(np.zeros(3,dtype=float))
             dubious = True
         # check gantry angle
         if "GantryAngle" in icp0:
             gantry_angle_list.append(float(icp0.GantryAngle))
         else:
-            print("WARNING: no gantry angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
+            logger.warning("no gantry angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
             gantry_angle_list.append(0.)
             dubious = True
         # check couch angle
         if "PatientSupportAngle" in icp0:
             patient_angle_list.append(float(icp0.PatientSupportAngle))
         else:
-            print("WARNING: no patient support angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
+            logger.warning("no patient support angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
             patient_angle_list.append(0.)
             dubious = True
     if verbose and not dubious:
-        print("patient/gantry angles and isocenters all seem fine.")
+         logger.info("patient/gantry angles and isocenters all seem fine.")
     return gantry_angle_list, patient_angle_list, iso_center_list
 
 def _read_and_check_dicom_plan_file(rp_filepath,verbose=False):
@@ -273,11 +275,11 @@ def _check_output_filename(txt_output,verbose):
     if len(base_txt_output)<5:
         raise IOError("Output file name should have at least one charachter before the txt/dat suffix.")
     if os.path.exists(txt_output) and verbose:
-        print("WARNING: going to overwrite existing file {}".format(txt_output))
+        logger.warning("going to overwrite existing file {}".format(txt_output))
     badchars=re.compile("[^a-zA-Z0-9_]")
     planname = re.sub(badchars,"_",base_txt_output[:-4])
     if verbose:
-        print("using plan name '{}'".format(planname))
+        logger.info("using plan name '{}'".format(planname))
     return planname
 
 
@@ -397,7 +399,7 @@ class _tmp_test_plan_writer:
         else:
             self.ds.NumberOfBeams = 0
         if verbose:
-            print("number of beams is {}".format(self.ds.NumberOfBeams))
+            logger.info("number of beams is {}".format(self.ds.NumberOfBeams))
         dt = datetime.datetime.now()
         self.ds.ContentDate = dt.strftime('%Y%m%d')
         timeStr = dt.strftime('%H%M%S.%f')  # long format with micro seconds
@@ -407,11 +409,11 @@ class _tmp_test_plan_writer:
         self.ds.fix_meta_info()
         self.ds.save_as(self.dcm_filename)
         if self.verbose:
-            print("wrote dicom file {}".format(self.dcm_filename))
+            logger.info("wrote dicom file {}".format(self.dcm_filename))
     def __del__(self):
         os.remove(self.dcm_filename)
         if self.verbose:
-            print("deleted dicom file {}".format(self.dcm_filename))
+            logger.info("deleted dicom file {}".format(self.dcm_filename))
         del self.ds
 
 class test_small_normal_plan(unittest.TestCase):
@@ -558,7 +560,7 @@ class test_workarounds(unittest.TestCase):
     def test_angles_and_iscoCs(self):
         test_rp = _check_rp_dicom_file("test.dcm",self.verbose)
         # The "unittest" module has an "assertWarning" test, maybe we should apply that here.
-        print("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
+        logger.info("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
         gantry_angles, patient_angles, iso_centers = _get_angles_and_isoCs(test_rp,self.verbose)
         for g,p,i in zip(gantry_angles, patient_angles, iso_centers):
             # missing in input, therefore all zero!
@@ -569,10 +571,10 @@ class test_workarounds(unittest.TestCase):
                 self.assertEqual(i[j],0.)
     def test_the_whole_thing_already(self):
         # "unittest" has an "assertWarning" test, maybe we should apply that here.
-        print("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
+        logger.info("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
         dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_tolerance.txt",allow0=True,verbose=self.verbose)
         # "unittest" has an "assertWarning" test, maybe we should apply that here.
-        print("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
+        logger.info("After this message you should see 3x3 warnings about 'absent/corrupted isocenter' and missing patient & gantry angles.")
         dicom_rt_pbs_plan_to_gate_conversion("test.dcm","zero_nontolerance.txt",allow0=False,verbose=self.verbose)
 
 # vim: set et ts=4 ai sw=4:

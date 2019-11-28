@@ -8,6 +8,8 @@
 
 import gatetools as gt
 import click
+import logging
+logger=logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -15,10 +17,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--short/--not-short', '-s',
               default=False,
               help='If true, display Gate path only')
-def gt_gate_info(short):
+@gt.add_options(gt.common_options)
+def gt_gate_info(short, **kwargs):
     '''
     Print information about a Gate and the environment
     '''
+
+    # logger
+    gt.logging_conf(**kwargs)
+
     gt.print_gate_info(short)
 
 # -----------------------------------------------------------------------------

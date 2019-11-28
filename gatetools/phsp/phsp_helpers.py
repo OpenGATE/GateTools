@@ -10,6 +10,8 @@ import tokenize
 from io import BytesIO
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
+import logging
+logger=logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 def load(filename, nmax=-1, random=False):
@@ -23,7 +25,7 @@ def load(filename, nmax=-1, random=False):
 
     if extension == '.root':
         if random:
-            print('Error, cannot random on root file for the moment')
+            logger.error('cannot random on root file for the moment')
             exit(0)
         return load_root(filename, nmax)
 
@@ -33,7 +35,7 @@ def load(filename, nmax=-1, random=False):
     if extension == '.npy':
         return load_npy(filename, nmax, random)
 
-    print('Error, dont know how to open phsp with extension ',
+    logger.error('dont know how to open phsp with extension ',
           extension,
           ' (known extensions: .root .npy)')
     exit(0)
@@ -49,14 +51,14 @@ def load_root(filename, nmax=-1):
     nmax = int(nmax)
     # Check if file exist
     if (not os.path.isfile(filename)):
-        print("File '"+filename+"' does not exist.")
+        logger.error("File '"+filename+"' does not exist.")
         exit()
 
     # Check if this is a root file
     try:
         f = uproot.open(filename)
     except Exception:
-        print("File '"+filename+"' cannot be opened, not root file ?")
+        logger.error("File '"+filename+"' cannot be opened, not root file ?")
         exit()
 
     # Look for a single key named "PhaseSpace"
@@ -64,7 +66,7 @@ def load_root(filename, nmax=-1):
     try:
         psf = f['PhaseSpace']
     except Exception:
-        print("This root file does not look like a PhaseSpace, keys are: ",
+        logger.error("This root file does not look like a PhaseSpace, keys are: ",
               f.keys(), ' while expecting "PhaseSpace"')
         exit()
         
@@ -94,7 +96,7 @@ def load_npy(filename, nmax=-1, random=False):
     
     # Check if file exist
     if (not os.path.isfile(filename)):
-        print("File '"+filename+"' does not exist.")
+        logger.error("File '"+filename+"' does not exist.")
         exit()
 
     x = np.load(filename, mmap_mode='r')
@@ -158,7 +160,7 @@ def remove_keys(data, keys, rm_keys):
     
     for k in rm_keys:
         if k not in keys:
-            print('Error the key', k, 'does not exist in', keys)
+            logger.error('Error the key', k, 'does not exist in', keys)
             exit(0)
         i = keys.index(k)
         cols = np.delete(cols, i)
@@ -278,7 +280,7 @@ def select_keys(data, input_keys, output_keys):
     cols = np.arange(len(input_keys))
     index = []
     if len(output_keys) == 0:
-        print('Error, select_keys is void')
+        logger.error('Error, select_keys is void')
         exit(0)
 
     cols = []
@@ -287,7 +289,7 @@ def select_keys(data, input_keys, output_keys):
             i = input_keys.index(k)
             cols.append(i)
         except:
-            print('Error, cannot find',k,'in keys:',input_keys)
+            logger.error('Error, cannot find',k,'in keys:',input_keys)
             exit(0)
 
     data = data[:, cols]
@@ -325,7 +327,7 @@ def add_vector_angle(data, keys, radius, k='angleXY', k1='X', k2='Y'):
         return data, keys
 
     if k not in keys:
-        print('Cannot convert angle, the key angleXY does not exist in ', keys)
+        logger.warning('Cannot convert angle, the key angleXY does not exist in ', keys)
 
     i = keys.index(k)
     angle = data[:,i]

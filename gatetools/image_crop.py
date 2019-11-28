@@ -15,6 +15,8 @@ This module provides a function to crop image
 import itk
 import gatetools as gt
 import numpy as np
+import logging
+logger=logging.getLogger(__name__)
 
 def image_auto_crop(img, bg=0):
     """
@@ -26,7 +28,7 @@ def image_auto_crop(img, bg=0):
     Dim = 3
     dims = np.array(img.GetLargestPossibleRegion().GetSize())
     if len(dims) != 3:
-        print('ERROR: only 3D image supported')
+        logger.error('only 3D image supported')
         exit(0)
 
     # check image type: LabelImageToLabelMapFilter only allow unsigned short/char
@@ -36,11 +38,11 @@ def image_auto_crop(img, bg=0):
     PixelType = itk.template(img)[1][0]
 
     if PixelType == itk.ctype('float'):
-        print('Cannot crop for float or double PixelType. Only char/short supported')
+        logger.error('Cannot crop for float or double PixelType. Only char/short supported')
         exit(0)
 
     if PixelType == itk.ctype('int'):
-        print('Cannot crop for int PixelType. Only char/short supported')
+        logger.error('Cannot crop for int PixelType. Only char/short supported')
         exit(0)
 
     # special case for negative value
@@ -99,7 +101,7 @@ def image_crop_with_bb(img, bb):
     """
     dims = np.array(img.GetLargestPossibleRegion().GetSize())
     if len(dims) != 3:
-        print('ERROR: only 3D image supported')
+        logger.error('only 3D image supported')
         exit(0)
     #inclusive
     from_index = np.maximum(np.zeros(3,dtype=int),np.array(img.TransformPhysicalPointToIndex(bb.mincorner)))
