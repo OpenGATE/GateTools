@@ -81,7 +81,7 @@ def load_root(filename, nmax=-1):
         a = psf.arrays()
 
     # Concat arrays
-    d = np.column_stack( a[k] for k in psf.keys())
+    d = np.column_stack([a[k] for k in psf.keys()])
     #d = np.float64(d) # long
     
     return d, names, n
