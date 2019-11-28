@@ -10,4 +10,8 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
-script: python -m unittest gatetools -v && python -m unittest gatetools.phsp -v
+install:
+  - pip install -e gatetools
+script: 
+  - python -m unittest gatetools -v
+  - python -m unittest gatetools.phsp -v
