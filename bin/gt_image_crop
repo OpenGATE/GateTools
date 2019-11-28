@@ -36,14 +36,14 @@ def gt_image_crop(input_filename, output, bg, bb, **kwargs):
     if bg == None and bb == None:
         bg = 0
     if bg != None and bb != None:
-        print('Use --bg or --bb not both')
+        logger.error('Use --bg or --bb not both')
         exit(0)
 
     # read img
     try:
         img = itk.imread(input_filename)
     except:
-        print(f'ERROR: cannot read {input_filename}')
+        logger.error(f'cannot read {input_filename}')
         exit(0)
     dims = np.array(img.GetLargestPossibleRegion().GetSize())
     

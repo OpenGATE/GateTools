@@ -7,6 +7,8 @@ import gatetools.phsp as phsp
 import click
 import os
 from matplotlib import pyplot as plt
+import logging
+logger=logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
@@ -18,7 +20,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--plot2d',
               type=(str, str),
               help='Add 2D plots (key1,key2), such as --plot2d X Ekine --plot2d X Y ', multiple=True)
-def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d):
+@gt.add_options(gt.common_options)
+def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, **kwargs):
     '''
     \b
     Plot histograms
@@ -29,12 +32,15 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d):
     WARNING: if several filenames, they must have the same keys
     '''
 
+    # logger
+    gt.logging_conf(**kwargs)
+
     f = None
     nb_fig = 0
     q = {}
 
     for filename in filenames:
-        print(filename)
+        logger.info(filename)
 
         # load data
         data, read_keys, m = phsp.load(filename, n)

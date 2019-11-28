@@ -1,4 +1,6 @@
 import numpy as np
+import logging
+logger=logging.getLogger(__name__)
 
 class bounding_box(object):
     """

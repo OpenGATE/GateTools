@@ -10,6 +10,8 @@ import gatetools as gt
 import itk
 import click
 import sys
+import logging
+logger=logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -32,8 +34,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               type=click.Path(dir_okay=False,
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
+@gt.add_options(gt.common_options)
 
-def gt_pbs_dicom2gate_main(dicomfile, output, keepzero, verbose):
+def gt_pbs_dicom2gate_main(dicomfile, output, keepzero, verbose, **kwargs):
     '''
     Convert DICOM files with treatment plans for pencil beam scanning (PBS)
     radiotherapy (RT) to the text format that can be read by `TPSPencilBeam`
@@ -59,7 +62,10 @@ def gt_pbs_dicom2gate_main(dicomfile, output, keepzero, verbose):
     the plan name, which is then also stored in the output file (after
     replacing all non-alphanumeric characters with an underscore).
     '''
-    
+
+    # logger
+    gt.logging_conf(**kwargs)
+
     gt.dicom_rt_pbs_plan_to_gate_conversion(dicomfile,output,allow0=keepzero,verbose=verbose)
 
 

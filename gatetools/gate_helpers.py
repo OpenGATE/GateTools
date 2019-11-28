@@ -10,6 +10,8 @@ import platform
 import subprocess
 import pkg_resources
 import os
+import logging
+logger=logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
 def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
@@ -29,7 +31,7 @@ def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
         output = result.stdout.decode("utf-8").splitlines()[0]
 
     if short_verbose:
-        print(path)
+        logger.info(path)
         return
 
     # get gatetools version
@@ -38,17 +40,17 @@ def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
     # get G4 env variables
     g4_list = ['G4ABLADATA', 'G4ENSDFSTATEDATA', 'G4INCLDATA', 'G4LEDATA', 'G4LEVELGAMMADATA', 'G4NEUTRONHPDATA', 'G4PARTICLEXSDATA', 'G4PIIDATA', 'G4RADIOACTIVEDATA', 'G4REALSURFACEDATA', 'G4SAIDXSDATA']
 
-    print('Gate path:         ', path)
-    print('Version:           ', output)
-    print('Machine type:      ', platform.machine())
-    print('Hostname:          ', platform.node())
-    print('Platform:          ', platform.platform())
-    print('Processor:         ', platform.processor())
-    print('Python:            ', platform.python_version())
-    print('System:            ', platform.system())
-    print('GateTools version: ', gtv)
+    logger.info('Gate path:         ', path)
+    logger.info('Version:           ', output)
+    logger.info('Machine type:      ', platform.machine())
+    logger.info('Hostname:          ', platform.node())
+    logger.info('Platform:          ', platform.platform())
+    logger.info('Processor:         ', platform.processor())
+    logger.info('Python:            ', platform.python_version())
+    logger.info('System:            ', platform.system())
+    logger.info('GateTools version: ', gtv)
     for g in g4_list:
         try:
-            print('{:<19} {}'.format(g, os.environ[g]))
+            logger.info('{:<19} {}'.format(g, os.environ[g]))
         except:
-            print('{:<19} NOT FOUND'.format(g))
+            logger.info('{:<19} NOT FOUND'.format(g))

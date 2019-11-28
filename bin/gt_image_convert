@@ -10,14 +10,16 @@ import gatetools as gt
 import click
 import itk
 import os
+import logging
+logger=logging.getLogger(__name__)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-o', '--output', type=str, required=True, help='Output image name')
 @click.option('-p', '--pixeltype', type=str, help='Pixel type conversion')
 @click.argument('input', type=str, required=True, nargs=-1)
-
-def gt_image_convert(input, output, pixeltype):
+@gt.add_options(gt.common_options)
+def gt_image_convert(input, output, pixeltype, **kwargs):
     '''
     Convert the input to the output with pixeltype. If pixeltype is
     not set, the output has the same pixel type than the input.
@@ -36,10 +38,13 @@ def gt_image_convert(input, output, pixeltype):
        ~/path/to/dcm/toto.dcm
     '''
 
+    # logger
+    gt.logging_conf(**kwargs)
+
     #Check if input is available
     for inputFile in input:
         if not os.path.isfile(inputFile):
-            print("ERROR: no existing input: " + inputFile)
+            logger.error('no existing input: ' + inputFile)
             return
 
     #Read input
@@ -50,7 +55,7 @@ def gt_image_convert(input, output, pixeltype):
     elif len(input) == 1 and input[0].endswith(".dcm"):
         inputImage = gt.read_3d_dicom(input)
     else:
-        print("ERROR: no input available")
+        logger.error('no input available')
         return
 
     # convert image

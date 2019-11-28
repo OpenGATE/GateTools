@@ -17,6 +17,8 @@ import pydicom
 from pydicom.tag import Tag
 import gatetools as gt
 import numpy as np
+import logging
+logger=logging.getLogger(__name__)
 
 def read_dicom(dicomFiles):
     """
@@ -39,12 +41,12 @@ def read_dicom(dicomFiles):
                 skipcount = skipcount + 1
 
         if skipcount >0:
-            print("skipped, no SliceLocation: {}".format(skipcount))
+            logger.info("skipped, no SliceLocation: {}".format(skipcount))
 
         # ensure they are in the correct order
         slices = sorted(slices, key=lambda s: s.SliceLocation)
     else:
-        print("ERROR: no file available")
+        logger.error('no file available')
         return
 
 
@@ -77,7 +79,6 @@ def read_dicom(dicomFiles):
     img_shape[0] = len(slices)
     img_shape.append(slices[0].pixel_array.shape[0])
     img3d = np.zeros(img_shape)
-    print(slices[0].pixel_array.shape)
 
     # fill 3D array with the images from the files
     for i, s in enumerate(slices):
@@ -113,7 +114,7 @@ def read_3d_dicom(dicomFile):
     if len(files) == 1:
         slices.append(files[0])
     else:
-        print("ERROR: no file available")
+        logger.error('no file available')
         return
 
 

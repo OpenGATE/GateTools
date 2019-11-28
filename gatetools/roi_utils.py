@@ -165,9 +165,9 @@ def test_enclosed_area():
     vs[2,0] = 1
     vs[2,1] = 1
     vs[3,1] = 1
-    print("unit square: area={}".format(enclosed_area(vs)))
+    logger.info("unit square: area={}".format(enclosed_area(vs)))
     avs=vs[::-1,:]
-    print("reverse unit square: area={}".format(enclosed_area(avs)))
+    logger.info("reverse unit square: area={}".format(enclosed_area(avs)))
 
 class contour_layer(object):
     """
