@@ -50,7 +50,14 @@ setuptools.setup(
 )
 
 
-# Help for uploading the package (TEST)
+# -----------------------------------------------------------------------------
+# Uploading the package on pypi
+
+# Steps
+# 1 - change version in setup.py file
+# 2 - commit, tag
+# 3 - setup/twine (see below)
+
 
 # pip uninstall gatetools
 # python3 setup.py sdist bdist_wheel
