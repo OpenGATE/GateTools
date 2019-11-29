@@ -382,29 +382,33 @@ def fig_histo2D(ax, data, keys, k, nbins, color='g'):
 #####################################################################################
 import unittest
 import hashlib
+import wget
+import tempfile
+import shutil
 from gatetools.logging_conf import LoggedTestCase
 
 class Test_Phsp(LoggedTestCase):
     def test_phsp_convert(self):
-        testfilesPath = os.path.dirname(os.path.realpath(__file__))
-        testfilesPath = os.path.join(testfilesPath, "testphsp")
-        data, read_keys, m = load(os.path.join(testfilesPath, "phsp.root"), -1)
-        save_npy(os.path.join(testfilesPath, "testphsp.npy"), data, read_keys)
-        with open(os.path.join(testfilesPath, "testphsp.npy"),"rb") as fnew:
+        tmpdirpath = tempfile.mkdtemp()
+        filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/gatetools/phsp/testphsp/phsp.root", out=tmpdirpath, bar=None)
+        data, read_keys, m = load(os.path.join(tmpdirpath, filenameRoot), -1)
+        save_npy(os.path.join(tmpdirpath, "testphsp.npy"), data, read_keys)
+        with open(os.path.join(tmpdirpath, "testphsp.npy"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("cec796ec5764d039b02e15d504e80ccf2b2c35e0e5380985245262faf0ff0892" == new_hash)
-        dataNPY, read_keysNPY, mNPY = load(os.path.join(testfilesPath, "testphsp.npy"), -1)
+        dataNPY, read_keysNPY, mNPY = load(os.path.join(tmpdirpath, "testphsp.npy"), -1)
         self.assertTrue(np.allclose(131.69868, np.amax(dataNPY[:,2])))
-        os.remove(os.path.join(testfilesPath, "testphsp.npy"))
+        shutil.rmtree(tmpdirpath)
 
     def test_phsp_info(self):
-        testfilesPath = os.path.dirname(os.path.realpath(__file__))
-        testfilesPath = os.path.join(testfilesPath, "testphsp")
-        data, read_keys, m = load(os.path.join(testfilesPath, "phsp.root"), -1)
-        self.assertTrue("17.27 MB" == humansize(os.stat(os.path.join(testfilesPath, "phsp.root")).st_size))
+        tmpdirpath = tempfile.mkdtemp()
+        filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/gatetools/phsp/testphsp/phsp.root", out=tmpdirpath, bar=None)
+        data, read_keys, m = load(os.path.join(tmpdirpath, filenameRoot), -1)
+        self.assertTrue("17.27 MB" == humansize(os.stat(os.path.join(tmpdirpath, filenameRoot)).st_size))
         self.assertTrue(np.float32 == data.dtype)
         self.assertTrue(782127 == m)
         self.assertTrue(7 == len(read_keys))
         self.assertTrue(np.allclose(131.69868, np.amax(data[:,2])))
+        shutil.rmtree(tmpdirpath)
 

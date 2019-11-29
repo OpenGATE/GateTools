@@ -28,6 +28,7 @@ setuptools.setup(
         'colored',
         'itk>=5',
         'uproot',
+        'wget',
     ],
     scripts=[
         'bin/gt_gate_info',
