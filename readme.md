@@ -8,7 +8,7 @@ gt_gate_info
 gt_image_convert -i input.dcm -o output.mhd
 gt_image_convert -i input.mhd -o output_float.mhd -p float
 gt_image_arithm -i *.mhd -o output.mhd -O sum
-gt_gamma_index data/tps_dose.mhd result.XYZ/gate-DoseToWater.mhd -o gamma.mhd --dd 2 --dta 2.5 -u "%" -T 0.2
+gt_gamma_index dose.mhd gate-DoseToWater.mhd -o gamma.mhd --dd 2 --dta 2.5 -u "%" -T 0.2
 ```
 
 Use the flag `-h` to get print the help of each tool. Here is the current list of command line tools. 
