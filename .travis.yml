@@ -1,18 +1,18 @@
 language: python
-sudo: required
-dist: trusty
 cache:
   directories:
     - $HOME/.cache/pip
 python:
-  - "3.4"
-  - "3.5"
+#  - "3.4" #itk 5.0.1 does not run with this version
+#  - "3.5" # fstring not available with this version
   - "3.6"
-#  - "3.7"
-#  - "3.8"
+  - "3.7"
+  - "3.8"
+env:
+  - ITK_VERSION=5.0.0
+  - ITK_VERSION=5.0.1
 install:
-  - echo $TRAVIS_PYTHON_VERSION
-  - "if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then pip install scikit-build; fi"
+  - pip install -q itk==$ITK_VERSION
   - pip install -e .
 script: 
   - python -m unittest gatetools -v
