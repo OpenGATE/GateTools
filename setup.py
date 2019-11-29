@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.8.1",
+    version="0.8.2",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
@@ -22,6 +22,7 @@ setuptools.setup(
         'uproot',
         'matplotlib',
         'click',
+        'numpy',
         'pydicom',
         'tqdm',
         'colored',
@@ -49,11 +50,19 @@ setuptools.setup(
 )
 
 
-# Help for uploading the package (TEST)
+# -----------------------------------------------------------------------------
+# Uploading the package on pypi
 
-# pip uninstall gatetools
-# python3 setup.py sdist bdist_wheel
+# Steps
+# 1 - change version in setup.py file
+# 2 - commit, tag. git push --tags
+# 3 - setup: python3 setup.py sdist bdist_wheel
+# 4 - twine: see below
+
+# On TEST pypi: 
 # twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 # test with
+# pip uninstall gatetools
 # pip3 install --index-url https://test.pypi.org/simple/ gatetools
+# https://test.pypi.org/project/gatetools/
