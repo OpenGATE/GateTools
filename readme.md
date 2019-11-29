@@ -1,4 +1,4 @@
-Tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
+**Tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
 
 Install with : `pip install gatetools` 
 
