@@ -34,9 +34,11 @@ import gatetools as gt
 gt.image_convert(inputImage, pixeltype)
 ```
 
-Tests: run `python -m unittest gatetools -v`
-           `python -m unittest gatetools.phsp -v`
-
+Tests: run 
+```
+python -m unittest gatetools -v
+python -m unittest gatetools.phsp -v
+```
 
 ## Developers
 
