@@ -49,19 +49,25 @@ def gt_image_convert(input, output, pixeltype, **kwargs):
 
     #Read input
     if len(input) == 1 and not input[0].endswith(".dcm"):
+        logger.info(f'Reading input image with itk {input[0]}')
         inputImage = itk.imread(input[0])
     elif len(input) > 1:
+        logger.info(f'Reading input dicom {len(input)} input files')
         inputImage = gt.read_dicom(input)
     elif len(input) == 1 and input[0].endswith(".dcm"):
+        logger.info(f'Reading input 3D dicom {input[0]}')
         inputImage = gt.read_3d_dicom(input)
     else:
         logger.error('no input available')
         return
 
     # convert image
+    if pixeltype != None:
+        logger.info(f'Convert pixel type to {pixeltype}')
     outputImage = gt.image_convert(inputImage, pixeltype)
 
     # write file
+    logger.info(f'Write {output}')
     itk.imwrite(outputImage, output)
 
 
