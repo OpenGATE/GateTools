@@ -11,6 +11,10 @@ python:
 env:
   - ITK_VERSION=5.0.0
   - ITK_VERSION=5.0.1
+jobs:
+  exclude:
+    - python: "3.8"
+      env: ITK_VERSION=5.0.0
 install:
   - pip install -q itk==$ITK_VERSION
   - pip install -e .
