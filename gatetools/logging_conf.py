@@ -1,3 +1,10 @@
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
 """
 This module contains the default logging configuration for the Gate tools.
 It is used by the command line tools and you *can* use it for your own

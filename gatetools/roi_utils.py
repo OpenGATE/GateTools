@@ -1,4 +1,10 @@
-# coding: utf-8
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
 """
 This module was developed in as part of the effort in Uppsala (2015-2017)
 develop a framework to analyze the effect of patient motion on the dose
