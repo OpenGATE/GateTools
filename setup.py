@@ -55,13 +55,14 @@ setuptools.setup(
 
 # Steps
 # 1 - change version in setup.py file
-# 2 - commit, tag
-# 3 - setup/twine (see below)
+# 2 - commit, tag. git push --tags
+# 3 - setup: python3 setup.py sdist bdist_wheel
+# 4 - twine: see below
 
-
-# pip uninstall gatetools
-# python3 setup.py sdist bdist_wheel
+# On TEST pypi: 
 # twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 # test with
+# pip uninstall gatetools
 # pip3 install --index-url https://test.pypi.org/simple/ gatetools
+# https://test.pypi.org/project/gatetools/
