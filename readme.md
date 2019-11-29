@@ -40,18 +40,5 @@ python -m unittest gatetools -v
 python -m unittest gatetools.phsp -v
 ```
 
-## Developers
-
 For developers, please have a look at the [readme_dev.md](readme_dev.md) file. 
 
-When developing, install with: `pip install -e .`
-
-Dependencies:
-- click: https://click.palletsprojects.com
-- uproot: https://github.com/scikit-hep/uproot
-- pydicom: https://pydicom.github.io/
-- tqdm: https://github.com/tqdm/tqdm
-- colored: https://gitlab.com/dslackw/colored
-- itk: https://itk.org/
-- numpy https://numpy.org/
-- matplotlib https://matplotlib.org/
