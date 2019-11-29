@@ -1,6 +1,4 @@
-**(Hopefully) useful tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
-
-**STILL WORK IN PROGRESS : will be released before end 2019**
+Tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
 
 Install with : `pip install gatetools` 
 
@@ -42,7 +40,7 @@ Tests: run `python -m unittest gatetools -v`
 
 ## Developers
 
-For developers, please have a look at the [](readme_dev.md) file. 
+For developers, please have a look at the [readme_dev.md](readme_dev.md) file. 
 
 When developing, install with: `pip install -e .`
 
