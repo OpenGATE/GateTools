@@ -1,4 +1,11 @@
-# Compare two 3D images using the gamma index formalism as introduced by Daniel Low (1998).
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
+#Compare two 3D images using the gamma index formalism as introduced by Daniel Low (1998).
 
 import numpy as np
 import itk
