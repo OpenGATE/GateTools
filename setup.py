@@ -19,7 +19,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ),
     install_requires=[
-        'uproot',
         'matplotlib',
         'click',
         'numpy',
@@ -28,6 +27,7 @@ setuptools.setup(
         'colored',
         'itk>=5',
         'uproot',
+        'psutil',
         'wget',
     ],
     scripts=[
