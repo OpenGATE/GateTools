@@ -1,8 +1,7 @@
 """
-This module provides single threaded and multithreaded functions for mass
-weighted resampling an image file that contains a 3D dose distribution to match
-the geometry (origin, spacing, number of voxels per dimension) of a reference
-image.
+This module provides a function for mass weighted resampling of an image file
+that contains a 3D dose distribution to match the geometry (origin, spacing,
+number of voxels per dimension) of a reference image.
 
 The resampled dose R_j in voxel j of the new grid is computed as follows from the
 dose D_i of voxels i in the input dose distribution, the corresponding masses (or mass densities) M_i
@@ -28,6 +27,8 @@ machine.
 import numpy as np
 import itk
 from datetime import datetime
+import logging
+logger = logging.getLogger()
 
 def mass_weighted_resampling(dose,mass,newgrid):
     """
@@ -77,7 +78,7 @@ def mass_weighted_resampling(dose,mass,newgrid):
     newdose.CopyInformation(newgrid)
     t1=datetime.now()
     dt=(t1-t0).total_seconds()
-    #print(f"resampling using `np.tensordot` took {dt:.3f} seconds")
+    logger.debug(f"resampling using `np.tensordot` took {dt:.3f} seconds")
     return newdose
 
     
@@ -139,7 +140,7 @@ def _mwr_with_loops(dose,mass,newgrid):
     newdose.CopyInformation(newgrid)
     t1=datetime.now()
     dt=(t1-t0).total_seconds()
-    #print(f"resampling using explicit loops over nonzero voxel overlaps took {dt:.3f} seconds")
+    logger.debug(f"resampling using explicit loops over nonzero voxel overlaps took {dt:.3f} seconds")
     return newdose
     
 
@@ -220,7 +221,7 @@ def _overlaps(a0,da,na,b0,db,nb,label="",center=True):
             ab=False
         else:
             o[ia,ib]=min(ada,bdb)-max(a,b)
-            #print(f"o[{ia},{ib}]={o[ia,ib]:.2f}")
+            logger.debug(f"o[{ia},{ib}]={o[ia,ib]:.2f}")
             ab = (ada<bdb)
         if ab:
             ia+=1
@@ -238,8 +239,9 @@ def _overlaps(a0,da,na,b0,db,nb,label="",center=True):
 ################################################################################
 
 import unittest
+from .logging_conf import LoggedTestCase
 
-class overlaptests(unittest.TestCase):
+class overlaptests(LoggedTestCase):
     def test_IdenticalRanges(self):
         # 10 bins with step 1
         idr1=_overlaps(0,1,10,0,1,10,"idr1",center=False)
@@ -333,7 +335,7 @@ class overlaptests(unittest.TestCase):
         self.assertEqual(np.sum(nt2>0),np.sum(nt2exp>0))
         self.assertTrue(np.allclose(nt2,nt2exp))
 
-class dose_resampling_tests(unittest.TestCase):
+class dose_resampling_tests(LoggedTestCase):
     def setUp(self):
         self.dims = (200,300,40)
         self.spacing = (0.06,0.05,0.4)
@@ -393,10 +395,10 @@ class dose_resampling_tests(unittest.TestCase):
                 for iz,wz in enumerate([0.5-dz, 0.5+dz]):
                     expval += dose.GetPixel((ix,iy,iz))*mass.GetPixel((ix,iy,iz))*wx*wy*wz
                     norm += mass.GetPixel((ix,iy,iz))*wx*wy*wz
-        #print(f"value = {value}")
-        #print(f"exp value = {expval}")
-        #print(f"norm = {norm}")
+        logger.debug(f"value1 = {value1}")
+        logger.debug(f"exp value = {expval}")
+        logger.debug(f"norm = {norm}")
         expval/=norm
-        #print(f"normalized exp value = {expval}")
+        logger.debug(f"normalized exp value = {expval}")
         self.assertAlmostEqual(expval,value1,places=5)
         self.assertAlmostEqual(expval,value2,places=5)
