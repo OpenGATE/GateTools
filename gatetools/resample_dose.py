@@ -29,7 +29,7 @@ import numpy as np
 import itk
 from datetime import datetime
 
-def mass_weighted_resampling(dose,mass,newgrid,nthreads=1):
+def mass_weighted_resampling(dose,mass,newgrid):
     """
     This function computes a dose distribution using the geometry (origin,
     size, spacing) of the `newgrid` image, using the energy deposition and mass
@@ -38,11 +38,11 @@ def mass_weighted_resampling(dose,mass,newgrid,nthreads=1):
     and then we want to resample this dose distribution to the geometry of the
     new grid, e.g. from the dose distribution computed by a TPS.
 
-    If nthreads==1 (default), then the resampling will be computed using a
-    single thread.  If nthreads>1, then the resampling will be computed using
-    multiple threads, unless the output grid is too course to split up the
-    calculation.  If nthreads=0, then a guess will be made based on the
-    available RAM, number cores and the current workload on the machine.
+    This implementation relies on a bit of numpy magic (np.tensordot,
+    repeatedly).  A intuitively more clear but in practice much slower
+    implementation is given by `_mwr_wit_loops(dose,mass,newgrid)`; the unit
+    tests are verifying that these two implementation indeed yield the same
+    result. 
     """
     assert(_equal_geometry(dose,mass))
     if _equal_geometry(dose,newgrid):
@@ -54,7 +54,7 @@ def mass_weighted_resampling(dose,mass,newgrid,nthreads=1):
         # In a later release we may provide some smart code to deal with dose resampling outside of the input geometry.
         raise RuntimeError("new grid must be inside the old one")
     t0=datetime.now()
-    xyz_ol = [ _overlaps(*xyz) for xyz in zip(dose.GetOrigin(),
+    xol,yol,zol = [ _overlaps(*xyz) for xyz in zip(dose.GetOrigin(),
                                               dose.GetSpacing(),
                                               dose.GetLargestPossibleRegion().GetSize(),
                                               newgrid.GetOrigin(),
@@ -63,221 +63,85 @@ def mass_weighted_resampling(dose,mass,newgrid,nthreads=1):
     nxyz = np.array(dose.GetLargestPossibleRegion().GetSize())
     mxyz = np.array(newgrid.GetLargestPossibleRegion().GetSize())
     mzyx = mxyz[::-1].tolist()
-    if mxyz[0]<nthreads:
-        print(f"WARNING: going to use {mx} threads instead of {nthreads}")
-        nthreads=mxyz[0]
-    if nthreads==0:
-        nthreads = _guess_n_threads(np.prod(nxyz),np.prod(mxyz))
     adose = itk.array_from_image(dose)
     amass = itk.array_from_image(mass)
-    anew = np.zeros(mzyx,dtype=float)
-    wsum = np.zeros(mzyx,dtype=float)
-    if nthreads==1:
-        _mass_weighted_summing(xyz_ol,adose,amass,anew,wsum)
-    else:
-        import multiprocessing
-        from multiprocessing import Queue
-        qoutput=Queue()
-        threads = []
-        for ithread in range(nthreads):
-            t = multiprocessing.Process(target=_mass_weighted_summing_mt,args=[xyz_ol,adose.copy(),amass.copy(),qoutput,ithread,nthreads])
-            t.start()
-            threads.append(t)
-        #print("collecting output data")
-        for i in range(nthreads):
-            #print(f"waiting {i}th process to finish...")
-            j,janew,jwsum=qoutput.get()
-            #print(f"i={i} j={j} dsum={np.sum(janew)} wsum={np.sum(jwsum)}")
-            for jx in range(janew.shape[2]):
-                ix=jx*nthreads+j
-                wsum[:,:,ix]+=jwsum[:,:,jx]
-                anew[:,:,ix]+=janew[:,:,jx]
-        for it,t in enumerate(threads):
-            #print(f"waiting for thread nr {it} to join")
-            t.join()
-    #print(f"top 2x2x2 weights: {wsum[:2,:2,:2]}")
-    #print(f"top 2x2x2 doses: {anew[:2,:2,:2]}")
+    aedep = adose*amass
+    # now the magic happens :-)
+    anew = np.tensordot(zol,np.tensordot(yol,np.tensordot(xol,aedep,axes=(0,2)),axes=(0,2)),axes=(0,2))
+    wsum = np.tensordot(zol,np.tensordot(yol,np.tensordot(xol,amass,axes=(0,2)),axes=(0,2)),axes=(0,2))
+    assert(anew.shape==tuple(mzyx))
+    assert(wsum.shape==tuple(mzyx))
     mask=(wsum>0)
     anew[mask]/=wsum[mask]
     newdose=itk.image_from_array(anew)
     newdose.CopyInformation(newgrid)
     t1=datetime.now()
     dt=(t1-t0).total_seconds()
-    print(f"resampling using {nthreads} thread(s) took {dt:.3f} seconds")
+    #print(f"resampling using `np.tensordot` took {dt:.3f} seconds")
     return newdose
-    
 
-#def resample_dose(dose,mass,newgrid):
-#    """
-#    This function computes a dose distribution using the geometry (origin,
-#    size, spacing) of the `newgrid` image, using the energy deposition and mass
-#    with some different geometry. A typical use case is that a Gate simulation first
-#    computes the dose w.r.t. a patient CT (exporting also the mass image),
-#    and then we want to resample this dose distribution to the geometry of the
-#    new grid, e.g. from the dose distribution computed by a TPS.
-#
-#    This is the single threaded implementation.
-#    """
-#    t0=datetime.now()
-#    assert(_equal_geometry(dose,mass))
-#    if _equal_geometry(dose,newgrid):
-#        newdose=itk.image_from_array(itk.array_from_image(dose))
-#        newdose.CopyInformation(dose)
-#        return newdose
-#    if not _enclosing_geometry(dose,newgrid):
-#        raise RuntimeError("new grid must be inside the old one")
-#    xol,yol,zol = [ _overlaps(*xyz) for xyz in zip(dose.GetOrigin(),
-#                                                  dose.GetSpacing(),
-#                                                  dose.GetLargestPossibleRegion().GetSize(),
-#                                                  newgrid.GetOrigin(),
-#                                                  newgrid.GetSpacing(),
-#                                                  newgrid.GetLargestPossibleRegion().GetSize()) ]
-#    adose = itk.array_from_image(dose)
-#    amass = itk.array_from_image(mass)
-#    nz,ny,nx = adose.shape
-#    mz,my,mx = itk.array_from_image(newgrid).shape
-#    assert(xol.shape==(nx,mx))
-#    assert(yol.shape==(ny,my))
-#    assert(zol.shape==(nz,mz))
-#    anew = np.zeros((mz,my,mx),dtype=float)
-#    wsum = np.zeros((mz,my,mx),dtype=float)
-#    N_ops = 0
-#    for (ixs,ixd) in zip(*np.nonzero(xol)):
-#        dx=xol[ixs,ixd]
-#        for (iys,iyd) in zip(*np.nonzero(yol)):
-#            dy=yol[iys,iyd]
-#            for (izs,izd) in zip(*np.nonzero(zol)):
-#                dz=zol[izs,izd]
-#                w = dx*dy*dz*amass[izs,iys,ixs]
-#                anew[izd,iyd,ixd] += adose[izs,iys,ixs]*w
-#                wsum[izd,iyd,ixd] += w
-#                N_ops += 1
-#    mask=(wsum>0)
-#    anew[mask]/=wsum[mask]
-#    newdose=itk.image_from_array(anew)
-#    newdose.CopyInformation(newgrid)
-#    t1=datetime.now()
-#    print("resampling with numpy magic took {}, preformed {} ops".format(t1-t0,N_ops))
-#    return newdose
     
 ################################################################################
 # IMPLEMENTATION DETAILS, DO NOT USE IN CLIENT CODE                            #
 ################################################################################
 
-def _mass_weighted_summing(xyz_ol,adose,amass,anew,wsum):
+def _mwr_with_loops(dose,mass,newgrid):
     """
-    This function loops over the intersecting source/destination bins and computes the
-    numerator & denominator sums for each destination voxel. No threading.
+    Reference implementation, only for testing.
+
+    This function computes a dose distribution using the geometry (origin,
+    size, spacing) of the `newgrid` image, using the energy deposition and mass
+    with some different geometry. A typical use case is that a Gate simulation first
+    computes the dose w.r.t. a patient CT (exporting also the mass image),
+    and then we want to resample this dose distribution to the geometry of the
+    new grid, e.g. from the dose distribution computed by a TPS.
     """
-    assert(len(xyz_ol)==3)
-    xol,yol,zol=xyz_ol[:]
+    assert(_equal_geometry(dose,mass))
+    if _equal_geometry(dose,newgrid):
+        # If input and output geometry are equal, then we don't need to do anything, just copy the input dose.
+        newdose=itk.image_from_array(itk.array_from_image(dose))
+        newdose.CopyInformation(dose)
+        return newdose
+    if not _enclosing_geometry(dose,newgrid):
+        # In a later release we may provide some smart code to deal with dose resampling outside of the input geometry.
+        raise RuntimeError("new grid must be inside the old one")
+    t0=datetime.now()
+    xol,yol,zol = [ _overlaps(*xyz) for xyz in zip(dose.GetOrigin(),
+                                                   dose.GetSpacing(),
+                                                   dose.GetLargestPossibleRegion().GetSize(),
+                                                   newgrid.GetOrigin(),
+                                                   newgrid.GetSpacing(),
+                                                   newgrid.GetLargestPossibleRegion().GetSize()) ]
+    nxyz = np.array(dose.GetLargestPossibleRegion().GetSize())
+    mxyz = np.array(newgrid.GetLargestPossibleRegion().GetSize())
+    mzyx = mxyz[::-1].tolist()
+    adose = itk.array_from_image(dose)
+    amass = itk.array_from_image(mass)
+    anew = np.zeros(mzyx,dtype=float)
+    wsum = np.zeros(mzyx,dtype=float)
     N_ops = 0
+    # loop over nonzero overlaps of x-internvals
     for (ixs,ixd) in zip(*np.nonzero(xol)):
         dx = xol[ixs,ixd]
+        # loop over nonzero overlaps of y-internvals
         for (iys,iyd) in zip(*np.nonzero(yol)):
             dy = yol[iys,iyd]
+            # loop over nonzero overlaps of z-internvals
             for (izs,izd) in zip(*np.nonzero(zol)):
                 dz = zol[izs,izd]
                 w = dx*dy*dz*amass[izs,iys,ixs]
                 anew[izd,iyd,ixd] += adose[izs,iys,ixs]*w
                 wsum[izd,iyd,ixd] += w
                 N_ops += 1
-    #print(f"Unthreaded implementation performed {N_ops} ops, sum of dose values is {np.sum(anew)} total weight is {np.sum(wsum)}")
-
-def _mass_weighted_summing_mt(xyz_ol,adose,amass,qoutput,ithread,nthread):
-    """
-    This function loops over the intersecting source/destination bins and
-    computes the numerator & denominator sums for each destination voxel.
-    Multithreaded implementation.  Only the destination x-slices with (index
-    modulo nthreads) equal to (the thread number) will be computed (and the
-    results will be combined by the main thread). This way each thread will
-    write to a different subset of the output dose array.
-    """
-    assert(nthread>1)
-    assert(0<=ithread<nthread)
-    assert(len(xyz_ol)==3)
-    xol,yol,zol=xyz_ol[:]
-    nx,mx=xol.shape
-    ny,my=yol.shape
-    nz,mz=zol.shape
-    mxmod=mx//nthread
-    if mx%nthread>ithread:
-        mxmod+=1
-    anew = np.zeros((mz,my,mxmod),dtype=float)
-    wsum = np.zeros((mz,my,mxmod),dtype=float)
-    N_ops = 0
-    for (ixs,ixd) in zip(*np.nonzero(xol)):
-        if nthread>1 and (ixd%nthread) != ithread:
-            continue
-        dx = xol[ixs,ixd]
-        ixdmod=ixd//nthread
-        for (iys,iyd) in zip(*np.nonzero(yol)):
-            dy = yol[iys,iyd]
-            for (izs,izd) in zip(*np.nonzero(zol)):
-                dz = zol[izs,izd]
-                w = dx*dy*dz*amass[izs,iys,ixs]
-                anew[izd,iyd,ixdmod] += adose[izs,iys,ixs]*w
-                wsum[izd,iyd,ixdmod] += w
-                N_ops += 1
-    #print(f"thread {ithread}/{nthread} performed {N_ops} ops, sum of dose values is {np.sum(anew)} total weight is {np.sum(wsum)}")
-    qoutput.put([ithread,anew,wsum])
-
-def _mwr_simplistically(dose,mass,newgrid):
-    """
-    This function computes the same thing as `mass_weighted_resampling`, only
-    with a much more simplistic implementation that is only intended to be used
-    in the unit tests.
-    """
-    t0=datetime.now()
-    assert(_equal_geometry(dose,mass))
-    if _equal_geometry(dose,newgrid):
-        newdose=itk.image_from_array(itk.array_from_image(dose))
-        newdose.CopyInformation(dose)
-        return newdose
-    if not _enclosing_geometry(dose,newgrid):
-        raise RuntimeError("new grid must be inside the old one")
-    xol,yol,zol = [ _overlaps(*xyz,center=True) for xyz in zip(dose.GetOrigin(),
-                                                              dose.GetSpacing(),
-                                                              dose.GetLargestPossibleRegion().GetSize(),
-                                                              newgrid.GetOrigin(),
-                                                              newgrid.GetSpacing(),
-                                                              newgrid.GetLargestPossibleRegion().GetSize()) ]
-    adose = itk.array_from_image(dose)
-    amass = itk.array_from_image(mass)
-    nz,ny,nx = adose.shape
-    mz,my,mx = itk.array_from_image(newgrid).shape
-    assert(xol.shape==(nx,mx))
-    assert(yol.shape==(ny,my))
-    assert(zol.shape==(nz,mz))
-    anew = np.zeros((mz,my,mx),dtype=float)
-    wsum = np.zeros((mz,my,mx),dtype=float)
-    N_ops = 0
-    for ix in range(mx):
-        for iy in range(my):
-            for iz in range(mz):
-                for jx in range(nx):
-                    dx = xol[jx,ix]
-                    if dx==0:
-                        continue
-                    for jy in range(ny):
-                        dy = yol[jy,iy]
-                        if dy==0:
-                            continue
-                        for jz in range(nz):
-                            dz = zol[jz,iz]
-                            if dz==0:
-                                continue
-                            w = dx*dy*dz*amass[jz,jy,jx]
-                            anew[iz,iy,ix] += adose[jz,jy,jx]*w
-                            wsum[iz,iy,ix] += w
-                            N_ops += 1
     mask=(wsum>0)
     anew[mask]/=wsum[mask]
     newdose=itk.image_from_array(anew)
     newdose.CopyInformation(newgrid)
     t1=datetime.now()
-    #print("resampling with brute force took {}, performed {} ops".format(t1-t0,N_ops))
+    dt=(t1-t0).total_seconds()
+    #print(f"resampling using explicit loops over nonzero voxel overlaps took {dt:.3f} seconds")
     return newdose
+    
 
 def _equal_geometry(img1,img2):
     """
@@ -367,21 +231,6 @@ def _overlaps(a0,da,na,b0,db,nb,label="",center=True):
             b=bdb
             bdb=b0+(ib+1)*db
     return o
-
-def _guess_n_threads(nvoxels_in,nvoxels_out):
-    # we need two float32 input images (dose and mass) per process
-    # we need two float32 output images (dose and mass) per process
-    ram_bytes_per_process = 2*4*nvoxels_in+2*nvoxels_out
-    import psutil
-    ram_bytes_available = psutil.virtual_memory().available
-    ram_bytes_arbitrary_margin = 500*1024*1024 # 500 MiB
-    nram = max(1,int(np.floor(ram_bytes_available-ram_bytes_arbitrary_margin) / ram_bytes_per_process))
-    n_physical_cores = psutil.cpu_count(False)
-    n_busy_cores = sum(psutil.cpu_percent(percpu=True))/100.
-    ncpu=max(1,int(n_physical_cores-n_busy_cores))
-    nthreads=min(nram,ncpu)
-    print(f"nthreads guess: {nthreads} (CPU limit: {ncpu}, RAM limit: {nram})")
-    return nthreads
 
 
 ################################################################################
@@ -506,19 +355,13 @@ class dose_resampling_tests(unittest.TestCase):
         self.newdose.SetSpacing(self.newspacing)
         self.newdose.SetOrigin(self.neworigin)
     def test_big(self):
-        #resampled0=_mwr_simplistically(self.dose,self.mass,self.newdose)
-        resampled1=mass_weighted_resampling(self.dose,self.mass,self.newdose)
-        self.assertTrue(_equal_geometry(resampled1,self.newdose))
-        ar1=itk.array_from_image(resampled1)
-        nmax=_guess_n_threads(np.prod(self.dims),np.prod(self.newdims))
-        print(f"going to check nthreads=2..{nmax}")
-        for nthreads in range(2,nmax+1):
-            resampledN=mass_weighted_resampling(self.dose,self.mass,self.newdose,nthreads)
-            self.assertTrue(_equal_geometry(resampledN,self.newdose))
-            arN=itk.array_from_image(resampledN)
-            #print("number of nonzero voxel values: {}, {}".format(np.sum(ar1>0),np.sum(arN>0)))
-            #print("number of voxels NOT close: {} (out of {})".format(np.sum(np.logical_not(np.isclose(ar1,arN))),np.prod(self.newdims)))
-            self.assertTrue(np.allclose(ar1,arN))
+        resampled_loops=_mwr_with_loops(self.dose,self.mass,self.newdose)
+        resampled=mass_weighted_resampling(self.dose,self.mass,self.newdose)
+        self.assertTrue(_equal_geometry(resampled_loops,self.newdose))
+        self.assertTrue(_equal_geometry(resampled,self.newdose))
+        ar0=itk.array_from_image(resampled_loops)
+        ar1=itk.array_from_image(resampled)
+        self.assertTrue(np.allclose(ar0,ar1))
     def test_single_voxel(self):
         # source grid is 2x2x2 voxels with spacing 1x1x1, centered on (0,0,0)
         # dest grid is 1x1x1 voxels with spacing 1x1x1, centered on (0,0,0)
@@ -530,18 +373,18 @@ class dose_resampling_tests(unittest.TestCase):
         for img in (dose,mass):
             img.SetOrigin((-0.5,-0.5,-0.5))
         newgrid=itk.image_from_array(anew)
-        value=_mwr_simplistically(dose,mass,newgrid).GetPixel((0,0,0))
+        value1=_mwr_with_loops(dose,mass,newgrid).GetPixel((0,0,0))
         value2=mass_weighted_resampling(dose,mass,newgrid).GetPixel((0,0,0))
         # intersection volumes are all equal
         expval = np.sum(adose*amass)/np.sum(amass)
-        self.assertAlmostEqual(value,expval,places=5)
+        self.assertAlmostEqual(value1,expval,places=5)
         self.assertAlmostEqual(value2,expval,places=5)
         # now try with intersection volumes NOT equal
         # source grid is unchanged: 2x2x2 voxels with spacing 1x1x1, centered on (0,0,0)
         # dest grid is shifted: 1x1x1 voxels with spacing 1x1x1, centered on (dx,dy,dz)
         dx,dy,dz=0.1,-0.15,0.2
         newgrid.SetOrigin((dx,dy,dz))
-        value=_mwr_simplistically(dose,mass,newgrid).GetPixel((0,0,0))
+        value1=_mwr_with_loops(dose,mass,newgrid).GetPixel((0,0,0))
         value2=mass_weighted_resampling(dose,mass,newgrid).GetPixel((0,0,0))
         expval = 0.
         norm = 0.
@@ -555,5 +398,5 @@ class dose_resampling_tests(unittest.TestCase):
         #print(f"norm = {norm}")
         expval/=norm
         #print(f"normalized exp value = {expval}")
-        self.assertAlmostEqual(expval,value,places=5)
+        self.assertAlmostEqual(expval,value1,places=5)
         self.assertAlmostEqual(expval,value2,places=5)
