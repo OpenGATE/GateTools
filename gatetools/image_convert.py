@@ -1,3 +1,10 @@
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
 """
 
 This module provides a function to convert image from one type to another:
@@ -196,6 +203,8 @@ def image_convert(inputImage, pixeltype=None):
 import unittest
 import hashlib
 import os
+import tempfile
+import shutil
 from .logging_conf import LoggedTestCase
 
 class Test_Convert(LoggedTestCase):
@@ -206,9 +215,10 @@ class Test_Convert(LoggedTestCase):
         xx, yy, zz = np.meshgrid(x, y, z)
         image = itk.image_from_array(np.float32(xx))
         convertedImage = image_convert(image, "unsigned char")
-        itk.imwrite(convertedImage, "testConvert.mha")
-        with open("testConvert.mha","rb") as fnew:
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            os.remove("testConvert.mha")
             self.assertTrue("da57bf05ec62b9b5ee2aaa71aacbf7dbca8acbf2278553edc499a3af8007dd44" == new_hash)
+        shutil.rmtree(tmpdirpath)

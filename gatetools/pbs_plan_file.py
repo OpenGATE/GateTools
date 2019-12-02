@@ -1,3 +1,10 @@
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
 """
 This module contains a function named `dicom_rt_pbs_plan_to_gate_conversion`,
 which can be used to convert DICOM radiotherapy plan files for pencil beam
