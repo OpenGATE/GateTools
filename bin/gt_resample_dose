@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
+import gatetools as gt
+import itk
+import click
+import logging
+logger=logging.getLogger(__name__)
+
+# -----------------------------------------------------------------------------
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('dose',
+                type=click.Path(exists=True, file_okay=True, dir_okay=False,
+                                writable=False, readable=True, resolve_path=True,
+                                allow_dash=False, path_type=None))
+@click.argument('mass',
+                type=click.Path(exists=True, file_okay=True, dir_okay=False,
+                                writable=False, readable=True, resolve_path=True,
+                                allow_dash=False, path_type=None))
+@click.argument('reference',
+                type=click.Path(exists=True, file_okay=True, dir_okay=False,
+                                writable=False, readable=True, resolve_path=True,
+                                allow_dash=False, path_type=None))
+@click.option('--output','-o',
+              help='Output filename',
+              required=True,
+              type=click.Path(exists=False, file_okay=False, dir_okay=False,
+                              writable=True, readable=False, resolve_path=True,
+                              allow_dash=False, path_type=None))
+@gt.add_options(gt.common_options)
+def gt_resample_dose(dose,mass,reference,output,**kwargs):
+    '''
+    Resample the dose to get a new dose distribution with the same
+    geometry (origin, spacing and size) as a given reference dose image.
+
+    The resampled dose R_j in voxel j of the new grid is computed as follows
+    from the dose D_i of voxels i in the input dose distribution, the
+    corresponding masses (or mass densities) M_i and the intersection volumes
+    V_i_j of each pair of input voxel i and output voxel j:
+
+        R_j = Sum_i(w_i_j * D_i / N_j)
+
+        w_i_j = V_i_j * M_i
+
+        N_j = Sum_i(w_i_j)
+
+    The output image has the same geometry as the reference image.
+
+    DOSE: File path to input dose image.
+
+    MASS: File path to a mass image: same geometry as the dose image, with the
+    values representing either the voxel mass or the voxel mass density.  The
+    `ExportMassImage` option of the Gate DoseActor can be used to export a dose
+    image corresponding to the computed dose image.
+
+    REFERENCE: File path to the reference dose image. The output dose image
+    will have the same geometry (origin, spacing, size). The reference image
+    must be enclosed by (or describe exactly the same volume as) the input
+    dose image.
+
+    Example usage:
+    
+    gt_resample_dose -o resampled.mhd dose.mhd mass.mhd refdose.mhd
+    '''
+
+    # logger
+    gt.logging_conf(**kwargs)
+
+    verbose=kwargs["verbose"]
+    logfile=kwargs["logfile"]
+    logger.debug(f"dose: {dose}")
+    logger.debug(f"mass: {mass}")
+    logger.debug(f"reference: {reference}")
+    logger.debug(f"output: {output}")
+    logger.debug(f"verbose: {verbose}")
+    logger.debug(f"debugging_logfile: '{logfile}'")
+
+    # compute gamma
+    dose_img=itk.imread(dose)
+    mass_img=itk.imread(mass)
+    ref_img=itk.imread(reference)
+    o = gt.resample_dose(dose_img,mass_img,ref_img)
+
+    # write file
+    itk.imwrite(o, output)
+
+# -----------------------------------------------------------------------------
+if __name__ == '__main__':
+    gt_resample_dose()
