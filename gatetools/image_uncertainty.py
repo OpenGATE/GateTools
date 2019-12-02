@@ -1,3 +1,10 @@
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
 """
 
 This module provides a function to compute relative statistical
@@ -163,6 +170,8 @@ import hashlib
 import os
 import hashlib
 import numpy as np
+import shutil
+import tempfile
 from .logging_conf import LoggedTestCase
 
 class Test_Uncertainty(LoggedTestCase):
@@ -178,12 +187,13 @@ class Test_Uncertainty(LoggedTestCase):
         simage = itk.image_from_array(np.float32(npsImage))
         simages = [simage]
         uncertainty = image_uncertainty(images, simages, N=1000000000000)
-        itk.imwrite(uncertainty, "uncertainty.mha")
-        with open("uncertainty.mha","rb") as fnew:
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(uncertainty, os.path.join(tmpdirpath, "uncertainty.mha"))
+        with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            os.remove("uncertainty.mha")
             self.assertTrue("0a2dc7a0e28509c569cecde6b6252507936b29365cb4db0c75ab3c0fab3b2bc4" == new_hash)
+        shutil.rmtree(tmpdirpath)
     def test_image_uncertainty_by_slice(self):
         x = np.arange(0, 1, 0.01)
         y = np.arange(0, 1, 0.01)
@@ -196,14 +206,15 @@ class Test_Uncertainty(LoggedTestCase):
         simage = itk.image_from_array(np.float32(npsImage))
         simages = [simage]
         uncertainty, mean, nb = image_uncertainty_by_slice(images, simages, N=1000000000000)
-        itk.imwrite(uncertainty, "uncertainty.mha")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(uncertainty, os.path.join(tmpdirpath, "uncertainty.mha"))
         self.assertTrue(mean[0] == 0.3356322509765625)
         self.assertTrue(nb[0] == 10000)
-        with open("uncertainty.mha","rb") as fnew:
+        with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            os.remove("uncertainty.mha")
             self.assertTrue("0a2dc7a0e28509c569cecde6b6252507936b29365cb4db0c75ab3c0fab3b2bc4" == new_hash)
+        shutil.rmtree(tmpdirpath)
     def test_image_uncertainty_Poisson(self):
         x = np.arange(0, 1, 0.01)
         y = np.arange(0, 1, 0.01)
@@ -213,12 +224,13 @@ class Test_Uncertainty(LoggedTestCase):
         image = itk.image_from_array(np.float32(npImage))
         images = [image]
         uncertainty = image_uncertainty_Poisson(images)
-        itk.imwrite(uncertainty, "uncertainty.mha")
-        with open("uncertainty.mha","rb") as fnew:
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(uncertainty, os.path.join(tmpdirpath, "uncertainty.mha"))
+        with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            os.remove("uncertainty.mha")
             self.assertTrue("cb58fb2f5490546bb83b9e0e51ce1d87b13eab2f0f4ebddc4e9c767c8b98e57b" == new_hash)
+        shutil.rmtree(tmpdirpath)
     def test_image_uncertainty_Poisson_by_slice(self):
         x = np.arange(0, 1, 0.01)
         y = np.arange(0, 1, 0.01)
@@ -228,11 +240,12 @@ class Test_Uncertainty(LoggedTestCase):
         image = itk.image_from_array(np.float32(npImage))
         images = [image]
         uncertainty, mean, nb = image_uncertainty_Poisson_by_slice(images)
-        itk.imwrite(uncertainty, "uncertainty.mha")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(uncertainty, os.path.join(tmpdirpath, "uncertainty.mha"))
         self.assertTrue(mean[0] == 0.33836081024332604)
         self.assertTrue(nb[0] == 10000)
-        with open("uncertainty.mha","rb") as fnew:
+        with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            os.remove("uncertainty.mha")
             self.assertTrue("cb58fb2f5490546bb83b9e0e51ce1d87b13eab2f0f4ebddc4e9c767c8b98e57b" == new_hash)
+        shutil.rmtree(tmpdirpath)

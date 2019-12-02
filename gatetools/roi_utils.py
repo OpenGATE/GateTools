@@ -1,4 +1,10 @@
-# coding: utf-8
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
 """
 This module was developed in as part of the effort in Uppsala (2015-2017)
 develop a framework to analyze the effect of patient motion on the dose
@@ -759,26 +765,30 @@ import hashlib
 import os
 import pydicom
 import hashlib
+import wget
+import tempfile
+import shutil
 from .logging_conf import LoggedTestCase
 
 class Test_ROI(LoggedTestCase):
     def test_roi(self):
-        testfilesPath = os.path.dirname(os.path.realpath(__file__))
-        testfilesPath = os.path.join(testfilesPath, "testroi")
-        structset = pydicom.read_file(os.path.join(testfilesPath, "rtstruct.dcm"))
+        tmpdirpath = tempfile.mkdtemp()
+        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/gatetools/testroi/rtstruct.dcm", out=tmpdirpath, bar=None)
+        structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
 
         # roi names
         roi_names = list_roinames(structset)
-        img = itk.imread(os.path.join(testfilesPath, "ct.mha"))
+        filenameCT = wget.download("https://github.com/OpenGATE/GateTools/raw/master/gatetools/testroi/ct.mha", out=tmpdirpath, bar=None)
+        img = itk.imread(os.path.join(tmpdirpath, filenameCT))
         self.assertTrue(len(roi_names) == 11)
         self.assertTrue(roi_names[0] == 'External')
 
         #Convert PTV
         aroi = region_of_interest(structset, roi_names[6])
         mask = aroi.get_mask(img, corrected=False)
-        itk.imwrite(mask, "testPTV.mha")
-        with open("testPTV.mha","rb") as fnew:
+        itk.imwrite(mask, os.path.join(tmpdirpath, "testPTV.mha"))
+        with open(os.path.join(tmpdirpath, "testPTV.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            os.remove("testPTV.mha")
             self.assertTrue("7fc957af4cc082330cf5d430bb4d0d09a7e3be9918472580db32b5a636d8c147" == new_hash)
+        shutil.rmtree(tmpdirpath)
