@@ -37,6 +37,7 @@ setuptools.setup(
         'bin/gt_image_crop',
         'bin/gt_image_convert',
         'bin/gt_gamma_index',
+        'bin/gt_resample_dose',
 
         'bin/gt_dicom_rt_struct_to_image',
         'bin/gt_dicom_rt_pbs2gate',
