@@ -149,6 +149,8 @@ def read_3d_dicom(dicomFile):
     elif Tag(0x40, 0x9096) in slices[0]:
         ri = slices[0][0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
         rs = slices[0][0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
+    elif Tag(0x3004, 0x000e) in slices[0]:
+        rs = slices[0][0x3004, 0x000e].value #Rescale Slope
 
     # create 3D array
     img_shape = list(slices[0].pixel_array.shape)
@@ -168,7 +170,7 @@ def read_3d_dicom(dicomFile):
     arrayDirection[1,0] = io[3]
     arrayDirection[1,1] = io[4]
     arrayDirection[1,2] = io[5]
-    if slices[0][0x18, 0x88].value <0:
+    if Tag(0x18, 0x88) in slices[0] and slices[0][0x18, 0x88].value <0:
         arrayDirection[2,2] = -1.0
     else:
         arrayDirection[2,2] = 1.0
