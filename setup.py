@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.8.2",
+    version="0.8.3",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
@@ -15,11 +15,10 @@ setuptools.setup(
     packages=['gatetools'],
     classifiers=(
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Operating System :: OS Independent",
     ),
     install_requires=[
-        'uproot',
         'matplotlib',
         'click',
         'numpy',
@@ -28,6 +27,8 @@ setuptools.setup(
         'colored',
         'itk>=5',
         'uproot',
+        'psutil',
+        'wget',
     ],
     scripts=[
         'bin/gt_gate_info',
@@ -65,5 +66,5 @@ setuptools.setup(
 
 # test with
 # pip uninstall gatetools
-# pip3 install --index-url https://test.pypi.org/simple/ gatetools
+# pip3 install --extra-index-url https://test.pypi.org/simple/ gatetools
 # https://test.pypi.org/project/gatetools/

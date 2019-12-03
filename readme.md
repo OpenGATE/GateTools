@@ -1,8 +1,8 @@
 **Tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
 
-Install with : `pip install gatetools` 
+Install with : `pip install gatetools`
 
-Example of usage: 
+Example of usage:
 ```
 gt_gate_info
 gt_image_convert -i input.dcm -o output.mhd
@@ -11,7 +11,7 @@ gt_image_arithm -i *.mhd -o output.mhd -O sum
 gt_gamma_index dose.mhd gate-DoseToWater.mhd -o gamma.mhd --dd 2 --dta 2.5 -u "%" -T 0.2
 ```
 
-Use the flag `-h` to get print the help of each tool. Here is the current list of command line tools. 
+Use the flag `-h` to get print the help of each tool. Here is the current list of command line tools.
 
 | Tool                          | Comment                                                   |
 | -------------                 | -------------                                             |
@@ -23,6 +23,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_image_arithm`             | Pixel- or voxel-wise arithmetic operations                |
 | `gt_image_crop`               | Crop 3D images                                            |
 | `gt_image_convert`            | Convert image file format (**dicom**, mhd, hdr, nii ... ) |
+| `gt_image_crop`               | Crop an image                                             |
 | `gt_image_uncertainty`        | Compute statistical uncertainty                           |
 | `gt_phsp_convert`             | Convert a phase space file from root to npy               |
 | `gt_phsp_info`                | Display information about a phase space file              |
@@ -30,17 +31,21 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_phps_peaks`               | Try to detect photopeaks (experimental)                   |
 | `gt_phsp_plot`                | Plot marginal distributions form a phase space file       |
 
-All tools are also available to be use within your own Python script with, for example: 
+All tools are also available to be use within your own Python script with, for example:
 ```
 import gatetools as gt
 gt.image_convert(inputImage, pixeltype)
 ```
 
-Tests: run 
+Tests: run
 ```
 python -m unittest gatetools -v
 python -m unittest gatetools.phsp -v
 ```
 
-For developers, please have a look at the [readme_dev.md](readme_dev.md) file. 
+Classes and function documentation. Use the following command to open a browser for documentation (it is still not very convenient ; will be improved later).
+```
+pydoc -b
+```
 
+For developers, please have a look at the [readme_dev.md](readme_dev.md) file.
