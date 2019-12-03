@@ -207,6 +207,7 @@ import hashlib
 import os
 import tempfile
 import shutil
+import wget
 from .logging_conf import LoggedTestCase
 
 class Test_Convert(LoggedTestCase):
@@ -227,7 +228,7 @@ class Test_Convert(LoggedTestCase):
     def test_convert_rtDose(self):
         tmpdirpath = tempfile.mkdtemp()
         filenameRTDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
-        convertedImage = read_3d_dicom(os.path.join(tmpdirpath, filenameRTDose))
+        convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filenameRTDose)])
         itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
         with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
             bytesNew = fnew.read()
