@@ -1,4 +1,5 @@
 **Tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
+[![Build Status](https://travis-ci.org/OpenGATE/GateTools.svg?branch=master)](https://travis-ci.org/OpenGATE/GateTools)
 
 Install with : `pip install gatetools`
 
