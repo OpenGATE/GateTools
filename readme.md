@@ -21,7 +21,6 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_resample_dose`            | Mass weighted resampling of a 3D dose image               |
 | `gt_gate_info`                | Display info about current Gate/G4 version                |
 | `gt_image_arithm`             | Pixel- or voxel-wise arithmetic operations                |
-| `gt_image_crop`               | Crop 3D images                                            |
 | `gt_image_convert`            | Convert image file format (**dicom**, mhd, hdr, nii ... ) |
 | `gt_image_crop`               | Crop an image                                             |
 | `gt_image_uncertainty`        | Compute statistical uncertainty                           |
