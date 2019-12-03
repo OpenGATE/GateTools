@@ -54,28 +54,30 @@ def mass_weighted_resampling(dose,mass,newgrid):
     if not _enclosing_geometry(dose,newgrid):
         # In a later release we may provide some smart code to deal with dose resampling outside of the input geometry.
         raise RuntimeError("new grid must be inside the old one")
+    # start the timer
     t0=datetime.now()
     xol,yol,zol = [ _overlaps(*xyz) for xyz in zip(dose.GetOrigin(),
-                                              dose.GetSpacing(),
-                                              dose.GetLargestPossibleRegion().GetSize(),
-                                              newgrid.GetOrigin(),
-                                              newgrid.GetSpacing(),
-                                              newgrid.GetLargestPossibleRegion().GetSize()) ]
-    nxyz = np.array(dose.GetLargestPossibleRegion().GetSize())
-    mxyz = np.array(newgrid.GetLargestPossibleRegion().GetSize())
-    mzyx = mxyz[::-1].tolist()
+                                                   dose.GetSpacing(),
+                                                   dose.GetLargestPossibleRegion().GetSize(),
+                                                   newgrid.GetOrigin(),
+                                                   newgrid.GetSpacing(),
+                                                   newgrid.GetLargestPossibleRegion().GetSize()) ]
     adose = itk.array_from_image(dose)
     amass = itk.array_from_image(mass)
     aedep = adose*amass
     # now the magic happens :-)
     anew = np.tensordot(zol,np.tensordot(yol,np.tensordot(xol,aedep,axes=(0,2)),axes=(0,2)),axes=(0,2))
     wsum = np.tensordot(zol,np.tensordot(yol,np.tensordot(xol,amass,axes=(0,2)),axes=(0,2)),axes=(0,2))
-    assert(anew.shape==tuple(mzyx))
-    assert(wsum.shape==tuple(mzyx))
+    # paranoia
+    mzyx = tuple(np.array(newgrid.GetLargestPossibleRegion().GetSize())[::-1])
+    assert(anew.shape==mzyx)
+    assert(wsum.shape==mzyx)
+    # dose=edep/mass, but only if mass>0
     mask=(wsum>0)
     anew[mask]/=wsum[mask]
     newdose=itk.image_from_array(anew)
     newdose.CopyInformation(newgrid)
+    # stop the timer
     t1=datetime.now()
     dt=(t1-t0).total_seconds()
     logger.debug(f"resampling using `np.tensordot` took {dt:.3f} seconds")
