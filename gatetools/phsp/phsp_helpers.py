@@ -394,7 +394,7 @@ from gatetools.logging_conf import LoggedTestCase
 class Test_Phsp(LoggedTestCase):
     def test_phsp_convert(self):
         tmpdirpath = tempfile.mkdtemp()
-        filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/gatetools/phsp/testphsp/phsp.root", out=tmpdirpath, bar=None)
+        filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/phsp.root", out=tmpdirpath, bar=None)
         data, read_keys, m = load(os.path.join(tmpdirpath, filenameRoot), -1)
         save_npy(os.path.join(tmpdirpath, "testphsp.npy"), data, read_keys)
         with open(os.path.join(tmpdirpath, "testphsp.npy"),"rb") as fnew:
@@ -407,7 +407,7 @@ class Test_Phsp(LoggedTestCase):
 
     def test_phsp_info(self):
         tmpdirpath = tempfile.mkdtemp()
-        filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/gatetools/phsp/testphsp/phsp.root", out=tmpdirpath, bar=None)
+        filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/phsp.root", out=tmpdirpath, bar=None)
         data, read_keys, m = load(os.path.join(tmpdirpath, filenameRoot), -1)
         self.assertTrue("17.27 MB" == humansize(os.stat(os.path.join(tmpdirpath, filenameRoot)).st_size))
         self.assertTrue(np.float32 == data.dtype)

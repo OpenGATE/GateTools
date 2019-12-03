@@ -224,3 +224,13 @@ class Test_Convert(LoggedTestCase):
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("da57bf05ec62b9b5ee2aaa71aacbf7dbca8acbf2278553edc499a3af8007dd44" == new_hash)
         shutil.rmtree(tmpdirpath)
+    def test_convert_rtDose(self):
+        tmpdirpath = tempfile.mkdtemp()
+        filenameRTDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        convertedImage = read_3d_dicom(os.path.join(tmpdirpath, filenameRTDose))
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("9c18c0344e309d096122c4b771fe3f1e66ddb778d818f98d18f29442fd287d47" == new_hash)
+        shutil.rmtree(tmpdirpath)
