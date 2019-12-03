@@ -18,8 +18,10 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_dicom_rt_pbs2gate`        | Convert Dicom RT proton plan for Gate                     |
 | `gt_dicom_rt_struct_to_image` | Turn Dicom RT Struct contours into mask image             |
 | `gt_gamma_index`              | Compute gamma index between images                        |
+| `gt_resample_dose`            | Mass weighted resampling of a 3D dose image               |
 | `gt_gate_info`                | Display info about current Gate/G4 version                |
 | `gt_image_arithm`             | Pixel- or voxel-wise arithmetic operations                |
+| `gt_image_crop`               | Crop 3D images                                            |
 | `gt_image_convert`            | Convert image file format (**dicom**, mhd, hdr, nii ... ) |
 | `gt_image_uncertainty`        | Compute statistical uncertainty                           |
 | `gt_phsp_convert`             | Convert a phase space file from root to npy               |
