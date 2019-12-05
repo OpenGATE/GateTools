@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.8.3",
+    version="0.8.4",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
@@ -62,6 +62,8 @@ setuptools.setup(
 
 # On TEST pypi: 
 # twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+# On REAL pyip
+# twine upload  dist/*
 
 # test with
 # pip uninstall gatetools
