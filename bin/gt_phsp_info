@@ -35,27 +35,27 @@ def gt_phsp_info(filename, n, **kwargs):
     data, keys, m = phsp.load(filename, n)
 
     # print info
-    logger.info(f'File:        {filename}')
+    print(f'File:        {filename}')
     statinfo = os.stat(filename)
-    logger.info(f'Size:        {phsp.humansize(statinfo.st_size)}')
+    print(f'Size:        {phsp.humansize(statinfo.st_size)}')
     b, extension = os.path.splitext(filename)
     if (extension == '.root'):
         t = 'root'
     if (extension == '.npy'):
         t = 'npy'
-    logger.info(f'Type:        {t} {data.dtype}')
-    logger.info(f'Nb values:   {m} ({m:.2e})')
+    print(f'Type:        {t} {data.dtype}')
+    print(f'Nb values:   {m} ({m:.2e})')g
     n = len(data)
-    logger.info(f'Read values: {n} ({n:.2e})')
-    logger.info(f'Nb of keys:  {len(keys)}')
-    logger.info(f'Keys:        ', *keys)
+    print(f'Read values: {n} ({n:.2e})')
+    print(f'Nb of keys:  {len(keys)}')
+    print(f'Keys:        ', *keys)
 
     # stats info per key
-    logger.info('{:<10} {:>10} {:>10} {:>10} {:>10}'.format('key', 'min', 'max', 'mean', 'std'))
+    print('{:<10} {:>10} {:>10} {:>10} {:>10}'.format('key', 'min', 'max', 'mean', 'std'))
     i=0
     for k in keys:
         x = data[:,i]
-        logger.info('{:10} {:10.3f} {:10.3f} {:10.3f} {:10.3f}'.format(k, np.amin(x), np.amax(x), np.mean(x), np.std(x)))
+        print('{:10} {:10.3f} {:10.3f} {:10.3f} {:10.3f}'.format(k, np.amin(x), np.amax(x), np.mean(x), np.std(x)))
         i = i+1
 
 # --------------------------------------------------------------------------
