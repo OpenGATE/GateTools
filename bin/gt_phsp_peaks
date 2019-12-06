@@ -9,6 +9,7 @@
 import sys
 import numpy as np
 import gatetools.phsp as phsp
+import gatetools as gt
 import click
 import os
 import logging
