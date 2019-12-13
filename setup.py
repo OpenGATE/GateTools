@@ -5,14 +5,16 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.8.5",
+    version="0.8.6",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/OpenGATE/GateTools",
-    packages=['gatetools'],
+    package_dir={ 'gatetools': 'gatetools',
+                  'gatetools.phsp': 'gatetools/phsp'},
+    packages=['gatetools', 'gatetools.phsp'],
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
