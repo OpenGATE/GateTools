@@ -16,8 +16,6 @@ jobs:
   exclude:
     - python: "3.8"
       env: ITK_VERSION=5.0.0
-    - python: "3.8"
-      env: ITK_VERSION=pre
 install:
   - if [ $ITK_VERSION == 'pre' ];
     then pip install itk --pre;
