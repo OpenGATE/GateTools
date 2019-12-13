@@ -11,12 +11,18 @@ python:
 env:
   - ITK_VERSION=5.0.0
   - ITK_VERSION=5.0.1
+  - ITK_VERSION=pre
 jobs:
   exclude:
     - python: "3.8"
       env: ITK_VERSION=5.0.0
+    - python: "3.8"
+      env: ITK_VERSION=pre
 install:
-  - pip install -q itk==$ITK_VERSION
+  - if [ $ITK_VERSION == 'pre' ];
+    then pip install itk --pre;
+    else pip install itk==$ITK_VERSION;
+    fi
   - pip install -e .
 script: 
   - python -m unittest gatetools -v
