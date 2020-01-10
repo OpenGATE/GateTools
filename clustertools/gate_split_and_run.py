@@ -227,7 +227,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                       ',RELEASEDIR=' + releasedir + \
                       ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                       ',MACRODIR=' + outputDir + \
-                      ',ENV=' + envCommand + \
+                      ',ENVCOMMAND=' + envCommand + \
                       ' ' + jobFile
             paramFile.write(command)
             paramFile.write("\n")
@@ -253,7 +253,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                           ',RELEASEDIR=' + releasedir + \
                           ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                           ',MACRODIR=' + outputDir + \
-                          ',ENV=' + envCommand + \
+                          ',ENVCOMMAND=' + envCommand + \
                           '\" ' + jobFile
             elif qsub is None:
                 if no_detach:
@@ -264,7 +264,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                             ' RELEASEDIR=' + releasedir + \
                             ' MACROFILE=' + os.path.join(fullMacroDir, mainMacroFile) + \
                             ' MACRODIR=' + fullMacroDir + \
-                            ' ENV=' + envCommand + \
+                            ' ENVCOMMAND=' + envCommand + \
                             ' PBS_JOBID=\"local_' + str(i) + \
                             '\" bash ' + jobFile
                 else:
@@ -275,7 +275,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                             ' RELEASEDIR=' + releasedir + \
                             ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                             ' MACRODIR=' + outputDir + \
-                            ' ENV=' + envCommand + \
+                            ' ENVCOMMAND=' + envCommand + \
                             ' PBS_JOBID=\"local_' + str(i) + \
                             '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
             else:
@@ -288,7 +288,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                           ',RELEASEDIR=' + releasedir + \
                           ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                           ',MACRODIR=' + outputDir + \
-                          ',ENV=' + envCommand + \
+                          ',ENVCOMMAND=' + envCommand + \
                           '\" ' + jobFile
             paramFile.write(command)
             paramFile.write("\n")

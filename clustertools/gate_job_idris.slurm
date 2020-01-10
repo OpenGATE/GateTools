@@ -36,7 +36,7 @@ echo "MACRODIR=${MACRODIR:?"unknown MACRODIR"}"
 echo "MACROFILE=${MACROFILE:?"unknown MACROFILE"}"
 echo "RELEASEDIR=${RELEASEDIR:?"unknown RELEASEDIR"}"
 echo "OUTPUTDIR=${OUTPUTDIR:?"unknown OUTPUTDIR"}"
-echo "ENV=${ENV:?"unknown ENV"}"
+echo "ENVCOMMAND=${ENVCOMMAND:?"unknown ENVCOMMAND"}"
 echo "JOB_ID=$SLURM_ARRAY_JOB_ID.$SLURM_ARRAY_TASK_ID"
 echo "INDEX=${INDEX}"
 echo "INDEXMAX=${INDEX}"
@@ -44,12 +44,12 @@ PARAMFILE=${PARAM}.$SLURM_ARRAY_TASK_ID
 PARAM=`cat ${PARAMFILE}`
 echo "PARAM= ${PARAM}"
 
-if test "$ENV" = "NONE"
+if test "$ENVCOMMAND" = "NONE"
 then
   echo General environment
 else
   echo Load user environment
-  source "$ENV"
+  source "$ENVCOMMAND"
 fi
 
 if test "$RELEASEDIR" = "NONE"
