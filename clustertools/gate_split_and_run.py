@@ -214,12 +214,12 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
             #Set paramtogate
             paramtogateJob = paramtogate + ' -a '
             for aliasMac in parserMacro.aliasToGate:
-                paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
+                paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][0]) + ']'
             tempParamFile = tempfile.NamedTemporaryFile(mode='w+t', delete=False, prefix='var.', dir=outputDir)
             tempParamFile.write(paramtogateJob)
             tempParamFile.close()
             command = 'sbatch -J gate.' + runId + \
-                      ' --array=0-5000%100' \
+                      ' --array=0-' + str(jobs) + '%' + str(jobs) + \
                       ' --export=ALL,PARAM=\"' + tempParamFile.name + \
                       '\",INDEX=' + str(jobs) + \
                       ',INDEXMAX=' + str(jobs) + \
