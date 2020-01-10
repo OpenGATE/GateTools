@@ -31,7 +31,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--qt', is_flag=True, help='Add visualisation - Be sure to have few particles')
 @click.option('--env', default='', help='Bash script to set environment variables during job. This file is source at the beginning.')
 @click.option('--jobfile', default='', help='Job file for the cluster allowing to modify submission parameters (--jobfile="current" display the path of the current job file and exit)')
-def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile):
+@click.option('--no_detach', is_flag=True, help='Do not detach Gate, just 1 job in local, print in the shell and output in output directory')
+def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile, no_detach):
     """
     \b
     Run Gate jobs
@@ -62,6 +63,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
             jobFile = os.path.join(directoryJobFiles, 'gate_job_ccin2p3.job')
         elif get_dns_domain() == 'idris.fr':
             jobFile = os.path.join(directoryJobFiles, 'gate_job_idris.slurm')
+        elif no_detach:
+            jobFile = os.path.join(directoryJobFiles, 'gate_local.job')
         else:
             jobFile = os.path.join(directoryJobFiles, 'gate_job_cluster.job')
         if not os.path.isfile(jobFile):
@@ -114,6 +117,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
 
     # Check output path is absolute or relative
     outputDir = output
+    if no_detach:
+      outputDir = os.path.join(os.getcwd(), "output")
     if not outputDir == '' and not os.path.isabs(outputDir):
       outputDir = os.path.join(os.getcwd(), outputDir)
     # Create output directory
@@ -136,6 +141,15 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
         if qsub is None:
             print('No qsub, run Gate on multiple cores.')
 
+    if no_detach:
+        #Be sure to be local, to run 1 job
+        if not qsub is None:
+          print(colorama.Fore.RED + 'ERROR: no_detach mode is available locally only' + colorama.Style.RESET_ALL)
+          exit(1)
+        if jobs != 1:
+          print(colorama.Fore.RED + 'ERROR: The number of jobs has to be 1' + colorama.Style.RESET_ALL)
+          exit(1)
+
     # Parameter files
     paramFileName = os.path.join(outputDir, 'run.log')
     paramFile = open(paramFileName, "w")
@@ -144,7 +158,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
     paramFile.write('runId = ' + runId + '\n')
 
     #Parse macro files and sub-Macro
-    os.makedirs(os.path.join(outputDir, 'mac'), exist_ok=True)
+    if not no_detach:
+      os.makedirs(os.path.join(outputDir, 'mac'), exist_ok=True)
     parserMacro = ParserMacro()
     for a in alias:
         if ',' in a[1]:
@@ -159,15 +174,17 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
         parserMacro.setVisualisation()
         paramtogate += ' --qt '
 
+
     # Copy data
-    if copydata:
-        shutil.copytree(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
-    else:
-        if os.path.islink(os.path.join(outputDir, 'data')):
-            os.unlink(os.path.join(outputDir, 'data'))
-        elif os.path.isdir(os.path.join(outputDir, 'data')):
-            shutil.rmtree(os.path.join(outputDir, 'data'))
-        os.symlink(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
+    if not no_detach:
+      if copydata:
+          shutil.copytree(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
+      else:
+          if os.path.islink(os.path.join(outputDir, 'data')):
+              os.unlink(os.path.join(outputDir, 'data'))
+          elif os.path.isdir(os.path.join(outputDir, 'data')):
+              shutil.rmtree(os.path.join(outputDir, 'data'))
+          os.symlink(os.path.join(fullMacroDir, 'data'), os.path.join(outputDir, 'data'))
 
     #Manage split time option
     #Divide the time into jobs range of time
@@ -185,7 +202,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
         parserMacro.setAttributes('setTimeStop', arrayStopTime)
 
     #Write mac files into output folder
-    parserMacro.writeMacFiles(outputDir)
+    if not no_detach:
+        parserMacro.writeMacFiles(outputDir)
 
     #Create file to write commands in it
     paramFile.write('\ncommands: \n')
@@ -238,16 +256,28 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                           ',ENV=' + envCommand + \
                           '\" ' + jobFile
             elif qsub is None:
-                command = 'PARAM=\" ' + paramtogateJob + \
-                          '\" INDEX=' + str(i) + \
-                          ' INDEXMAX=' + str(jobs) + \
-                          ' OUTPUTDIR=' + outputDir + \
-                          ' RELEASEDIR=' + releasedir + \
-                          ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
-                          ' MACRODIR=' + outputDir + \
-                          ' ENV=' + envCommand + \
-                          ' PBS_JOBID=\"local_' + str(i) + \
-                          '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
+                if no_detach:
+                    command = 'PARAM=\" ' + paramtogateJob + \
+                            '\" INDEX=' + str(i) + \
+                            ' INDEXMAX=' + str(jobs) + \
+                            ' OUTPUTDIR=' + outputDir + \
+                            ' RELEASEDIR=' + releasedir + \
+                            ' MACROFILE=' + os.path.join(fullMacroDir, mainMacroFile) + \
+                            ' MACRODIR=' + fullMacroDir + \
+                            ' ENV=' + envCommand + \
+                            ' PBS_JOBID=\"local_' + str(i) + \
+                            '\" bash ' + jobFile
+                else:
+                    command = 'PARAM=\" ' + paramtogateJob + \
+                            '\" INDEX=' + str(i) + \
+                            ' INDEXMAX=' + str(jobs) + \
+                            ' OUTPUTDIR=' + outputDir + \
+                            ' RELEASEDIR=' + releasedir + \
+                            ' MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
+                            ' MACRODIR=' + outputDir + \
+                            ' ENV=' + envCommand + \
+                            ' PBS_JOBID=\"local_' + str(i) + \
+                            '\" bash ' + jobFile + " &>  " + os.path.join(outputDir, "gate.o_" + str(i)) + " &"
             else:
                 command = 'qsub -N \"gatejob.' + runId + \
                           ' -o ' + outputDir + \
