@@ -296,7 +296,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                 print(command)
             else:
                 os.system(command)
-                time.sleep(1)
+                if qsub is None:
+                    time.sleep(1)
 
     paramFile.close()
     print(str(jobs) + ' jobs running')
