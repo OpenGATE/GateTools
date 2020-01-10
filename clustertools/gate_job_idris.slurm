@@ -1,7 +1,7 @@
 #!/bin/bash -x
 #SBATCH --nodes=1                   # nombre de noeuds
 #SBATCH --ntasks-per-node=1         # nombre de taches MPI par noeud
-#SBATCH --time=10:00:00             # temps d execution maximum demande (HH:MM:SS)
+#SBATCH --time=20:00:00             # temps d execution maximum demande (HH:MM:SS)
 #SBATCH --output=Seq%A_%a.out       # nom du fichier de sortie
 #SBATCH --error=Seq%A_%a.out        # nom du fichier d'erreur (ici en commun avec la sortie)
 
@@ -40,7 +40,7 @@ echo "ENVCOMMAND=${ENVCOMMAND:?"unknown ENVCOMMAND"}"
 echo "JOB_ID=$SLURM_ARRAY_JOB_ID.$SLURM_ARRAY_TASK_ID"
 echo "INDEX=${INDEX}"
 echo "INDEXMAX=${INDEX}"
-PARAMFILE=${PARAM}.$SLURM_ARRAY_TASK_ID
+PARAMFILE=${PARAM}
 PARAM=`cat ${PARAMFILE}`
 echo "PARAM= ${PARAM}"
 
