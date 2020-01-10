@@ -9,6 +9,7 @@ import subprocess
 import colorama
 import numpy as np
 import sys
+import time
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
@@ -265,6 +266,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                 print(command)
             else:
                 os.system(command)
+                time.sleep(1)
 
     paramFile.close()
     print(str(jobs) + ' jobs running')
