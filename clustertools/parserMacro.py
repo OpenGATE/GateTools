@@ -225,7 +225,7 @@ class ParserMacro:
         return splitLine
 
     def setVisualisation(self):
-        self.parserAllFiles[os.path.join(self.fullMacroDir, self.mainMacroFile)] = ["/control/execute mac/visu.mac"] + self.parserAllFiles[os.path.join(self.fullMacroDir, self.mainMacroFile)]
+        self.parserAllFiles[os.path.join(self.fullMacroDir, self.mainMacroFile)] = ["/control/execute mac/visu.mac \n"] + self.parserAllFiles[os.path.join(self.fullMacroDir, self.mainMacroFile)]
         shutil.copyfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), "visu.mac"), os.path.join(self.fullMacroDir, "mac/visu.mac"))
         self.copyAppendixMac.append(os.path.join(self.fullMacroDir, "mac/visu.mac"))
 
