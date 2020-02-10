@@ -40,19 +40,22 @@ class dicom_properties:
     def read_dicom_properties(self, slice):
         # pixel aspects, assuming all slices are the same
 
-        ps = slice.PixelSpacing
+        ps = [1.0, 1.0]
+        if Tag(0x28, 0x30) in slice:
+            ps = slice.PixelSpacing
         ss = 1.0
         if Tag(0x18, 0x50) in slice:
             ss = slice.SliceThickness
         self.spacing = [ps[0], ps[1], ss]
+        ip = [0.0, 0.0, 0.0]
         if Tag(0x20, 0x32) in slice:
             ip = slice[0x20, 0x32].value #Image Position
-        else:
+        elif Tag(0x54, 0x22) in slice and Tag(0x20, 0x32) in slice[0x54, 0x22][0]:
             ip = slice[0x54, 0x22][0][0x20, 0x32].value #Image Position
         self.origin = [ip[0], ip[1], ip[2]]
         if Tag(0x20, 0x37) in slice:
             self.io = slice[0x20, 0x37].value #Image Orientation
-        else:
+        elif Tag(0x54, 0x22) in slice and Tag(0x20, 0x37) in slice[0x54, 0x22][0]:
             self.io = slice[0x54, 0x22][0][0x20, 0x37].value #Image Orientation
         if self.io == "":
             self.io = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
@@ -63,7 +66,7 @@ class dicom_properties:
         elif Tag(0x11, 0x103b) in slice:
             self.rs = slice[0x11, 0x103b].value #Rescale Intercept
             self.ri = slice[0x11, 0x103c].value #Rescale Slope
-        elif Tag(0x40, 0x9096) in slice:
+        elif Tag(0x40, 0x9096) in slice and Tag(0x40, 0x9224) in slice[0x40, 0x9096][0]:
             self.ri = slice[0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
             self.rs = slice[0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
         elif Tag(0x3004, 0x000e) in slice:
