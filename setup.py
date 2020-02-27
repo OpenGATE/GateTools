@@ -30,7 +30,6 @@ setuptools.setup(
         'colored',
         'itk>=5',
         'uproot',
-        'psutil',
         'wget',
     ],
     scripts=[
