@@ -46,6 +46,8 @@ class dicom_properties:
         ss = 1.0
         if Tag(0x18, 0x50) in slice:
             ss = slice.SliceThickness
+        if ss == '':
+            ss = 1.0
         self.spacing = [ps[0], ps[1], ss]
         ip = [0.0, 0.0, 0.0]
         if Tag(0x20, 0x32) in slice:
