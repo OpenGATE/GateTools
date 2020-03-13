@@ -4,14 +4,13 @@
 import sys
 import re
 import datetime
+import click
 
 linere = re.compile(r'''^#\s+([a-zA-Z]+)\s+=\s(.*)$''')
-mergedlines = ['NumberOfRun', 'NumberOfEvents', 'NumberOfTracks', 'NumberOfSteps', 'NumberOfGeometricalSteps', 'NumberOfPhysicalSteps', 'ElapsedTimeWoInit', 'ElapsedTime', 'StartDate', 'EndDate',  'NumberOfMergedJobs', 'MeanPPS', 'MeanElapsedTime', 'MinElapsedTime', 'MaxElapsedTime']
+mergedlines = ['NumberOfRun', 'NumberOfEvents', 'NumberOfTracks', 'NumberOfSteps', 'NumberOfGeometricalSteps',
+               'NumberOfPhysicalSteps', 'ElapsedTimeWoInit', 'ElapsedTime', 'StartDate', 'EndDate',
+               'NumberOfMergedJobs', 'MeanPPS', 'MeanElapsedTime', 'MinElapsedTime', 'MaxElapsedTime']
 
-assert(len(sys.argv)==7)
-assert(sys.argv[1]=="-i")
-assert(sys.argv[3]=="-j")
-assert(sys.argv[5]=="-o")
 
 def total_seconds(deltat):
     try:
@@ -141,8 +140,27 @@ def format_keys(keys):
         output += "\n# Speedup = %s" % keys["Speedup"]
     return output
 
-ikeys = parse_stat_file(sys.argv[2])
-jkeys = parse_stat_file(sys.argv[4])
-keys  = merge_keys(ikeys,jkeys)
-output = format_keys(keys)
-open(sys.argv[6],"w").write(output)
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+@click.option('-i', '--input1', default='', help='First input file to merge')
+@click.option('-j', '--input2', default='', help='Second input file to merge')
+@click.option('-o', '--output', default='', help='Output merged file')
+def mergeStatFile(input1, input2, output):
+    """
+    \b
+    Merge Stats file from Gate
+
+    """
+    mergeStatFileMain(input1, input2, output)
+
+
+def mergeStatFileMain(input1, input2, output):
+    ikeys = parse_stat_file(input1)
+    jkeys = parse_stat_file(input2)
+    keys  = merge_keys(ikeys,jkeys)
+    outputFile = format_keys(keys)
+    open(output,"w").write(outputFile)
+
+if __name__ == "__main__":
+    colorama.init()
+    mergeStatFile()
