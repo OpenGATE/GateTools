@@ -20,7 +20,7 @@ def convertNewParameterToFloat(newParameterString, size):
         parameterFloat = np.array(newParameterString.split(','))
         parameterFloat = parameterFloat.astype(np.float)
         if len(parameterFloat) == 1:
-            parameterFloat = np.array([]*size)
+            parameterFloat = [parameterFloat[0].astype(np.float)]*size
         return parameterFloat
     else:
         return []
@@ -98,6 +98,7 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
         spacingLikeImage = itk.imread(spacinglike)
 
     size = convertNewParameterToFloat(newsize, imageDimension)
+    size = [int(i) for i in size]
     origin = convertNewParameterToFloat(neworigin, imageDimension)
     spacing = convertNewParameterToFloat(newspacing, imageDimension)
     direction = convertNewParameterToFloat(newdirection, imageDimension**2)

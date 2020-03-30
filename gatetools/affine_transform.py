@@ -19,7 +19,6 @@ This module provides basic affine transformation and resampling of an image for 
 import os
 import itk
 import numpy as np
-from numpy import linalg as LA
 import math
 import logging
 logger=logging.getLogger(__name__)
@@ -224,27 +223,23 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     postTranslateFilter.ChangeOriginOn()
     postTranslateFilter.Update()
 
-    if keep_original_canvas:
-        identityTransform = itk.AffineTransform[itk.D, imageDimension].New()
-        resampleFilterOriginalCanvas = itk.ResampleImageFilter.New(Input=postTranslateFilter.GetOutput())
-        resampleFilterOriginalCanvas.SetOutputSpacing(newspacing)
-        resampleFilterOriginalCanvas.SetOutputOrigin(neworigin)
-        resampleFilterOriginalCanvas.SetOutputDirection(newdirection)
-        resampleFilterOriginalCanvas.SetSize(newsize)
-        resampleFilterOriginalCanvas.SetTransform(identityTransform)
-        if interpolation_mode == "NN":
-            interpolator = itk.NearestNeighborInterpolateImageFunction[tempImageType, itk.D].New()
-        else:
-            interpolator = itk.LinearInterpolateImageFunction[tempImageType, itk.D].New()
-        resampleFilterOriginalCanvas.SetInterpolator(interpolator)
-        resampleFilterOriginalCanvas.SetDefaultPixelValue(pad)
-        resampleFilterOriginalCanvas.Update()
+    identityTransform = itk.AffineTransform[itk.D, imageDimension].New()
+    resampleFilterCanvas = itk.ResampleImageFilter.New(Input=postTranslateFilter.GetOutput())
+    resampleFilterCanvas.SetOutputSpacing(newspacing)
+    resampleFilterCanvas.SetOutputOrigin(neworigin)
+    resampleFilterCanvas.SetOutputDirection(newdirection)
+    resampleFilterCanvas.SetSize(newsize)
+    resampleFilterCanvas.SetTransform(identityTransform)
+    if interpolation_mode == "NN":
+        interpolator = itk.NearestNeighborInterpolateImageFunction[tempImageType, itk.D].New()
+    else:
+        interpolator = itk.LinearInterpolateImageFunction[tempImageType, itk.D].New()
+    resampleFilterCanvas.SetInterpolator(interpolator)
+    resampleFilterCanvas.SetDefaultPixelValue(pad)
+    resampleFilterCanvas.Update()
         
     castImageFilter2 = itk.CastImageFilter[tempImageType, type(input)].New()
-    if keep_original_canvas:
-        castImageFilter2.SetInput(resampleFilterOriginalCanvas.GetOutput())
-    else:
-        castImageFilter2.SetInput(postTranslateFilter.GetOutput())
+    castImageFilter2.SetInput(resampleFilterCanvas.GetOutput())
     castImageFilter2.Update()
     
     return castImageFilter2.GetOutput()
