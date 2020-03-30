@@ -252,8 +252,54 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
 import unittest
 import sys
 from datetime import datetime
+import tempfile
+import hashlib
+import shutil
 from .logging_conf import LoggedTestCase
 
-class Test_Apply_Transform(LoggedTestCase):
-    def test_apply_transform(self):
-        logger.info('Test_Apply_Transform test_apply_transform')
+def createImageExample():
+    x = np.arange(-10, 10, 1)
+    y = np.arange(-12, 15, 1)
+    z = np.arange(-13, 10, 1)
+    xx, yy, zz = np.meshgrid(x, y, z)
+    image = itk.image_from_array(np.int16(xx))
+    image.SetOrigin([7, 3.4, -4.6])
+    image.SetSpacing([4, 2, 3.6])
+    return image
+
+class Test_Affine_Transform(LoggedTestCase):
+    def test_change_info(self):
+        logger.info('Test_Affine_Transform test_change_info')
+        image = createImageExample()
+        transformImage = applyTransformation(image, None, None, None, neworigin=[-3, 4, -4.6], newspacing=[3, 3, 3])
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
+        with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("43cfa7c5c4dadf403fd3555663bf4b2341b69b6797bbae65824abd160a5ef36b" == new_hash)
+        shutil.rmtree(tmpdirpath)
+
+    def test_force_resample(self):
+        logger.info('Test_Affine_Transform test_force_resample')
+        image = createImageExample()
+        transformImage = applyTransformation(image, None, None, None, force_resample=True, rotation=[43, 12, 278], rotation_center=np.array([12, 56, 23]), translation=[100, -5, 12], pad=-15, interpolation_mode='linear')
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
+        with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("98165d7ed3167b393fb65301bfa5a71670142be0421bd609454186c8c4b07333" == new_hash)
+        shutil.rmtree(tmpdirpath)
+
+    def test_keep_original_canvas(self):
+        logger.info('Test_Affine_Transform test_keep_original_canvas')
+        image = createImageExample()
+        transformImage = applyTransformation(image, None, None, None, keep_original_canvas=True, rotation=[43, 12, 278], rotation_center=np.array([12, 56, 23]), translation=[100, -5, 12], pad=-15, interpolation_mode='NN')
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
+        with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("2ee82f72b33f618b23b2dff553385180565318a85b5819bdc48256a3656e64fb" == new_hash)
+        shutil.rmtree(tmpdirpath)
