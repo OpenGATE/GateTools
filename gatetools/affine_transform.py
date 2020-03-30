@@ -85,7 +85,7 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     centerImageArray = [0]*imageDimension
     for i in range(imageDimension):
         centerImageArray[i] = centerImagePoint[i]
-    if rotation_center == []:
+    if len(rotation_center) == 0:
         rotation_center = np.zeros(imageDimension)
         for i in range(imageDimension):
             rotation_center[i] = centerImagePoint[i]
@@ -96,7 +96,7 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     rotationMatrix = []
     translationMatrix = []
     if not matrix is None:
-        if rotation != [] or translation != []:
+        if len(rotation) != 0 or len(translation) != 0:
             logger.error("Choose between matrix or rotation/translation, not both")
             sys.exit(1)
         if matrix.GetVnlMatrix().columns() != imageDimension+1 or matrix.GetVnlMatrix().rows() != imageDimension+1:
@@ -108,12 +108,12 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
             logger.error("We can transform only 2D and 3D images")
             sys.exit(1)
     else:
-        if rotation == []:
+        if len(rotation) == 0:
             rotation = [0]*imageDimension
         if len(rotation) != imageDimension:
             logger.error("Size of rotation is not correct (" + str(imageDimension) + "): " + str(rotation))
             sys.exit(1)
-        if translation == []:
+        if len(translation) == 0:
             translation = [0]*imageDimension
         if len(translation) != imageDimension:
             logger.error("Size of translation is not correct (" + str(imageDimension) + "): " + str(translation))
