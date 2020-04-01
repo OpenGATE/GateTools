@@ -68,7 +68,7 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
     Basic affine transfomation and resampling of images
     
     eg:
-    gt_affine_transform -i input.mhd -o output.mhd --newsize 2.0
+    gt_affine_transform -i input.mhd -o output.mhd --newsize "2.0"
     gt_affine_transform -i input.mhd -o output.mhd --newsize "2.0,3.0,4.0"
     
     There is 3 modes to apply the transfrom:
@@ -83,6 +83,10 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
     0 0 0 1
 
     rotation is in degree. By default, the rotation is around the center of the image
+
+    It could be more conveniant to use images with an identity matrix as image direction and keep the image with the correct space coordinate. In such a case you can do:
+        gt_affine_transform -i input.mhd -o output.mhd -fr
+
     '''
 
     # logger

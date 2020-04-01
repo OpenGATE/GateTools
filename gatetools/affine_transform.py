@@ -37,11 +37,6 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     if len(newsize) != imageDimension:
         logger.error("Size of newsize is not correct (" + str(imageDimension) + "): " + str(newsize))
         sys.exit(1)
-    if neworigin == []:
-        neworigin = input.GetOrigin()
-    if len(neworigin) != imageDimension:
-        logger.error("Size of neworigin is not correct (" + str(imageDimension) + "): " + str(neworigin))
-        sys.exit(1)
     if newspacing == []:
         newspacing = input.GetSpacing()
     if len(newspacing) != imageDimension:
@@ -207,7 +202,8 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     resampleFilter = itk.ResampleImageFilter.New(Input=castImageFilter.GetOutput())
     resampleFilter.SetOutputSpacing(newspacing)
     resampleFilter.SetOutputOrigin(originAfterRotation)
-    resampleFilter.SetOutputDirection(newdirection)
+    resampleDirection = itk.matrix_from_array(np.eye(imageDimension))
+    resampleFilter.SetOutputDirection(resampleDirection)
     resampleFilter.SetSize(sizeAfterRotation)
     resampleFilter.SetTransform(transform)
     if interpolation_mode == "NN":
@@ -223,11 +219,19 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     postTranslateFilter.ChangeOriginOn()
     postTranslateFilter.Update()
 
+    if neworigin == [] and not (itk.array_from_matrix(input.GetDirection()) == np.eye(imageDimension)).all():
+        neworigin = postTranslateFilter.GetOutput().GetOrigin()
+    elif neworigin == []:
+        neworigin = inputOrigin
+    if len(neworigin) != imageDimension:
+        logger.error("Size of neworigin is not correct (" + str(imageDimension) + "): " + str(neworigin))
+        sys.exit(1)
+
     identityTransform = itk.AffineTransform[itk.D, imageDimension].New()
     resampleFilterCanvas = itk.ResampleImageFilter.New(Input=postTranslateFilter.GetOutput())
     resampleFilterCanvas.SetOutputSpacing(newspacing)
     resampleFilterCanvas.SetOutputOrigin(neworigin)
-    resampleFilterCanvas.SetOutputDirection(newdirection)
+    resampleFilterCanvas.SetOutputDirection(resampleDirection)
     resampleFilterCanvas.SetSize(newsize)
     resampleFilterCanvas.SetTransform(identityTransform)
     if interpolation_mode == "NN":
