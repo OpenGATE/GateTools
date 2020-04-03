@@ -26,6 +26,7 @@ import gatetools as gt
 from functools import reduce
 import operator
 import numpy as np
+import numpy.testing as npt
 import logging
 logger=logging.getLogger(__name__)
 
@@ -227,7 +228,8 @@ class Test_Uncertainty(LoggedTestCase):
         uncertainty, mean, nb = image_uncertainty_by_slice(images, simages, N=1000000000000)
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(uncertainty, os.path.join(tmpdirpath, "uncertainty.mha"))
-        self.assertTrue(mean[0] == 0.3356322509765625)
+        #self.assertTrue(mean[0] == 0.3356322509765625)
+        npt.assert_almost_equal(mean[0], 0.3356322509765625)
         self.assertTrue(nb[0] == 10000)
         with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
@@ -261,7 +263,7 @@ class Test_Uncertainty(LoggedTestCase):
         uncertainty, mean, nb = image_uncertainty_Poisson_by_slice(images)
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(uncertainty, os.path.join(tmpdirpath, "uncertainty.mha"))
-        self.assertTrue(mean[0] == 0.33836081024332604)
+        npt.assert_almost_equal(mean[0], 0.33836081024332604)
         self.assertTrue(nb[0] == 10000)
         with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
