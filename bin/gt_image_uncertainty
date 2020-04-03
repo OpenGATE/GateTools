@@ -20,7 +20,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filenames', nargs=-1)
 
-@click.option('--nevents','-n', help='Total numbers of events', default=0)
+@click.option('--nevents','-n', help='Total numbers of events', default=0.0)
 
 @click.option('--counts/--not-counts', '-c', default=False, help='Compute uncertainty for counts image (Poisson process)')
 
@@ -32,8 +32,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--efficiency','-e', help='Compute efficiency (1/t*sigma). The time is read in the given stat file. Only slice by slice for the moment', default=False)
 
+@click.option('--sigma', default=False, is_flag=True, help='By default, uncertainty is normalized, unc = sigma/x. By using this option, the output is *not* normalized, sigma=sqrt(var) is computed.')
+
 @gt.add_options(gt.common_options)
-def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, **kwargs):
+def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, sigma, verbose, scale, **kwargs):
     '''
     Compute relative statistical uncertainty image for a list of
     images. Images are summed before computing the the uncertainty.
@@ -76,13 +78,14 @@ def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold
         exit()
 
     # ensure that nevents is an int (convert sci notation e.g. 1e5)
-    nevents = int(nevents)
+    nevents = int(float(nevents))
 
     # verbose
     if verbose:
         logger.info("Found {} file(s)".format(len(filenames)))
 
     # efficiency ?
+    sigma_flag = sigma
     time = 0.0
     if efficiency:
         fp = open(efficiency, 'r')
@@ -109,15 +112,15 @@ def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold
             sfilenames.append(fs)
         # compute uncertainty history by hitory
         if by_slice:
-            uncertainty, m, nb = gt.image_uncertainty_by_slice(filenames, sfilenames, nevents, threshold)
+            uncertainty, m, nb = gt.image_uncertainty_by_slice(filenames, sfilenames, nevents, sigma_flag, threshold)
         else:
-            uncertainty = gt.image_uncertainty(filenames, sfilenames, nevents, threshold)
+            uncertainty = gt.image_uncertainty(filenames, sfilenames, nevents, sigma_flag, threshold)
     else:
         # compute uncertainty Poisson
         if by_slice:
-            uncertainty, m, nb = gt.image_uncertainty_Poisson_by_slice(filenames, threshold)
+            uncertainty, m, nb = gt.image_uncertainty_Poisson_by_slice(filenames, sigma_flag, threshold)
         else:
-            uncertainty = gt.image_uncertainty_Poisson(filenames, threshold)
+            uncertainty = gt.image_uncertainty_Poisson(filenames, sigma_flag, threshold)
 
 
     if by_slice:

@@ -30,18 +30,35 @@ import numpy.testing as npt
 import logging
 logger=logging.getLogger(__name__)
 
-def relative_uncertainty_Poisson(x, threshold=0):
-    sigma = np.sqrt(x)
-    u = np.divide(sigma, x, out=np.ones_like(x), where=x > threshold)
+def relative_uncertainty_Poisson(x, sigma_flag, threshold=0):
+    u = np.sqrt(x)
+    if not sigma_flag:
+        u = np.divide(u, x, out=np.ones_like(x), where=x > threshold)
     return u
 
 
-def relative_uncertainty(x, sq_x, N, threshold=0):
-    u = np.sqrt( (N*sq_x - x*x) / (N-1) )
-    u = np.divide(u, x, out=np.ones_like(x), where=x > threshold)
+def relative_uncertainty(x, sq_x, N, sigma_flag, threshold=0):
+    # sometimes strange warning : 'invalid value encountered in sqrt'
+    # --> seems when values too close to zero
+    # sv = np.seterr(all='raise')
+    # If the warning is changed to an error, it becomes
+    # FloatingPointError: underflow encountered in sqrt:
+    # https://github.com/numpy/numpy/issues/11448
+    #
+    # corrected sample standard deviation
+    # https://en.wikipedia.org/wiki/Standard_deviation#Corrected_sample_standard_deviation
+    # See also Chetty2006 (IJROBP)
+
+    u = (sq_x/N - (x/N)**2) / (N-1)
+    # idem ->    u = np.sqrt( (N*sq_x - x*x) / (N-1) )
+    u[u<1e-40] = 0.0
+    u = np.sqrt(u)
+    if not sigma_flag:
+        u = np.divide(u, x/N, out=np.ones_like(x), where=x > threshold)
     return u
 
-def relative_uncertainty_by_slice(x, threshold=0, sq_x=[], N=0):
+
+def relative_uncertainty_by_slice(x, sigma_flag, threshold=0, sq_x=[], N=0):
     i=0
     means = []
     nb = []
@@ -52,13 +69,13 @@ def relative_uncertainty_by_slice(x, threshold=0, sq_x=[], N=0):
         use_square = True
     else:
         sq_x = x
-    for s,sq in zip(x, sq_x):
+
+    for s, sq in zip(x, sq_x):
         t = np.max(s)*threshold
-        sigma = np.sqrt(s)
         if use_square:
-            u = relative_uncertainty(s, sq, N, t)
+            u = relative_uncertainty(s, sq, N, sigma_flag, t)
         else:
-            u = relative_uncertainty_Poisson(s, t)
+            u = relative_uncertainty_Poisson(s, sigma_flag, t)
         n = len(np.where(s > t)[0])
         if n==0:
             mean = 1.0
@@ -69,7 +86,9 @@ def relative_uncertainty_by_slice(x, threshold=0, sq_x=[], N=0):
         nb.append(n)
         uncertainty[i] = u
         i = i + 1
+
     return uncertainty, means, nb
+
 
 def check_N(N):
     N = float(N)
@@ -77,7 +96,7 @@ def check_N(N):
         raise RuntimeError('ERROR: N  must be positive')
 
 
-def image_uncertainty(img_list=[], img_squared_list=[], N=0, threshold=0):
+def image_uncertainty(img_list=[], img_squared_list=[], N=0, sigma_flag=False, threshold=0):
     check_N(N)
 
     # Get the sums
@@ -98,7 +117,7 @@ def image_uncertainty(img_list=[], img_squared_list=[], N=0, threshold=0):
     return img_uncertainty
 
 
-def image_uncertainty_by_slice(img_list=[], img_squared_list=[], N=0, threshold=0):
+def image_uncertainty_by_slice(img_list=[], img_squared_list=[], N=0, sigma_flag=False, threshold=0):
     check_N(N)
 
     # Get the sums
@@ -110,7 +129,7 @@ def image_uncertainty_by_slice(img_list=[], img_squared_list=[], N=0, threshold=
     np_sq_sum = itk.array_view_from_image(img_sq_sum)
 
     # compute uncertainty
-    uncertainty, means, nb = relative_uncertainty_by_slice(np_sum, threshold, np_sq_sum, N)
+    uncertainty, means, nb = relative_uncertainty_by_slice(np_sum, sigma_flag, threshold, np_sq_sum, N)
 
     # create and return itk image
     img_uncertainty = itk.image_from_array(uncertainty)
@@ -118,7 +137,7 @@ def image_uncertainty_by_slice(img_list=[], img_squared_list=[], N=0, threshold=
     return img_uncertainty, means, nb
 
 
-def image_uncertainty_Poisson(img_list=[], threshold=0):
+def image_uncertainty_Poisson(img_list=[], sigma_flag=False, threshold=0):
     # Get the sums
     img_sum = gt.image_sum(img_list)
 
@@ -129,7 +148,7 @@ def image_uncertainty_Poisson(img_list=[], threshold=0):
     np_sum = np_sum.astype(np.float64)
 
     # Get stddev (variance is the mean)
-    sigma = np.sqrt(np_sum)
+    sigma_flag = np.sqrt(np_sum)
 
     # compute uncertainty
     t = np.max(np_sum)*threshold
@@ -144,7 +163,7 @@ def image_uncertainty_Poisson(img_list=[], threshold=0):
     return img_uncertainty
 
 
-def image_uncertainty_Poisson_by_slice(img_list=[], threshold=0):
+def image_uncertainty_Poisson_by_slice(img_list=[], sigma_flag=False, threshold=0):
     # Get the sums
     img_sum = gt.image_sum(img_list)
 
@@ -155,7 +174,7 @@ def image_uncertainty_Poisson_by_slice(img_list=[], threshold=0):
     np_sum = np_sum.astype(np.float64)
 
     # compute uncertainty
-    uncertainty, means, nb = relative_uncertainty_by_slice(np_sum, threshold)
+    uncertainty, means, nb = relative_uncertainty_by_slice(np_sum, sigma_flag, threshold)
 
     # np is double, convert to float32
     uncertainty = uncertainty.astype(np.float32)
