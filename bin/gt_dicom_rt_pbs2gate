@@ -27,9 +27,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--keepzero/--filterzero','-Z/-z',
               help='Keep spots with zero weight (-Z) or filter them out (-z, default)', default=False)
 
-@click.option('--verbose/--quiet','-v/-q',
-              help='Be verbose (-v) or keep quiet (-q, default)', default=False)
-
 @click.option('--output','-o', help='Output filename', required=True,
               type=click.Path(dir_okay=False,
                               writable=True, readable=False,

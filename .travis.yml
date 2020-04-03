@@ -1,7 +1,10 @@
 language: python
+git:
+  lfs_skip_smudge: true
 cache:
   directories:
     - $HOME/.cache/pip
+    - .git/lfs
 python:
 #  - "3.4" #itk 5.0.1 does not run with this version
 #  - "3.5" # fstring not available with this version
@@ -11,13 +14,20 @@ python:
 env:
   - ITK_VERSION=5.0.0
   - ITK_VERSION=5.0.1
+  - ITK_VERSION=pre
 jobs:
   exclude:
     - python: "3.8"
       env: ITK_VERSION=5.0.0
+before_install:
+  - git lfs pull
 install:
-  - pip install -q itk==$ITK_VERSION
+  - if [ $ITK_VERSION == 'pre' ];
+    then pip install itk --pre;
+    else pip install itk==$ITK_VERSION;
+    fi
   - pip install -e .
+  - pip freeze
 script: 
   - python -m unittest gatetools -v
   - python -m unittest gatetools.phsp -v

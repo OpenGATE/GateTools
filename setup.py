@@ -5,19 +5,22 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.8.5",
+    version="0.8.8",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/OpenGATE/GateTools",
-    packages=['gatetools'],
-    classifiers=(
+    package_dir={ 'gatetools': 'gatetools',
+                  'gatetools.phsp': 'gatetools/phsp'},
+    packages=['gatetools', 'gatetools.phsp'],
+    classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Operating System :: OS Independent",
-    ),
+    ],
+    python_requires='>=3.6',
     install_requires=[
         'matplotlib',
         'click',
@@ -27,7 +30,6 @@ setuptools.setup(
         'colored',
         'itk>=5',
         'uproot',
-        'psutil',
         'wget',
     ],
     scripts=[
