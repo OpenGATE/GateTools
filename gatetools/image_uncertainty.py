@@ -47,9 +47,9 @@ def relative_uncertainty(x, sq_x, N, sigma_flag, threshold=0):
     # corrected sample standard deviation
     # https://en.wikipedia.org/wiki/Standard_deviation#Corrected_sample_standard_deviation
     # See also Chetty2006 (IJROBP)
-    
+
     u = (sq_x/N - (x/N)**2) / (N-1)
-    # idem ->    u = np.sqrt( (N*sq_x - x*x) / (N-1) )    
+    # idem ->    u = np.sqrt( (N*sq_x - x*x) / (N-1) )
     u[u<1e-40] = 0.0
     u = np.sqrt(u)
     if not sigma_flag:
@@ -70,10 +70,6 @@ def relative_uncertainty_by_slice(x, sigma_flag, threshold=0, sq_x=[], N=0):
         sq_x = x
 
     for s, sq in zip(x, sq_x):
-        print('FIXME')
-        s = s*1e9
-        sq = sq*1e9
-        
         t = np.max(s)*threshold
         if use_square:
             u = relative_uncertainty(s, sq, N, sigma_flag, t)
@@ -89,6 +85,7 @@ def relative_uncertainty_by_slice(x, sigma_flag, threshold=0, sq_x=[], N=0):
         nb.append(n)
         uncertainty[i] = u
         i = i + 1
+
     return uncertainty, means, nb
 
 
