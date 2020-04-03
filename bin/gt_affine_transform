@@ -39,18 +39,18 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               type=click.Path(dir_okay=False,
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
-@click.option('--newsize', help='New Size for the output', type=str)
-@click.option('--neworigin', help='New Origin for the output', type=str)
-@click.option('--newspacing', help='New Spacing for the output', type=str)
-@click.option('--newdirection', help='New Direction for the output', type=str)
+@click.option('--newsize', help='Set the output size', type=str)
+@click.option('--neworigin', help='Set the output origin', type=str)
+@click.option('--newspacing', help='Set the output spacing', type=str)
+@click.option('--newdirection', help='Set the output direction', type=str)
 
 
-@click.option('--like', '-l', help='Output have the same size, origin, spacing and direction than the like image', type=click.Path(dir_okay=False))
-@click.option('--spacinglike', '-sl', help='Output have the same spacing than the spacinglike image', type=click.Path(dir_okay=False))
+@click.option('--like', '-l', help='Output will have the same size, origin, spacing and direction than this like image', type=click.Path(dir_okay=False))
+@click.option('--spacinglike', '-sl', help='Output will have the same spacing than this spacinglike image', type=click.Path(dir_okay=False))
 
 
-@click.option('--force_resample', '-fr', help='Force to resample the output instead of changing the metadata', is_flag=True)
-@click.option('--keep_original_canvas', '-koc', help='Do the transformation on the image but the output has the same physical region than input', is_flag=True)
+@click.option('--force_resample', '-fr', help='Force the output to be resampled instead of only changing the metadata', is_flag=True)
+@click.option('--keep_original_canvas', '-koc', help='Perform the transformation on the image but the output will keep the same physical region than the input', is_flag=True)
 
 
 @click.option('--matrix', '-m', help='Matrix for affine transformation', type=click.Path(dir_okay=False))
@@ -58,7 +58,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--center', '-c', help='Rotation center or affine transformation', type=str)
 @click.option('--translation', '-t', help='Translation for affine transformation', type=str)
 
-@click.option('--pad', '-p', help='New value for padding', default=0.0)
+@click.option('--pad', '-p', help='Set the padding pixel value', default=0.0)
 
 @click.option('--interpolation_mode', help='Interpolation mode', default='linear', type=click.Choice(['NN', 'linear']))
 
@@ -71,20 +71,20 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
     gt_affine_transform -i input.mhd -o output.mhd --newsize "2.0"
     gt_affine_transform -i input.mhd -o output.mhd --newsize "2.0,3.0,4.0"
     
-    There is 3 modes to apply the transfrom:
-      - by default, the transformation is applied to the mhd metadata. In such a case, no resempling is done. The raw file contains the same data, just the mhd file change.
-      - with force_resample flag, the output image is the reseampled imput image.
-      - with keep_interpolation_flag, the transformation is applied to the image the but output have the same characteristics than the input. This flag can lead to see the pixels outside the canvas after a translation for example.
+    There are 3 modes to apply the transform:
+      - by default, the transformation is applied to the mhd metadata. In such a case, no resampling is performed. The raw file contains the same data, only the mhd file is modified.
+      - with force_resample flag, the output image will be resampled like the input image.
+      - with keep_original_canvas, the transformation will be applied to the input image but output will keep the same support (physical size) than the input. Warning, some pixels may fall outside the image support after the transformation and will be ignored.
     
-    matrix in the path to a file containing the transformation matrix (rotation + translation). Example for a 3D image:
+    --matrix is a file that contains the transformation matrix (rotation + translation). Example for a 3D image:
     1 0 0 0
     0 1 0 0
     0 0 1 0
     0 0 0 1
 
-    rotation is in degree. By default, the rotation is around the center of the image
+    --rotation is in degree. By default, the rotation is around the center of the image
 
-    It could be more conveniant to use images with an identity matrix as image direction and keep the image with the correct space coordinate. In such a case you can do:
+    It could be more convenient to use images with an identity matrix as image direction and keep the image with the correct space coordinate. In such a case you can do:
         gt_affine_transform -i input.mhd -o output.mhd -fr
 
     '''

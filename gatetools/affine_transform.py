@@ -6,15 +6,8 @@
 # -----------------------------------------------------------------------------
 
 """
-This module provides basic affine transformation and resampling of an image for ITK images.
+This module provides basic affine transformation and resampling methods for images.
 """
-
-# -----------------------------------------------------------------------------
-#   Copyright (C): OpenGATE Collaboration
-#   This software is distributed under the terms
-#   of the GNU Lesser General  Public Licence (LGPL)
-#   See LICENSE.md for further details
-# -----------------------------------------------------------------------------
 
 import os
 import itk
@@ -50,7 +43,7 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
 
     if like is not None:
         if like.GetImageDimension() != imageDimension:
-            logger.error("Like image do not have the same dimension than input")
+            logger.error("Like image does not have the same dimension than input")
             sys.exit(1)
         newsize = like.GetLargestPossibleRegion().GetSize()
         neworigin = like.GetOrigin()
@@ -58,7 +51,7 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
         newdirection = like.GetDirection()
     if spacinglike is not None:
         if spacinglike.GetImageDimension() != imageDimension:
-            logger.error("Spacinglike image do not have the same dimension than input")
+            logger.error("Spacinglike image does not have the same dimension than input")
             sys.exit(1)
         newspacing = spacinglike.GetSpacing()
     
