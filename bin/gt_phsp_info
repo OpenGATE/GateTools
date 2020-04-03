@@ -44,7 +44,7 @@ def gt_phsp_info(filename, n, **kwargs):
     if (extension == '.npy'):
         t = 'npy'
     print(f'Type:        {t} {data.dtype}')
-    print(f'Nb values:   {m} ({m:.2e})')g
+    print(f'Nb values:   {m} ({m:.2e})')
     n = len(data)
     print(f'Read values: {n} ({n:.2e})')
     print(f'Nb of keys:  {len(keys)}')

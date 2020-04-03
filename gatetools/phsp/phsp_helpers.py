@@ -18,7 +18,7 @@ import logging
 logger=logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
-def load(filename, nmax=-1, random=False):
+def load(filename, nmax=-1, shuffle=False):
     ''' 
     Load a PHSP (Phase-Space) file
     Output is numpy structured array
@@ -28,8 +28,8 @@ def load(filename, nmax=-1, random=False):
     nmax = int(nmax)
 
     if extension == '.root':
-        if random:
-            logger.error('cannot random on root file for the moment')
+        if shuffle:
+            logger.error('cannot shuffle on root file for the moment')
             exit(0)
         return load_root(filename, nmax)
 
@@ -37,7 +37,7 @@ def load(filename, nmax=-1, random=False):
     #     return load_raw(filename)
 
     if extension == '.npy':
-        return load_npy(filename, nmax, random)
+        return load_npy(filename, nmax, shuffle)
 
     logger.error('dont know how to open phsp with extension ',
           extension,
@@ -92,7 +92,7 @@ def load_root(filename, nmax=-1):
 
 
 # -----------------------------------------------------------------------------
-def load_npy(filename, nmax=-1, random=False):
+def load_npy(filename, nmax=-1, shuffle=False):
     '''
     Load a PHSP (Phase-Space) file in npy
     Output is numpy structured array
@@ -106,7 +106,7 @@ def load_npy(filename, nmax=-1, random=False):
     x = np.load(filename, mmap_mode='r')
     n = len(x)
     if nmax > 0:
-        if random:
+        if shuffle:
             x = np.random.choice(x, nmax, replace=False)
         else:
             x = x[:nmax]
