@@ -23,7 +23,7 @@ def convertNewParameterToFloat(newParameterString, size):
             parameterFloat = [parameterFloat[0].astype(np.float)]*size
         return parameterFloat
     else:
-        return []
+        return None
     
 
 # -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--pad', '-p', help='Set the padding pixel value', default=0.0)
 
-@click.option('--interpolation_mode', help='Interpolation mode', default='linear', type=click.Choice(['NN', 'linear']))
+@click.option('--interpolation_mode', '-im', help='Interpolation mode: NN for nearest neighbor, linear for linear interpolation', default='linear', type=click.Choice(['NN', 'linear']))
 
 @gt.add_options(gt.common_options)
 def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newdirection, like, spacinglike, force_resample, keep_original_canvas, matrix, rotation, center, translation, pad, interpolation_mode, **kwargs):
@@ -102,7 +102,8 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
         spacingLikeImage = itk.imread(spacinglike)
 
     size = convertNewParameterToFloat(newsize, imageDimension)
-    size = [int(i) for i in size]
+    if size is not None:
+        size = [int(i) for i in size]
     origin = convertNewParameterToFloat(neworigin, imageDimension)
     spacing = convertNewParameterToFloat(newspacing, imageDimension)
     direction = convertNewParameterToFloat(newdirection, imageDimension**2)
