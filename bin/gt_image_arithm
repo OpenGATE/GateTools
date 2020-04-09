@@ -86,17 +86,7 @@ def gt_image_arithm_main(files, operation, scalar, output, **kwargs):
         #raise # the full traceback is scary and uninformative
 
     if not scalar == None:
-        duplicator = itk.ImageDuplicator.New(input_images[0])
-        duplicator.Update()
-        InputType = type(input_images[0])
-        input_dimension = input_images[0].GetImageDimension()
-        OutputType = itk.Image[itk.F, input_dimension]
-        castFilter = itk.CastImageFilter[InputType, OutputType].New()
-        castFilter.SetInput(duplicator.GetOutput())
-        castFilter.Update()
-        scalarImage = castFilter.GetOutput()
-        scalarImage.FillBuffer(scalar)
-        input_images += [scalarImage]
+        input_images += [scalar]
         
     n = len(input_images)    
     if n == 1 and operation != "invert":

@@ -82,8 +82,22 @@ def _image_list(input_list):
         if hasattr(img,"GetSpacing") and hasattr(img,"GetOrigin"):
             # semi-duck-typing
             input_images.append(img)
-        elif os.path.exists(img):
+        elif isinstance(img, str) and os.path.exists(img):
             input_images.append(itk.imread(img))
+        elif (not hasattr(img, 'len')) and (not isinstance(img, str)):
+            if not input_images:
+              raise RuntimeError("Pass an image before a scalar to have a model")
+            duplicator = itk.ImageDuplicator.New(input_images[0])
+            duplicator.Update()
+            InputType = type(input_images[0])
+            input_dimension = input_images[0].GetImageDimension()
+            OutputType = itk.Image[itk.F, input_dimension]
+            castFilter = itk.CastImageFilter[InputType, OutputType].New()
+            castFilter.SetInput(duplicator.GetOutput())
+            castFilter.Update()
+            scalarImage = castFilter.GetOutput()
+            scalarImage.FillBuffer(img)
+            input_images += [scalarImage]
         else:
             raise TypeError("ERROR: {} is not an ITK image object nor a path to an existing image file".format(img))
     if not input_images:
@@ -259,8 +273,8 @@ class Test_Sum(LoggedTestCase):
         self.assertTrue( itk.array_from_image(imgsumUS).shape == (nx,ny))
         self.assertTrue( np.allclose(imgsumUS.GetSpacing(),spacing))
         self.assertTrue( np.allclose(imgsumUS.GetOrigin(),origin))
-    def test_five_3D_images(self):
-        logger.info('Test_Sum test_five_3D_images')
+    def test_five_3D_images_and_scalar(self):
+        logger.info('Test_Sum test_five_3D_images_and_scalar')
         nx,ny,nz = 3,4,5
         hundred = 100
         thirteen = 13.333
@@ -275,9 +289,10 @@ class Test_Sum(LoggedTestCase):
         for imgF in imglistF:
             imgF.SetSpacing( spacing )
             imgF.SetOrigin( origin )
+        imglistF = imglistF[:-1] + [42.0, imglistF[-1]]
         imgsumF = image_sum(input_list=imglistF)
         index = imgsumF.GetLargestPossibleRegion().GetSize() -1
-        self.assertTrue( np.allclose(itk.array_from_image(imgsumF),(hundred+1)*(nx*ny*nz -1.)+thirteen))
+        self.assertTrue( np.allclose(itk.array_from_image(imgsumF),(hundred+1)*(nx*ny*nz -1.)+thirteen+42.0))
         self.assertTrue( np.allclose(imgsumF.GetSpacing(),spacing))
         self.assertTrue( np.allclose(imgsumF.GetOrigin(),origin))
         # unsigned short int images ("US" in itk lingo)
