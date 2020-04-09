@@ -16,26 +16,23 @@ import math
 import logging
 logger=logging.getLogger(__name__)
 
-def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=[], newspacing=[], newdirection=[], force_resample=False, keep_original_canvas=False, rotation=[], rotation_center=[], translation=[], pad=0.0, interpolation_mode='linear'):
+def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, newsize=None, neworigin=None, newspacing=None, newdirection=None, force_resample=None, keep_original_canvas=None, rotation=None, rotation_center=None, translation=None, pad=None, interpolation_mode=None):
     
     if like is not None and spacinglike is not None:
         logger.error("Choose between like and spacinglike options")
         sys.exit(1)
-    if force_resample and keep_original_canvas:
-        logger.error("Choose between force_resample and keep_original_canvas options")
-        sys.exit(1)
     imageDimension = input.GetImageDimension()
-    if newsize == []:
+    if newsize is None:
         newsize = input.GetLargestPossibleRegion().GetSize()
     if len(newsize) != imageDimension:
         logger.error("Size of newsize is not correct (" + str(imageDimension) + "): " + str(newsize))
         sys.exit(1)
-    if newspacing == []:
+    if newspacing is None:
         newspacing = input.GetSpacing()
     if len(newspacing) != imageDimension:
         logger.error("Size of newspacing is not correct (" + str(imageDimension) + "): " + str(newspacing))
         sys.exit(1)
-    if newdirection == []:
+    if newdirection is None:
         newdirection = input.GetDirection()
     if newdirection.GetVnlMatrix().columns() != imageDimension or newdirection.GetVnlMatrix().rows() != imageDimension:
         logger.error("Size of newdirection is not correct (" + str(imageDimension) + "): " + str(newdirection))
@@ -54,7 +51,20 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
             logger.error("Spacinglike image does not have the same dimension than input")
             sys.exit(1)
         newspacing = spacinglike.GetSpacing()
-    
+
+    if force_resample is None:
+        force_resample = False
+    if keep_original_canvas is None:
+        keep_original_canvas = False
+    if force_resample and keep_original_canvas:
+        logger.error("Choose between force_resample and keep_original_canvas options")
+        sys.exit(1)
+
+    if pad is None:
+        pad = 0.0
+    if interpolation_mode is None:
+        interpolation_mode : "linear"
+
     if not force_resample and not keep_original_canvas:
         changeInfoFilter = itk.ChangeInformationImageFilter.New(Input=input)
         changeInfoFilter.SetOutputSpacing(newspacing)
@@ -73,7 +83,7 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     centerImageArray = [0]*imageDimension
     for i in range(imageDimension):
         centerImageArray[i] = centerImagePoint[i]
-    if len(rotation_center) == 0:
+    if rotation_center is None:
         rotation_center = np.zeros(imageDimension)
         for i in range(imageDimension):
             rotation_center[i] = centerImagePoint[i]
@@ -96,12 +106,12 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
             logger.error("We can transform only 2D and 3D images")
             sys.exit(1)
     else:
-        if len(rotation) == 0:
+        if rotation is None:
             rotation = [0]*imageDimension
         if len(rotation) != imageDimension:
             logger.error("Size of rotation is not correct (" + str(imageDimension) + "): " + str(rotation))
             sys.exit(1)
-        if len(translation) == 0:
+        if translation is None:
             translation = [0]*imageDimension
         if len(translation) != imageDimension:
             logger.error("Size of translation is not correct (" + str(imageDimension) + "): " + str(translation))
@@ -212,9 +222,9 @@ def applyTransformation(input, like, spacinglike, matrix, newsize=[], neworigin=
     postTranslateFilter.ChangeOriginOn()
     postTranslateFilter.Update()
 
-    if neworigin == [] and not (itk.array_from_matrix(input.GetDirection()) == np.eye(imageDimension)).all():
+    if neworigin is None and not (itk.array_from_matrix(input.GetDirection()) == np.eye(imageDimension)).all():
         neworigin = postTranslateFilter.GetOutput().GetOrigin()
-    elif neworigin == []:
+    elif neworigin is None:
         neworigin = inputOrigin
     if len(neworigin) != imageDimension:
         logger.error("Size of neworigin is not correct (" + str(imageDimension) + "): " + str(neworigin))
@@ -268,7 +278,7 @@ class Test_Affine_Transform(LoggedTestCase):
     def test_change_info(self):
         logger.info('Test_Affine_Transform test_change_info')
         image = createImageExample()
-        transformImage = applyTransformation(image, None, None, None, neworigin=[-3, 4, -4.6], newspacing=[3, 3, 3])
+        transformImage = applyTransformation(input=image, neworigin=[-3, 4, -4.6], newspacing=[3, 3, 3])
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
         with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
@@ -280,7 +290,7 @@ class Test_Affine_Transform(LoggedTestCase):
     def test_force_resample(self):
         logger.info('Test_Affine_Transform test_force_resample')
         image = createImageExample()
-        transformImage = applyTransformation(image, None, None, None, force_resample=True, rotation=[43, 12, 278], rotation_center=np.array([12, 56, 23]), translation=[100, -5, 12], pad=-15, interpolation_mode='linear')
+        transformImage = applyTransformation(input=image, force_resample=True, rotation=[43, 12, 278], rotation_center=np.array([12, 56, 23]), translation=[100, -5, 12], pad=-15, interpolation_mode='linear')
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
         with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
@@ -292,7 +302,7 @@ class Test_Affine_Transform(LoggedTestCase):
     def test_keep_original_canvas(self):
         logger.info('Test_Affine_Transform test_keep_original_canvas')
         image = createImageExample()
-        transformImage = applyTransformation(image, None, None, None, keep_original_canvas=True, rotation=[43, 12, 278], rotation_center=np.array([12, 56, 23]), translation=[100, -5, 12], pad=-15, interpolation_mode='NN')
+        transformImage = applyTransformation(input=image, keep_original_canvas=True, rotation=[43, 12, 278], rotation_center=np.array([12, 56, 23]), translation=[100, -5, 12], pad=-15, interpolation_mode='NN')
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
         with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
