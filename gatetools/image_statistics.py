@@ -20,48 +20,40 @@ def imageStatistics(input=None, mask=None, resample=False):
     if input is None:
         logger.error("Set an input")
         sys.exit(1)
-    if mask is None:
-        ImageType = itk.Image[itk.UC, input.GetImageDimension()]
-        mask = ImageType.New()
-        region = itk.ImageRegion[input.GetImageDimension()]()
-        region.SetSize(input.GetLargestPossibleRegion().GetSize())
-        region.SetIndex(input.GetLargestPossibleRegion().GetIndex())
-        mask.SetRegions(region)
-        mask.SetSpacing(input.GetSpacing())
-        mask.SetOrigin(input.GetOrigin())
-        mask.SetDirection(input.GetDirection())
-        mask.Allocate()
-        mask.FillBuffer(1)
-    if resample:
-        mask = gt.applyTransformation(input=mask, like=input, force_resample=True)
-    if mask.GetSpacing() != input.GetSpacing():
-        logger.error("Input and mask do not have the same spacing")
-        sys.exit(1)
-    if mask.GetOrigin() != input.GetOrigin():
-        logger.error("Input and mask do not have the same origin")
-        sys.exit(1)
-    if mask.GetDirection() != input.GetDirection():
-        logger.error("Input and mask do not have the same direction")
-        sys.exit(1)
-    if mask.GetLargestPossibleRegion().GetSize() != input.GetLargestPossibleRegion().GetSize():
-        logger.error("Input and mask do not have the same size")
-        sys.exit(1)
 
-    inputArrayView = itk.array_view_from_image(input)
-    maskArrayView = itk.array_view_from_image(mask)
-    if len(np.where(maskArrayView > 1)[0]) >0:
-        logger.error("The mask seems to be a non-binary image")
-    index = np.where(maskArrayView == 1)
-
+    inputArray = itk.array_from_image(input)
     outputStats = {}
-    outputStats["minimum"] = np.amin(inputArrayView[index])
-    outputStats["maximum"] = np.amax(inputArrayView[index])
-    outputStats["median"] = np.median(inputArrayView[index])
-    outputStats["mean"] = np.mean(inputArrayView[index])
-    outputStats["sigma"] = np.std(inputArrayView[index])
-    outputStats["variance"] = np.var(inputArrayView[index])
-    outputStats["sum"] = np.sum(inputArrayView[index])
-    outputStats["count"] = len(index[0])
+    outputStats["count"] = inputArray.size
+    if not mask is None:
+        if resample:
+            mask = gt.applyTransformation(input=mask, like=input, force_resample=True)
+        if mask.GetSpacing() != input.GetSpacing():
+            logger.error("Input and mask do not have the same spacing")
+            sys.exit(1)
+        if mask.GetOrigin() != input.GetOrigin():
+            logger.error("Input and mask do not have the same origin")
+            sys.exit(1)
+        if mask.GetDirection() != input.GetDirection():
+            logger.error("Input and mask do not have the same direction")
+            sys.exit(1)
+        if mask.GetLargestPossibleRegion().GetSize() != input.GetLargestPossibleRegion().GetSize():
+            logger.error("Input and mask do not have the same size")
+            sys.exit(1)
+
+        maskArray = itk.array_from_image(mask)
+        if len(np.where(maskArray > 1)[0]) >0:
+            logger.error("The mask seems to be a non-binary image")
+        index = np.where(maskArray == 1)
+        outputStats["count"] = len(index[0])
+        inputArray = inputArray[index]
+
+    outputStats["minimum"] = np.amin(inputArray)
+    outputStats["maximum"] = np.amax(inputArray)
+    outputStats["sum"] = np.sum(inputArray)
+    outputStats["median"] = np.median(inputArray)
+    outputStats["mean"] = np.mean(outputStats["sum"]/outputStats["count"])
+    outputStats["variance"] = np.var(inputArray)
+    outputStats["sigma"] = np.sqrt(outputStats["variance"])
 
     return outputStats
     
