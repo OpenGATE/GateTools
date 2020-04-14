@@ -27,16 +27,16 @@ def imageStatistics(input=None, mask=None, resample=False):
     if not mask is None:
         if resample:
             mask = gt.applyTransformation(input=mask, like=input, force_resample=True)
-        if mask.GetSpacing() != input.GetSpacing():
+        if not np.allclose(mask.GetSpacing(), input.GetSpacing()):
             logger.error("Input and mask do not have the same spacing")
             sys.exit(1)
-        if mask.GetOrigin() != input.GetOrigin():
+        if not np.allclose(mask.GetOrigin(), input.GetOrigin()):
             logger.error("Input and mask do not have the same origin")
             sys.exit(1)
-        if mask.GetDirection() != input.GetDirection():
+        if not np.allclose(itk.array_from_matrix(mask.GetDirection()), itk.array_from_matrix(input.GetDirection())):
             logger.error("Input and mask do not have the same direction")
             sys.exit(1)
-        if mask.GetLargestPossibleRegion().GetSize() != input.GetLargestPossibleRegion().GetSize():
+        if not np.allclose(mask.GetLargestPossibleRegion().GetSize(),  input.GetLargestPossibleRegion().GetSize()):
             logger.error("Input and mask do not have the same size")
             sys.exit(1)
 
