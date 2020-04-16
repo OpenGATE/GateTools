@@ -21,6 +21,10 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     if like is not None and spacinglike is not None:
         logger.error("Choose between like and spacinglike options")
         sys.exit(1)
+    if newspacing is not None and spacinglike is not None:
+        logger.error("Choose between newspacing and spacinglike options")
+        sys.exit(1)
+
     imageDimension = input.GetImageDimension()
     if newsize is None:
         newsize = input.GetLargestPossibleRegion().GetSize()
@@ -66,6 +70,8 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
         interpolation_mode : "linear"
 
     if not force_resample and not keep_original_canvas:
+        if neworigin is None:
+            neworigin = input.GetOrigin()
         changeInfoFilter = itk.ChangeInformationImageFilter.New(Input=input)
         changeInfoFilter.SetOutputSpacing(newspacing)
         changeInfoFilter.SetOutputOrigin(neworigin)
@@ -94,7 +100,7 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     rotationMatrix = []
     translationMatrix = []
     if not matrix is None:
-        if len(rotation) != 0 or len(translation) != 0:
+        if not rotation is None or not translation is None:
             logger.error("Choose between matrix or rotation/translation, not both")
             sys.exit(1)
         if matrix.GetVnlMatrix().columns() != imageDimension+1 or matrix.GetVnlMatrix().rows() != imageDimension+1:
