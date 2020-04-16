@@ -51,6 +51,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--force_resample', '-fr', help='Force the output to be resampled instead of only changing the metadata', is_flag=True)
 @click.option('--keep_original_canvas', '-koc', help='Perform the transformation on the image but the output will keep the same physical region than the input', is_flag=True)
+@click.option('--adaptive', '-a', help='If newspacing is set, compute the corresponding new size and vice versa', is_flag=True)
 
 
 @click.option('--matrix', '-m', help='Matrix for affine transformation', type=click.Path(dir_okay=False))
@@ -63,7 +64,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--interpolation_mode', '-im', help='Interpolation mode: NN for nearest neighbor, linear for linear interpolation', default='linear', type=click.Choice(['NN', 'linear']))
 
 @gt.add_options(gt.common_options)
-def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newdirection, like, spacinglike, force_resample, keep_original_canvas, matrix, rotation, center, translation, pad, interpolation_mode, **kwargs):
+def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newdirection, like, spacinglike, force_resample, keep_original_canvas, adaptive, matrix, rotation, center, translation, pad, interpolation_mode, **kwargs):
     '''
     Basic affine transfomation and resampling of images
     
@@ -86,6 +87,8 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
 
     It could be more convenient to use images with an identity matrix as image direction and keep the image with the correct space coordinate. In such a case you can do:
         gt_affine_transform -i input.mhd -o output.mhd -fr
+
+    --adaptive flag (in combination with force_resample flag) allows the users to set the newspacing (or spacinglike) and the newsize is automatically computed and vice versa.
 
     '''
 
@@ -140,7 +143,7 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
             sys.exit(1)
         matrixParameter = itk.matrix_from_array(np.array(readMatrix))
 
-    outputImage = gt.applyTransformation(inputImage, likeImage, spacingLikeImage, matrixParameter, newsize = itkSize, neworigin = itkOrigin, newspacing = itkSpacing, newdirection = itkDirection, force_resample = force_resample, keep_original_canvas = keep_original_canvas, rotation = rotationParameter, rotation_center = rotationCenterParameter, translation = translationParameter, pad = pad, interpolation_mode = interpolation_mode)
+    outputImage = gt.applyTransformation(inputImage, likeImage, spacingLikeImage, matrixParameter, newsize = itkSize, neworigin = itkOrigin, newspacing = itkSpacing, newdirection = itkDirection, force_resample = force_resample, keep_original_canvas = keep_original_canvas, adaptive = adaptive, rotation = rotationParameter, rotation_center = rotationCenterParameter, translation = translationParameter, pad = pad, interpolation_mode = interpolation_mode)
     
     itk.imwrite(outputImage, output)
     

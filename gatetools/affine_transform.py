@@ -16,7 +16,7 @@ import math
 import logging
 logger=logging.getLogger(__name__)
 
-def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, newsize=None, neworigin=None, newspacing=None, newdirection=None, force_resample=None, keep_original_canvas=None, rotation=None, rotation_center=None, translation=None, pad=None, interpolation_mode=None):
+def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, newsize=None, neworigin=None, newspacing=None, newdirection=None, force_resample=None, keep_original_canvas=None, adaptive=None, rotation=None, rotation_center=None, translation=None, pad=None, interpolation_mode=None):
     
     if like is not None and spacinglike is not None:
         logger.error("Choose between like and spacinglike options")
@@ -25,6 +25,22 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
         logger.error("Choose between newspacing and spacinglike options")
         sys.exit(1)
 
+    if force_resample is None:
+        force_resample = False
+    if keep_original_canvas is None:
+        keep_original_canvas = False
+    if force_resample and keep_original_canvas:
+        logger.error("Choose between force_resample and keep_original_canvas options")
+        sys.exit(1)
+    if adaptive is None:
+        adaptive = False
+    if adaptive and not force_resample:
+        logger.error("Be sure to activate force_resample flag with adaptive flag")
+        sys.exit(1)
+
+    if force_resample and adaptive and (newspacing is not None or spacinglike is not None) and newsize is not None:
+        logger.error("With adaptive flag, choose between spacing and size options")
+        sys.exit(1)
     imageDimension = input.GetImageDimension()
     if newsize is None:
         newsize = input.GetLargestPossibleRegion().GetSize()
@@ -55,14 +71,6 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
             logger.error("Spacinglike image does not have the same dimension than input")
             sys.exit(1)
         newspacing = spacinglike.GetSpacing()
-
-    if force_resample is None:
-        force_resample = False
-    if keep_original_canvas is None:
-        keep_original_canvas = False
-    if force_resample and keep_original_canvas:
-        logger.error("Choose between force_resample and keep_original_canvas options")
-        sys.exit(1)
 
     if pad is None:
         pad = 0.0
@@ -243,6 +251,17 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
         logger.error("Size of neworigin is not correct (" + str(imageDimension) + "): " + str(neworigin))
         sys.exit(1)
 
+    if force_resample and adaptive:
+        if (np.array(newspacing) == np.array(input.GetSpacing())).all():
+            temp = np.array(sizeAfterRotation)*itk.array_from_vnl_vector(newspacing.GetVnlVector())/np.array(newsize)
+            newspacing = itk.Vector[itk.D, imageDimension]()
+            for i in range(imageDimension):
+                newspacing[i] = temp[i]
+        else:
+            newsize = itk.Size[imageDimension]()
+            for i in range(imageDimension):
+                newsize[i] = sizeAfterRotation[i]
+
     identityTransform = itk.AffineTransform[itk.D, imageDimension].New()
     resampleFilterCanvas = itk.ResampleImageFilter.New(Input=postTranslateFilter.GetOutput())
     resampleFilterCanvas.SetOutputSpacing(newspacing)
@@ -322,4 +341,18 @@ class Test_Affine_Transform(LoggedTestCase):
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("2ee82f72b33f618b23b2dff553385180565318a85b5819bdc48256a3656e64fb" == new_hash)
+        shutil.rmtree(tmpdirpath)
+
+    def test_adaptive(self):
+        logger.info('Test_Affine_Transform test_adaptive')
+        image = createImageExample()
+        newspacing = itk.Vector[itk.D, 3]()
+        newspacing.Fill(3)
+        transformImage = applyTransformation(input=image, force_resample=True, adaptive=True, newspacing=newspacing, pad=-15, interpolation_mode='linear')
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
+        with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("1f3446724ce83d9dd5b150e506181e3c92f9b5892b0781383207b1a616da9a17" == new_hash)
         shutil.rmtree(tmpdirpath)
