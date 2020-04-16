@@ -102,11 +102,27 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
         spacingLikeImage = itk.imread(spacinglike)
 
     size = convertNewParameterToFloat(newsize, imageDimension)
+    itkSize = None
     if size is not None:
-        size = [int(i) for i in size]
+        itkSize = itk.Size[imageDimension]()
+        for i in range(imageDimension):
+            itkSize[i] = int(size[i])
     origin = convertNewParameterToFloat(neworigin, imageDimension)
+    itkOrigin = None
+    if origin is not None:
+        itkOrigin = itk.Vector[itk.D, imageDimension]()
+        for i in range(imageDimension):
+            itkOrigin[i] = origin[i]
     spacing = convertNewParameterToFloat(newspacing, imageDimension)
+    itkSpacing = None
+    if spacing is not None:
+        itkSpacing = itk.Vector[itk.D, imageDimension]()
+        for i in range(imageDimension):
+            itkSpacing[i] = spacing[i]
     direction = convertNewParameterToFloat(newdirection, imageDimension**2)
+    itkDirection = None
+    if direction is not None:
+        itkDirection = itk.matrix_from_array(np.array(direction).newshape((imageDimension, imageDimension)))
     rotationParameter = convertNewParameterToFloat(rotation, imageDimension)
     rotationCenterParameter = convertNewParameterToFloat(center, imageDimension)
     translationParameter = convertNewParameterToFloat(translation, imageDimension)
@@ -124,7 +140,7 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
             sys.exit(1)
         matrixParameter = itk.matrix_from_array(np.array(readMatrix))
 
-    outputImage = gt.applyTransformation(inputImage, likeImage, spacingLikeImage, matrixParameter, newsize = size, neworigin = origin, newspacing = spacing, newdirection = direction, force_resample = force_resample, keep_original_canvas = keep_original_canvas, rotation = rotationParameter, rotation_center = rotationCenterParameter, translation = translationParameter, pad = pad, interpolation_mode = interpolation_mode)
+    outputImage = gt.applyTransformation(inputImage, likeImage, spacingLikeImage, matrixParameter, newsize = itkSize, neworigin = itkOrigin, newspacing = itkSpacing, newdirection = itkDirection, force_resample = force_resample, keep_original_canvas = keep_original_canvas, rotation = rotationParameter, rotation_center = rotationCenterParameter, translation = translationParameter, pad = pad, interpolation_mode = interpolation_mode)
     
     itk.imwrite(outputImage, output)
     
