@@ -112,21 +112,28 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
             logger.error("We can transform only 2D and 3D images")
             sys.exit(1)
     else:
-        if rotation is None:
-            rotation = [0]*imageDimension
-        if len(rotation) != imageDimension:
-            logger.error("Size of rotation is not correct (" + str(imageDimension) + "): " + str(rotation))
-            sys.exit(1)
+        if imageDimension == 2:
+            if rotation is None:
+                rotation = [0]
+            if len(rotation) != 1:
+                logger.error("Size of rotation is not correct (1): " + str(rotation))
+                sys.exit(1)
+        elif imageDimension == 3:
+            if rotation is None:
+                rotation = [0]*imageDimension
+            if len(rotation) != imageDimension:
+                logger.error("Size of rotation is not correct (3): " + str(rotation))
+                sys.exit(1)
         if translation is None:
             translation = [0]*imageDimension
         if len(translation) != imageDimension:
             logger.error("Size of translation is not correct (" + str(imageDimension) + "): " + str(translation))
             sys.exit(1)
-        if len(rotation) == 2:
+        if imageDimension == 2:
             euler = itk.Euler2DTransform[itk.D].New()
-            euler.SetRotation(rotation[0]*math.pi/180.0, rotation[1]*math.pi/180.0)
+            euler.SetRotation(rotation[0]*math.pi/180.0)
             rotationMatrix = euler.GetMatrix()
-        elif len(rotation) == 3:
+        elif imageDimension == 3:
             euler = itk.Euler3DTransform[itk.D].New()
             euler.SetRotation(rotation[0]*math.pi/180.0, rotation[1]*math.pi/180.0, rotation[2]*math.pi/180.0)
             rotationMatrix = euler.GetMatrix()
@@ -151,7 +158,7 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     preTranslateFilter.CenterImageOn()
     preTranslateFilter.Update()
 
-    cornersIndex = [itk.ContinuousIndex[itk.D, imageDimension]() for i in range(imageDimension**2-1)]
+    cornersIndex = [itk.ContinuousIndex[itk.D, imageDimension]() for i in range(2**imageDimension)]
     if imageDimension == 2 or imageDimension == 3:
         cornersIndex[0][0] = -0.5
         cornersIndex[0][1] = -0.5
