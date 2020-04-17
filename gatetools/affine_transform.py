@@ -16,10 +16,30 @@ import math
 import logging
 logger=logging.getLogger(__name__)
 
-def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, newsize=None, neworigin=None, newspacing=None, newdirection=None, force_resample=None, keep_original_canvas=None, rotation=None, rotation_center=None, translation=None, pad=None, interpolation_mode=None):
+def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, newsize=None, neworigin=None, newspacing=None, newdirection=None, force_resample=None, keep_original_canvas=None, adaptive=None, rotation=None, rotation_center=None, translation=None, pad=None, interpolation_mode=None):
     
     if like is not None and spacinglike is not None:
         logger.error("Choose between like and spacinglike options")
+        sys.exit(1)
+    if newspacing is not None and spacinglike is not None:
+        logger.error("Choose between newspacing and spacinglike options")
+        sys.exit(1)
+
+    if force_resample is None:
+        force_resample = False
+    if keep_original_canvas is None:
+        keep_original_canvas = False
+    if force_resample and keep_original_canvas:
+        logger.error("Choose between force_resample and keep_original_canvas options")
+        sys.exit(1)
+    if adaptive is None:
+        adaptive = False
+    if adaptive and not force_resample:
+        logger.error("Be sure to activate force_resample flag with adaptive flag")
+        sys.exit(1)
+
+    if force_resample and adaptive and (newspacing is not None or spacinglike is not None) and newsize is not None:
+        logger.error("With adaptive flag, choose between spacing and size options")
         sys.exit(1)
     imageDimension = input.GetImageDimension()
     if newsize is None:
@@ -52,20 +72,14 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
             sys.exit(1)
         newspacing = spacinglike.GetSpacing()
 
-    if force_resample is None:
-        force_resample = False
-    if keep_original_canvas is None:
-        keep_original_canvas = False
-    if force_resample and keep_original_canvas:
-        logger.error("Choose between force_resample and keep_original_canvas options")
-        sys.exit(1)
-
     if pad is None:
         pad = 0.0
     if interpolation_mode is None:
         interpolation_mode : "linear"
 
     if not force_resample and not keep_original_canvas:
+        if neworigin is None:
+            neworigin = input.GetOrigin()
         changeInfoFilter = itk.ChangeInformationImageFilter.New(Input=input)
         changeInfoFilter.SetOutputSpacing(newspacing)
         changeInfoFilter.SetOutputOrigin(neworigin)
@@ -94,7 +108,7 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     rotationMatrix = []
     translationMatrix = []
     if not matrix is None:
-        if len(rotation) != 0 or len(translation) != 0:
+        if not rotation is None or not translation is None:
             logger.error("Choose between matrix or rotation/translation, not both")
             sys.exit(1)
         if matrix.GetVnlMatrix().columns() != imageDimension+1 or matrix.GetVnlMatrix().rows() != imageDimension+1:
@@ -106,21 +120,28 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
             logger.error("We can transform only 2D and 3D images")
             sys.exit(1)
     else:
-        if rotation is None:
-            rotation = [0]*imageDimension
-        if len(rotation) != imageDimension:
-            logger.error("Size of rotation is not correct (" + str(imageDimension) + "): " + str(rotation))
-            sys.exit(1)
+        if imageDimension == 2:
+            if rotation is None:
+                rotation = [0]
+            if len(rotation) != 1:
+                logger.error("Size of rotation is not correct (1): " + str(rotation))
+                sys.exit(1)
+        elif imageDimension == 3:
+            if rotation is None:
+                rotation = [0]*imageDimension
+            if len(rotation) != imageDimension:
+                logger.error("Size of rotation is not correct (3): " + str(rotation))
+                sys.exit(1)
         if translation is None:
             translation = [0]*imageDimension
         if len(translation) != imageDimension:
             logger.error("Size of translation is not correct (" + str(imageDimension) + "): " + str(translation))
             sys.exit(1)
-        if len(rotation) == 2:
+        if imageDimension == 2:
             euler = itk.Euler2DTransform[itk.D].New()
-            euler.SetRotation(rotation[0]*math.pi/180.0, rotation[1]*math.pi/180.0)
+            euler.SetRotation(rotation[0]*math.pi/180.0)
             rotationMatrix = euler.GetMatrix()
-        elif len(rotation) == 3:
+        elif imageDimension == 3:
             euler = itk.Euler3DTransform[itk.D].New()
             euler.SetRotation(rotation[0]*math.pi/180.0, rotation[1]*math.pi/180.0, rotation[2]*math.pi/180.0)
             rotationMatrix = euler.GetMatrix()
@@ -145,7 +166,7 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     preTranslateFilter.CenterImageOn()
     preTranslateFilter.Update()
 
-    cornersIndex = [itk.ContinuousIndex[itk.D, imageDimension]() for i in range(imageDimension**2-1)]
+    cornersIndex = [itk.ContinuousIndex[itk.D, imageDimension]() for i in range(2**imageDimension)]
     if imageDimension == 2 or imageDimension == 3:
         cornersIndex[0][0] = -0.5
         cornersIndex[0][1] = -0.5
@@ -230,6 +251,17 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
         logger.error("Size of neworigin is not correct (" + str(imageDimension) + "): " + str(neworigin))
         sys.exit(1)
 
+    if force_resample and adaptive:
+        if (np.array(newspacing) == np.array(input.GetSpacing())).all():
+            temp = np.array(sizeAfterRotation)*itk.array_from_vnl_vector(newspacing.GetVnlVector())/np.array(newsize)
+            newspacing = itk.Vector[itk.D, imageDimension]()
+            for i in range(imageDimension):
+                newspacing[i] = temp[i]
+        else:
+            newsize = itk.Size[imageDimension]()
+            for i in range(imageDimension):
+                newsize[i] = sizeAfterRotation[i]
+
     identityTransform = itk.AffineTransform[itk.D, imageDimension].New()
     resampleFilterCanvas = itk.ResampleImageFilter.New(Input=postTranslateFilter.GetOutput())
     resampleFilterCanvas.SetOutputSpacing(newspacing)
@@ -309,4 +341,18 @@ class Test_Affine_Transform(LoggedTestCase):
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("2ee82f72b33f618b23b2dff553385180565318a85b5819bdc48256a3656e64fb" == new_hash)
+        shutil.rmtree(tmpdirpath)
+
+    def test_adaptive(self):
+        logger.info('Test_Affine_Transform test_adaptive')
+        image = createImageExample()
+        newspacing = itk.Vector[itk.D, 3]()
+        newspacing.Fill(3)
+        transformImage = applyTransformation(input=image, force_resample=True, adaptive=True, newspacing=newspacing, pad=-15, interpolation_mode='linear')
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(transformImage, os.path.join(tmpdirpath, "testAffineTransform.mha"))
+        with open(os.path.join(tmpdirpath, "testAffineTransform.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("1f3446724ce83d9dd5b150e506181e3c92f9b5892b0781383207b1a616da9a17" == new_hash)
         shutil.rmtree(tmpdirpath)
