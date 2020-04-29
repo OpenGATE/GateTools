@@ -143,7 +143,7 @@ def read_dicom(dicomFiles):
     return img_result
 
 
-def read_3d_dicom(dicomFile):
+def read_3d_dicom(dicomFile, flip=False):
     """
 
     Read dicom file and return an float 3D image
@@ -188,9 +188,16 @@ def read_3d_dicom(dicomFile):
     if Tag(0x18, 0x88) in slices[0] and slices[0][0x18, 0x88].value <0:
         arrayDirection[2,2] = -1.0
     else:
+        flip = False
         arrayDirection[2,2] = 1.0
     matrixItk = itk.Matrix[itk.D,3,3](itk.GetVnlMatrixFromArray(arrayDirection))
     img_result.SetDirection(matrixItk)
+    if flip:
+        flipFilter = itk.FlipImageFilter.New(Input=img_result)
+        flipFilter.SetFlipAxes((False, False, True))
+        flipFilter.SetFlipAboutOrigin(False)
+        flipFilter.Update()
+        img_result = flipFilter.GetOutput()
     return img_result
 
 def image_convert(inputImage, pixeltype=None):

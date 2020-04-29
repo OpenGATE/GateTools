@@ -17,9 +17,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-o', '--output', type=str, required=True, help='Output image name')
 @click.option('-p', '--pixeltype', type=str, help='Pixel type conversion')
+@click.option('-f', '--flip', is_flag=True, help='If a negative spacing is present in 3D Dicom tags, flip the image to have a positive spacing and identity matrix')
 @click.argument('input', type=str, required=True, nargs=-1)
 @gt.add_options(gt.common_options)
-def gt_image_convert(input, output, pixeltype, **kwargs):
+def gt_image_convert(input, output, pixeltype, flip, **kwargs):
     '''
     Convert the input to the output with pixeltype. If pixeltype is
     not set, the output has the same pixel type than the input.
@@ -56,7 +57,7 @@ def gt_image_convert(input, output, pixeltype, **kwargs):
         inputImage = gt.read_dicom(input)
     elif len(input) == 1 and input[0].endswith(".dcm"):
         logger.info(f'Reading input 3D dicom {input[0]}')
-        inputImage = gt.read_3d_dicom(input)
+        inputImage = gt.read_3d_dicom(input, flip)
     else:
         logger.error('no input available')
         return
