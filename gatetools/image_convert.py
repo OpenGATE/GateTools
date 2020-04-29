@@ -44,8 +44,8 @@ class dicom_properties:
         if Tag(0x28, 0x30) in slice:
             ps = slice.PixelSpacing
         ss = 1.0
-        if Tag(0x18, 0x50) in slice:
-            ss = slice.SliceThickness
+        if Tag(0x18, 0x88) in slice:
+            ss = abs(float(slice[(0x0018,0X0088)].value))
         if ss == '' or ss is None:
             if Tag(0x3004, 0x000c) in slice:
                 ss = slice[0x3004, 0x000c][1] - slice[0x3004, 0x000c][0]
@@ -107,8 +107,8 @@ def read_dicom(dicomFiles):
         if skipcount >0:
             logger.info("skipped, no SliceLocation: {}".format(skipcount))
 
-        # ensure they are in the correct order
-        slices = sorted(slices, key=lambda s: s.SliceLocation)
+        # ensure they are in the correct order. Sort according Image Position along z
+        slices = sorted(slices, key=lambda s: s[0x0020, 0x0032][2])
     else:
         logger.error('no file available')
         return
