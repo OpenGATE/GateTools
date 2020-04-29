@@ -61,6 +61,10 @@ def gt_image_convert(input, output, pixeltype, flip, **kwargs):
         logger.error('no input available')
         return
 
+    if inputImage == None:
+        logger.error('no image available')
+        return
+
     # convert image
     if pixeltype != None:
         logger.info(f'Convert pixel type to {pixeltype}')

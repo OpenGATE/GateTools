@@ -113,6 +113,10 @@ def read_dicom(dicomFiles):
         logger.error('no file available')
         return
 
+    if len(slices) == 0:
+        logger.error('no slice available')
+        return
+
     dicomProperties = dicom_properties()
     dicomProperties.read_dicom_properties(slices[0])
 
