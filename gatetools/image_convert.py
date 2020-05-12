@@ -43,7 +43,7 @@ class dicom_properties:
         ps = [1.0, 1.0]
         if Tag(0x28, 0x30) in slice:
             ps = slice.PixelSpacing
-        ss = 1.0
+        ss = None
         if Tag(0x18, 0x88) in slice:
             ss = abs(float(slice[(0x0018,0X0088)].value))
         if ss == '' or ss is None:
