@@ -16,6 +16,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 
 | Tool                          | Comment                                                   |
 | -------------                 | -------------                                             |
+| `gt_affine_transform`         | Resample (resize, rotate) an image                        |
 | `gt_dicom_rt_pbs2gate`        | Convert Dicom RT proton plan for Gate                     |
 | `gt_dicom_rt_struct_to_image` | Turn Dicom RT Struct contours into mask image             |
 | `gt_gamma_index`              | Compute gamma index between images                        |
@@ -25,12 +26,12 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_image_crop`               | Crop an image                                             |
 | `gt_image_statistics`         | Statistics of an image                                    |
 | `gt_image_uncertainty`        | Compute statistical uncertainty                           |
-| `gt_affine_transform`         | Resample (resize, rotate) an image                        |
 | `gt_phsp_convert`             | Convert a phase space file from root to npy               |
 | `gt_phsp_info`                | Display information about a phase space file              |
 | `gt_phsp_merge`               | Merge two phase space files (output in npy only)          |
 | `gt_phps_peaks`               | Try to detect photopeaks (experimental)                   |
 | `gt_phsp_plot`                | Plot marginal distributions form a phase space file       |
+| `gt_write_dicom`                | Convert image (mhd, nii, ...) to dicom       |
 
 All tools are also available to be use within your own Python script with, for example:
 ```
