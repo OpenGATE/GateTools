@@ -107,6 +107,7 @@ def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newst
             newStudyInstanceUID = pydicom.uid.generate_uid()
             insertTag(dsOutput, 0x0020000d, newStudyInstanceUID, 'UI') #Study Instance UID
             insertTag(dsOutput, 0x00200052, dsImage[0x0020,0x0052].value, 'UI') #Frame of Reference UID
+            newseriesuid = True
         if newseriesuid:
             newSeriesInstanceUID = pydicom.uid.generate_uid()
             insertTag(dsOutput, 0x0020000e, newSeriesInstanceUID, 'UI') #Series Instance UID
