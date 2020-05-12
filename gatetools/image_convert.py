@@ -51,7 +51,7 @@ class dicom_properties:
                 ss = slice[0x3004, 0x000c][1] - slice[0x3004, 0x000c][0]
             if ss == '' or ss is None:
                 ss = 1.0
-        self.spacing = [ps[0], ps[1], ss]
+        self.spacing = [ps[1], ps[0], ss]
         ip = [0.0, 0.0, 0.0]
         if Tag(0x20, 0x32) in slice:
             ip = slice[0x20, 0x32].value #Image Position
