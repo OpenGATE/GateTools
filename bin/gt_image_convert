@@ -27,9 +27,7 @@ def gt_image_convert(input, output, pixeltype, flip, **kwargs):
 
     Available formats: (2D) .bmp .jpeg .png, (3D) .mhd .nii .nhdr .nrrd .tiff
 
-    Available pixel types: unsigned char, signed short, unsigned short, float
-
-    uchar, short, ushort, float
+    Available pixel types: unsigned char, short, unsigned short, float
 
     To convert Dicom to another format, set the folder fullpath
     containing the .dcm files as input, eg:
@@ -37,6 +35,7 @@ def gt_image_convert(input, output, pixeltype, flip, **kwargs):
        ~/path/to/dcm/*dcm
        or
        ~/path/to/dcm/toto.dcm
+    If a negative spacing is present in the dicom tag, you can set the flag flip to save the same image but without this negative spacing along z axis. The coordinates are preserved with this flip.
     '''
 
     # logger

@@ -69,8 +69,8 @@ class dicom_properties:
             self.ri = slice[0x28, 0x1052].value #Rescale Intercept
             self.rs = slice[0x28, 0x1053].value #Rescale Slope
         elif Tag(0x11, 0x103b) in slice:
-            self.rs = slice[0x11, 0x103b].value #Rescale Intercept
-            self.ri = slice[0x11, 0x103c].value #Rescale Slope
+            self.rs = slice[0x11, 0x103b].value #Pixel Scale
+            self.ri = slice[0x11, 0x103c].value #Pixel Offset
         elif Tag(0x40, 0x9096) in slice and Tag(0x40, 0x9224) in slice[0x40, 0x9096][0]:
             self.ri = slice[0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
             self.rs = slice[0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
@@ -290,3 +290,24 @@ class Test_Convert(LoggedTestCase):
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("9c18c0344e309d096122c4b771fe3f1e66ddb778d818f98d18f29442fd287d47" == new_hash)
         shutil.rmtree(tmpdirpath)
+    def test_convert_dicom(self):
+        tmpdirpath = tempfile.mkdtemp()
+        filename = wget.download("https://github.com/OpenGATE/GateTools/blob/master/dataTest/tomoSPECT.dcm?raw=true", out=tmpdirpath, bar=None)
+        convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filename)])
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("3a64eee5f6439388fdbe6a5b7a682aca200fbc6826dcfffccc6f5fbae82b9600" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_dicom_flip(self):
+        tmpdirpath = tempfile.mkdtemp()
+        filename = wget.download("https://github.com/OpenGATE/GateTools/blob/master/dataTest/tomoSPECT.dcm?raw=true", out=tmpdirpath, bar=None)
+        convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filename)], flip=True)
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("87c7eee6e29172289407e2739c2618418a38718c09e94ebee9a390a73433d236" == new_hash)
+        shutil.rmtree(tmpdirpath)
+
