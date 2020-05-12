@@ -232,13 +232,16 @@ import shutil
 import wget
 from .logging_conf import LoggedTestCase
 
+def createImage():
+    x = np.arange(-10, 10, 1)
+    y = np.arange(-12, 15, 1)
+    z = np.arange(-13, 10, 1)
+    xx, yy, zz = np.meshgrid(x, y, z)
+    return xx
+
 class Test_Convert(LoggedTestCase):
-    def test_convert(self):
-        x = np.arange(-10, 10, 1)
-        y = np.arange(-12, 15, 1)
-        z = np.arange(-13, 10, 1)
-        xx, yy, zz = np.meshgrid(x, y, z)
-        image = itk.image_from_array(np.float32(xx))
+    def test_convert_unsigned_char(self):
+        image = itk.image_from_array(np.float32(createImage()))
         convertedImage = image_convert(image, "unsigned char")
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
@@ -246,6 +249,36 @@ class Test_Convert(LoggedTestCase):
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("da57bf05ec62b9b5ee2aaa71aacbf7dbca8acbf2278553edc499a3af8007dd44" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_short(self):
+        image = itk.image_from_array(np.float32(createImage()))
+        convertedImage = image_convert(image, "short")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("e71240bd149a509a3c28193817c82bb78d4cf5a6c8978b8266f820aa332cda0d" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_unsigned_short(self):
+        image = itk.image_from_array(np.float32(createImage()))
+        convertedImage = image_convert(image, "unsigned short")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("55913ce0ca7d1c6f8166f0fdf7499e986d5965249742098cc2aaefe35964a1cb" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_float(self):
+        image = itk.image_from_array(np.int16(createImage()))
+        convertedImage = image_convert(image, "float")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("c78c8b7450119dd554c338d6fd9f25648c5ee2863d8267cdd72dd20952673865" == new_hash)
         shutil.rmtree(tmpdirpath)
     def test_convert_rtDose(self):
         tmpdirpath = tempfile.mkdtemp()
