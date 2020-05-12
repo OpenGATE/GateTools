@@ -17,18 +17,17 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-o', '--output', type=str, required=True, help='Output image name')
 @click.option('-p', '--pixeltype', type=str, help='Pixel type conversion')
+@click.option('-f', '--flip', is_flag=True, help='If a negative spacing is present in 3D Dicom tags, flip the image to have a positive spacing and identity matrix')
 @click.argument('input', type=str, required=True, nargs=-1)
 @gt.add_options(gt.common_options)
-def gt_image_convert(input, output, pixeltype, **kwargs):
+def gt_image_convert(input, output, pixeltype, flip, **kwargs):
     '''
     Convert the input to the output with pixeltype. If pixeltype is
     not set, the output has the same pixel type than the input.
 
     Available formats: (2D) .bmp .jpeg .png, (3D) .mhd .nii .nhdr .nrrd .tiff
 
-    Available pixel types: unsigned char, signed short, unsigned short, float
-
-    uchar, short, ushort, float
+    Available pixel types: unsigned char, short, unsigned short, float
 
     To convert Dicom to another format, set the folder fullpath
     containing the .dcm files as input, eg:
@@ -36,6 +35,7 @@ def gt_image_convert(input, output, pixeltype, **kwargs):
        ~/path/to/dcm/*dcm
        or
        ~/path/to/dcm/toto.dcm
+    If a negative spacing is present in the dicom tag, you can set the flag flip to save the same image but without this negative spacing along z axis. The coordinates are preserved with this flip.
     '''
 
     # logger
@@ -56,7 +56,7 @@ def gt_image_convert(input, output, pixeltype, **kwargs):
         inputImage = gt.read_dicom(input)
     elif len(input) == 1 and input[0].endswith(".dcm"):
         logger.info(f'Reading input 3D dicom {input[0]}')
-        inputImage = gt.read_3d_dicom(input)
+        inputImage = gt.read_3d_dicom(input, flip)
     else:
         logger.error('no input available')
         return

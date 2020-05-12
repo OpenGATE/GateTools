@@ -69,8 +69,8 @@ class dicom_properties:
             self.ri = slice[0x28, 0x1052].value #Rescale Intercept
             self.rs = slice[0x28, 0x1053].value #Rescale Slope
         elif Tag(0x11, 0x103b) in slice:
-            self.rs = slice[0x11, 0x103b].value #Rescale Intercept
-            self.ri = slice[0x11, 0x103c].value #Rescale Slope
+            self.rs = slice[0x11, 0x103b].value #Pixel Scale
+            self.ri = slice[0x11, 0x103c].value #Pixel Offset
         elif Tag(0x40, 0x9096) in slice and Tag(0x40, 0x9224) in slice[0x40, 0x9096][0]:
             self.ri = slice[0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
             self.rs = slice[0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
@@ -143,7 +143,7 @@ def read_dicom(dicomFiles):
     return img_result
 
 
-def read_3d_dicom(dicomFile):
+def read_3d_dicom(dicomFile, flip=False):
     """
 
     Read dicom file and return an float 3D image
@@ -188,9 +188,16 @@ def read_3d_dicom(dicomFile):
     if Tag(0x18, 0x88) in slices[0] and slices[0][0x18, 0x88].value <0:
         arrayDirection[2,2] = -1.0
     else:
+        flip = False
         arrayDirection[2,2] = 1.0
     matrixItk = itk.Matrix[itk.D,3,3](itk.GetVnlMatrixFromArray(arrayDirection))
     img_result.SetDirection(matrixItk)
+    if flip:
+        flipFilter = itk.FlipImageFilter.New(Input=img_result)
+        flipFilter.SetFlipAxes((False, False, True))
+        flipFilter.SetFlipAboutOrigin(False)
+        flipFilter.Update()
+        img_result = flipFilter.GetOutput()
     return img_result
 
 def image_convert(inputImage, pixeltype=None):
@@ -225,13 +232,16 @@ import shutil
 import wget
 from .logging_conf import LoggedTestCase
 
+def createImage():
+    x = np.arange(-10, 10, 1)
+    y = np.arange(-12, 15, 1)
+    z = np.arange(-13, 10, 1)
+    xx, yy, zz = np.meshgrid(x, y, z)
+    return xx
+
 class Test_Convert(LoggedTestCase):
-    def test_convert(self):
-        x = np.arange(-10, 10, 1)
-        y = np.arange(-12, 15, 1)
-        z = np.arange(-13, 10, 1)
-        xx, yy, zz = np.meshgrid(x, y, z)
-        image = itk.image_from_array(np.float32(xx))
+    def test_convert_unsigned_char(self):
+        image = itk.image_from_array(np.float32(createImage()))
         convertedImage = image_convert(image, "unsigned char")
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
@@ -239,6 +249,36 @@ class Test_Convert(LoggedTestCase):
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("da57bf05ec62b9b5ee2aaa71aacbf7dbca8acbf2278553edc499a3af8007dd44" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_short(self):
+        image = itk.image_from_array(np.float32(createImage()))
+        convertedImage = image_convert(image, "short")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("e71240bd149a509a3c28193817c82bb78d4cf5a6c8978b8266f820aa332cda0d" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_unsigned_short(self):
+        image = itk.image_from_array(np.float32(createImage()))
+        convertedImage = image_convert(image, "unsigned short")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("55913ce0ca7d1c6f8166f0fdf7499e986d5965249742098cc2aaefe35964a1cb" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_float(self):
+        image = itk.image_from_array(np.int16(createImage()))
+        convertedImage = image_convert(image, "float")
+        tmpdirpath = tempfile.mkdtemp()
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("c78c8b7450119dd554c338d6fd9f25648c5ee2863d8267cdd72dd20952673865" == new_hash)
         shutil.rmtree(tmpdirpath)
     def test_convert_rtDose(self):
         tmpdirpath = tempfile.mkdtemp()
@@ -250,3 +290,24 @@ class Test_Convert(LoggedTestCase):
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("9c18c0344e309d096122c4b771fe3f1e66ddb778d818f98d18f29442fd287d47" == new_hash)
         shutil.rmtree(tmpdirpath)
+    def test_convert_dicom(self):
+        tmpdirpath = tempfile.mkdtemp()
+        filename = wget.download("https://github.com/OpenGATE/GateTools/blob/master/dataTest/tomoSPECT.dcm?raw=true", out=tmpdirpath, bar=None)
+        convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filename)])
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("3a64eee5f6439388fdbe6a5b7a682aca200fbc6826dcfffccc6f5fbae82b9600" == new_hash)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_dicom_flip(self):
+        tmpdirpath = tempfile.mkdtemp()
+        filename = wget.download("https://github.com/OpenGATE/GateTools/blob/master/dataTest/tomoSPECT.dcm?raw=true", out=tmpdirpath, bar=None)
+        convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filename)], flip=True)
+        itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
+        with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
+            bytesNew = fnew.read()
+            new_hash = hashlib.sha256(bytesNew).hexdigest()
+            self.assertTrue("87c7eee6e29172289407e2739c2618418a38718c09e94ebee9a390a73433d236" == new_hash)
+        shutil.rmtree(tmpdirpath)
+
