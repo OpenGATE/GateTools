@@ -25,7 +25,16 @@ def insertTag(dataset, tag, value, type):
         dataset[tag] = pydicom.DataElement(tag, type, value)
 
 
-def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newstudyuid=False):
+def convertTagValue(value, VRtype):
+    if VRtype in ["AE", "AS" , "AT", "CS", "DA", "DS", "DT", "IS", "LO", "LT", "OB", "OD", "OF", "OW", "PN", "SH", "ST", "TM", "UI", "UN", "UT"]:
+        return str(value)
+    elif VRtype in ["SL", "SS", "UL", "US"]:
+        return int(value)
+    elif VRtype in ["FL", "FD"]:
+        return float(value)
+
+
+def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newstudyuid=False, tags=()):
 
     # Scale the input:
     inputArray = itk.array_from_image(input)
@@ -111,6 +120,20 @@ def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newst
         if newseriesuid:
             newSeriesInstanceUID = pydicom.uid.generate_uid()
             insertTag(dsOutput, 0x0020000e, newSeriesInstanceUID, 'UI') #Series Instance UID
+
+    # Change tag from command line:
+    for tag in tags:
+        try:
+            VRtype = pydicom.datadict.dictionary_VR(tag[0])
+        except:
+            print("The tag " + tag[0] + " is not know in public pydicom dictionary")
+            continue
+        try:
+            value = convertTagValue(tag[1], VRtype)
+        except:
+            print("Cannot find the correct type for " + tag[0] + " with value " + tag[1] + " and VR " + VRtype)
+            continue
+        insertTag(dsOutput, tag[0], value, VRtype)
 
     dsOutput.save_as(output)
 
