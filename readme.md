@@ -17,6 +17,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | Tool                          | Comment                                                   |
 | -------------                 | -------------                                             |
 | `gt_affine_transform`         | Resample (resize, rotate) an image                        |
+| `gt_dicom_info`               | Print tag values of a dicom file                           |
 | `gt_dicom_rt_pbs2gate`        | Convert Dicom RT proton plan for Gate                     |
 | `gt_dicom_rt_struct_to_image` | Turn Dicom RT Struct contours into mask image             |
 | `gt_gamma_index`              | Compute gamma index between images                        |
@@ -31,7 +32,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_phsp_merge`               | Merge two phase space files (output in npy only)          |
 | `gt_phps_peaks`               | Try to detect photopeaks (experimental)                   |
 | `gt_phsp_plot`                | Plot marginal distributions form a phase space file       |
-| `gt_write_dicom`                | Convert image (mhd, nii, ...) to dicom       |
+| `gt_write_dicom`              | Convert image (mhd, nii, ...) to dicom                    |
 
 All tools are also available to be use within your own Python script with, for example:
 ```
