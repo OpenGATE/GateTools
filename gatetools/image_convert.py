@@ -126,7 +126,10 @@ def read_dicom(dicomFiles):
         return
 
     dicomProperties = dicom_properties()
-    dicomProperties.read_dicom_properties(slices[0], slices[1])
+    if len(slices) >= 2:
+        dicomProperties.read_dicom_properties(slices[0], slices[1])
+    else:
+        dicomProperties.read_dicom_properties(slices[0])
 
     # create 3D array
     dicomProperties.img_shape[0] = len(slices)
