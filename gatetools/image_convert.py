@@ -37,7 +37,7 @@ class dicom_properties:
         self.ri = 0.0
         self.image_shape = []
 
-    def read_dicom_properties(self, slice):
+    def read_dicom_properties(self, slice, nextSlice=None):
         # pixel aspects, assuming all slices are the same
 
         ps = [1.0, 1.0]
@@ -49,6 +49,9 @@ class dicom_properties:
         if ss == '' or ss is None:
             if Tag(0x3004, 0x000c) in slice:
                 ss = slice[0x3004, 0x000c][1] - slice[0x3004, 0x000c][0]
+        if ss == '' or ss is None:
+            if not nextSlice is None and Tag(0x0020, 0x0032) in slice and Tag(0x0020, 0x0032) in nextSlice:
+                ss = abs(nextSlice[0x0020, 0x0032][2] - slice[0x0020, 0x0032][2])
             if ss == '' or ss is None:
                 ss = 1.0
         self.spacing = [ps[1], ps[0], ss]
@@ -118,7 +121,7 @@ def read_dicom(dicomFiles):
         return
 
     dicomProperties = dicom_properties()
-    dicomProperties.read_dicom_properties(slices[0])
+    dicomProperties.read_dicom_properties(slices[0], slices[1])
 
     # create 3D array
     dicomProperties.img_shape[0] = len(slices)
