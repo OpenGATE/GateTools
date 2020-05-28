@@ -95,7 +95,12 @@ def read_dicom(dicomFiles):
     files = []
     #Load dicom files
     for file in dicomFiles:
-        files.append(pydicom.read_file(file))
+        try:
+            files.append(pydicom.read_file(file))
+        except pydicom.errors.InvalidDicomError:
+            ds = pydicom.read_file(file, force=True)
+            ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+            files.append(ds)
 
     # skip files with no SliceLocation (eg scout views)
     slices = []
@@ -156,7 +161,12 @@ def read_3d_dicom(dicomFile, flip=False):
     Read dicom file and return an float 3D image
     """
     files = []
-    files.append(pydicom.read_file(dicomFile[0]))
+    try:
+        files.append(pydicom.read_file(dicomFile[0]))
+    except pydicom.errors.InvalidDicomError:
+        ds = pydicom.read_file(dicomFile[0], force=True)
+        ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+        files.append(ds)
 
     # skip files with no SliceLocation (eg scout views)
     slices = []
