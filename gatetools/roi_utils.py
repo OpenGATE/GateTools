@@ -390,7 +390,7 @@ class region_of_interest(object):
                 self.dz = dz.pop()
             else:
                 logger.warn("{} not one single z step: {}".format(self.roiname,", ".join([str(d) for d in dz])))
-                self.dz = 0.
+                self.dz = min(dz)
 
     def get_mask_from_parameters(self, img_params):
         if(img_params in self.maskparameters):
