@@ -37,7 +37,7 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
     gt.logging_conf(verbose=(verbose or list_roi),logfile=logfile)
 
     # read dicom struct
-    structset = pydicom.read_file(filename_struct)
+    structset = pydicom.read_file(filename_struct, force=True)
 
     # print roi names
     roi_names = gt.list_roinames(structset)
@@ -78,7 +78,7 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
             mask = aroi.get_mask(img, corrected=False,pbar=pbar)
             if crop:
                 mask = gt.image_auto_crop(mask, bg=0)
-            output_filename = base_filename+'_'+roiname+'.mhd';
+            output_filename = base_filename + '_' + ''.join(e for e in roiname if e.isalnum()) +'.mhd';
             itk.imwrite(mask, output_filename)
         except Exception as e:
             tqdm.write(str(e))

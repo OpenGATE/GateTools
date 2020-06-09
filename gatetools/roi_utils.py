@@ -199,7 +199,8 @@ class contour_layer(object):
     def __repr__(self):
         return "contour layer {} with {} inclusion(s) and {} exclusion(s) at z = {}".format(self.name, len(self.inclusion), len(self.exclusion), self.z)
     def add_contour(self,points,ref=None):
-        assert(len(points)>2)
+        if len(points)<=2:
+            return
         assert(self.z == points[0,2])
         if self.ref is None:
             self.ref = ref
