@@ -389,6 +389,9 @@ class region_of_interest(object):
             dz = set(np.diff(np.around(self.zlist,decimals=6)))
             if len(dz) == 1:
                 self.dz = dz.pop()
+            elif len(dz) == 0:
+                logger.warn("{} without z step".format(self.roiname))
+                self.dz = 0
             else:
                 logger.warn("{} not one single z step: {}".format(self.roiname,", ".join([str(d) for d in dz])))
                 self.dz = min(dz)
