@@ -12,13 +12,12 @@ python:
   - "3.7"
   - "3.8"
 env:
-  - ITK_VERSION=5.0.0
-  - ITK_VERSION=5.0.1
+  - ITK_VERSION=5.1.0
   - ITK_VERSION=pre
-jobs:
-  exclude:
-    - python: "3.8"
-      env: ITK_VERSION=5.0.0
+#jobs:
+#  exclude:
+#    - python: "3.8"
+#      env: ITK_VERSION=5.0.0
 before_install:
   - git lfs pull
 install:
