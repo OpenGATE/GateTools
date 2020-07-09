@@ -13,3 +13,4 @@ from .logging_conf import logging_conf, add_options, common_options
 from .affine_transform import *
 from .image_statistics import *
 from .write_dicom import *
+from .gauss_filter import *
