@@ -28,7 +28,7 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk>=5.1rc2',
+        'itk>=5.1.0',
         'uproot',
         'wget',
     ],

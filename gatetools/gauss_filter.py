@@ -6,7 +6,7 @@
 # -----------------------------------------------------------------------------
 
 """
-This module provides basic affine transformation and resampling methods for images.
+This module provides basic gauss filtering for images.
 """
 
 import os
