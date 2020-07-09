@@ -30,6 +30,13 @@ install:
 script: 
   - python -m unittest gatetools -v
   - python -m unittest gatetools.phsp -v
-
+deploy:
+  provider: pypi
+  username: "__token__"
+  password:
+    secure: NDCLSlinRu41ItJTUzCWl1aEf8MsBGXBEIUdzBpKAhF6jImyQnmZv07mLX8zuounYi2j3BVfDi+9NxWKt6iqq/NaFics8iv/YxjPN7Ga5XBLT0LYb5TQnxp3m5opAP7oAnuIahpnjWkqXrLJ4M4wDIk2JG7iCUmznHFEFmGVk7pdIhKQziPfFfvbNp4P48/JJfvBRB2JCuSmucvEvbtZS+EpJ/S4TXvnS0KwwkIlYFIQJAZbbSidJrrKX26Iz34hy6GbUZosu2Hoi+AWKU6bOp8qRgchrGoFwvMSiSTWs56S6GxqR+BSw5MQ4CxkJu3HyrIQnuUtiZaKsZdq467/x6OU6fjVno7gv+OSCNhTtp6KNsyaGvPlCiEplzU+lf0Pa7w1incIAfOWlI10SZktXEVLNokW6oKpkPX7g75J4jeXaMv+tfMMETrADrzypy/3BVbOhu+WjqjdmRdgnwXF0m4WrqsJlFT2ikdiidg4VqT/qk0Fam3jKxkoUEzINbrbLhghpxy2NhN/qz74KVOnxOoa9zktb15gwPSf0W5C04eWQvIgaa3c4XjkpFcXzl0gbtiQB5fwytKC4pPIkNLaj5pR4O6nnzWSU5nYSzc5Fe/Kkq5/UKALkPxcmWTjidx04XsCbOQxsDi0ZgGeOQJTxVCajYcewy5nGS8GPESzKK8=
+  on:
+    tags: true
+    branch: master
 notifications:
   email: false
