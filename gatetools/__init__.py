@@ -15,3 +15,4 @@ from .image_statistics import *
 from .write_dicom import *
 from .gauss_filter import *
 from .image_resize import *
+from .dvh import *
