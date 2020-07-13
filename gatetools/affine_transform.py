@@ -16,7 +16,7 @@ import math
 import logging
 logger=logging.getLogger(__name__)
 
-def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, newsize=None, neworigin=None, newspacing=None, newdirection=None, force_resample=None, keep_original_canvas=None, adaptive=None, rotation=None, rotation_center=None, translation=None, pad=None, interpolation_mode=None):
+def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, newsize=None, neworigin=None, newspacing=None, newdirection=None, force_resample=None, keep_original_canvas=None, adaptive=None, rotation=None, rotation_center=None, translation=None, pad=None, interpolation_mode=None, bspline_order=2):
     
     if like is not None and spacinglike is not None:
         logger.error("Choose between like and spacinglike options")
@@ -232,6 +232,9 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     resampleFilter.SetTransform(transform)
     if interpolation_mode == "NN":
         interpolator = itk.NearestNeighborInterpolateImageFunction[tempImageType, itk.D].New()
+    elif interpolation_mode == "BSpline":
+        interpolator = itk.BSplineInterpolateImageFunction[tempImageType, itk.D, itk.F].New()
+        interpolator.SetSplineOrder(bspline_order)
     else:
         interpolator = itk.LinearInterpolateImageFunction[tempImageType, itk.D].New()
     resampleFilter.SetInterpolator(interpolator)
