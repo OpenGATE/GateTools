@@ -28,7 +28,7 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk>=5.1rc2',
+        'itk>=5.1.0',
         'uproot',
         'wget',
     ],
@@ -44,6 +44,7 @@ setuptools.setup(
         'bin/gt_affine_transform',
         'bin/gt_write_dicom',
         'bin/gt_dicom_info',
+        'bin/gt_image_gauss',
 
         'bin/gt_dicom_rt_struct_to_image',
         'bin/gt_dicom_rt_pbs2gate',

@@ -25,6 +25,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_image_arithm`             | Pixel- or voxel-wise arithmetic operations                |
 | `gt_image_convert`            | Convert image file format (**dicom**, mhd, hdr, nii ... ) |
 | `gt_image_crop`               | Crop an image                                             |
+| `gt_image_gauss`               | Blur an image using gaussian filter                       |
 | `gt_image_statistics`         | Statistics of an image                                    |
 | `gt_image_uncertainty`        | Compute statistical uncertainty                           |
 | `gt_phsp_convert`             | Convert a phase space file from root to npy               |
