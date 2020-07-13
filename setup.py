@@ -46,6 +46,7 @@ setuptools.setup(
         'bin/gt_dicom_info',
         'bin/gt_image_gauss',
         'bin/gt_image_resize',
+        'bin/gt_dvh',
 
         'bin/gt_dicom_rt_struct_to_image',
         'bin/gt_dicom_rt_pbs2gate',

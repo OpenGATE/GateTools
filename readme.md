@@ -20,6 +20,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_dicom_info`               | Print tag values of a dicom file                           |
 | `gt_dicom_rt_pbs2gate`        | Convert Dicom RT proton plan for Gate                     |
 | `gt_dicom_rt_struct_to_image` | Turn Dicom RT Struct contours into mask image             |
+| `gt_dvh`                      | Create Dose Volume Histogram                              |
 | `gt_gamma_index`              | Compute gamma index between images                        |
 | `gt_gate_info`                | Display info about current Gate/G4 version                |
 | `gt_image_arithm`             | Pixel- or voxel-wise arithmetic operations                |
