@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+# -----------------------------------------------------------------------------
+#   Copyright (C): OpenGATE Collaboration
+#   This software is distributed under the terms
+#   of the GNU Lesser General  Public Licence (LGPL)
+#   See LICENSE.md for further details
+# -----------------------------------------------------------------------------
+
+import gatetools as gt
+import itk
+import click
+import sys
+import csv
+import os
+from matplotlib import pyplot as plt
+import logging
+logger=logging.getLogger(__name__)
+
+
+# -----------------------------------------------------------------------------
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+@click.command(context_settings=CONTEXT_SETTINGS)
+
+@click.option('--dose','-d', help='Input dose filename', required=True,
+              type=click.Path(dir_okay=False))
+@click.option('--roi','-r', help='Input roi filename', required=True,
+              type=click.Path(dir_okay=False))
+@click.option('--output','-o', help='Output base filename. Without output, it displays the DVH ',
+              type=click.Path(dir_okay=False,
+                              writable=True, readable=False,
+                              resolve_path=True, allow_dash=False, path_type=None))
+
+@gt.add_options(gt.common_options)
+def gt_dvh_main(dose, roi, output, **kwargs):
+    '''
+    Tool to create dose volume histogram
+
+    eg:
+
+    gt_dvh -d dose.mhd -r roi.mhd -o output
+
+    Display without output option or save the graph to csv and png formats if output is set
+    '''
+
+    # logger
+    gt.logging_conf(**kwargs)
+
+    doseImage = itk.imread(dose)
+    roiImage = itk.imread(roi)
+
+    doseValues, volumePercentage = gt.createDVH(doseImage, roiImage)
+
+    plt.plot(doseValues, volumePercentage*100)
+    plt.ylabel('Volume %')
+    plt.xlabel('Dose Gy')
+    if output is None:
+        plt.show()
+    else:
+        plt.savefig(output+'.png')
+        with open(output+'.csv', 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=';',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            spamwriter.writerow(['Dose Gy'] + ['Volume %'])
+            for x, y in zip(doseValues, volumePercentage):
+                spamwriter.writerow([x, y*100])
+
+
+# -----------------------------------------------------------------------------
+if __name__ == '__main__':
+    gt_dvh_main()

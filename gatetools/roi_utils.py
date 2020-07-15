@@ -199,7 +199,8 @@ class contour_layer(object):
     def __repr__(self):
         return "contour layer {} with {} inclusion(s) and {} exclusion(s) at z = {}".format(self.name, len(self.inclusion), len(self.exclusion), self.z)
     def add_contour(self,points,ref=None):
-        assert(len(points)>2)
+        if len(points)<=2:
+            return
         assert(self.z == points[0,2])
         if self.ref is None:
             self.ref = ref
@@ -388,9 +389,12 @@ class region_of_interest(object):
             dz = set(np.diff(np.around(self.zlist,decimals=6)))
             if len(dz) == 1:
                 self.dz = dz.pop()
+            elif len(dz) == 0:
+                logger.warn("{} without z step".format(self.roiname))
+                self.dz = 0
             else:
                 logger.warn("{} not one single z step: {}".format(self.roiname,", ".join([str(d) for d in dz])))
-                self.dz = 0.
+                self.dz = min(dz)
 
     def get_mask_from_parameters(self, img_params):
         if(img_params in self.maskparameters):

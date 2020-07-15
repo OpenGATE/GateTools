@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.8.8",
+    version="0.9.4",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
@@ -28,7 +28,7 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk>=5.1rc2',
+        'itk>=5.1.0',
         'uproot',
         'wget',
     ],
@@ -42,6 +42,11 @@ setuptools.setup(
         'bin/gt_image_statistics',
         'bin/gt_gamma_index',
         'bin/gt_affine_transform',
+        'bin/gt_write_dicom',
+        'bin/gt_dicom_info',
+        'bin/gt_image_gauss',
+        'bin/gt_image_resize',
+        'bin/gt_dvh',
 
         'bin/gt_dicom_rt_struct_to_image',
         'bin/gt_dicom_rt_pbs2gate',
