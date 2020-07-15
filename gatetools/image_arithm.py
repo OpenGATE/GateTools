@@ -146,6 +146,49 @@ def image_sum(input_list=[],output_file=None):
     """
     return _apply_operation_to_image_list(operator.add,input_list,output_file)
 
+
+def image_mean(input_list=[],output_file=None):
+    """
+    Computes element-wise mean of a list of image with equal geometry.
+    """
+    img_list = _image_list(input_list)
+    if len(img_list) == 1:
+        return _image_output(img_list[0], output_file)
+    np_list = [ itk.array_view_from_image(img) for img in img_list]
+    np_result = np.mean(np_list, axis=0)
+    img = itk.image_from_array(np_result)
+    img.CopyInformation(img_list[0])
+    return _image_output(img, output_file)
+    
+
+def image_std(input_list=[],output_file=None):
+    """
+    Computes element-wise standard deviation of a list of image with equal geometry.
+    """
+    img_list = _image_list(input_list)
+    if len(img_list) == 1:
+        return _image_output(img_list[0], output_file)
+    np_list = [ itk.array_view_from_image(img) for img in img_list]
+    np_result = np.std(np_list, axis=0)
+    img = itk.image_from_array(np_result)
+    img.CopyInformation(img_list[0])
+    return _image_output(img, output_file)
+
+def image_sem(input_list=[],output_file=None):
+    """
+    Computes element-wise standard deviation of a list of image with equal geometry.
+    """
+    img_list = _image_list(input_list)
+    if len(img_list) == 1:
+        return _image_output(img_list[0], output_file)
+    np_list = [ itk.array_view_from_image(img) for img in img_list]
+    N = len(img_list)
+    np_result = np.std(np_list, axis=0)/np.sqrt(N)
+    img = itk.image_from_array(np_result)
+    img.CopyInformation(img_list[0])
+    return _image_output(img, output_file)
+    
+
 def image_product(input_list=[],output_file=None):
     """
     Computes element-wise product of a list of image with equal geometry.

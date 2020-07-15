@@ -27,7 +27,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--operation','-O', help='Operation',
               type=click.Choice(['sum', 'product', 
                                  'divide', 'invert',
-                                 'min', 'max', 'absreldiffmax']))
+                                 'min', 'max', 'absreldiffmax',
+                                 'mean', 'std', 'sem']))
 
 @click.option('--scalar','-s', help='scalar for operation', type=float)
 
@@ -50,6 +51,9 @@ def gt_image_arithm_main(files, operation, scalar, output, **kwargs):
     - minimum                      : min(A, B, C, ...)
     - maximum                      : max(A, B, C, ...)
     - abs max relative difference  : |A-B|/max(A) (two input images only, not more)
+    - mean                         : mean (A+B+C)/n
+    - std                          : standard deviation
+    - sem                          : standard error mean = std/sqrt(N)
 
     FILES: the given files are the input for the arithmetic operations
     and will not be modified. Note that the standard ITK python
@@ -75,7 +79,7 @@ def gt_image_arithm_main(files, operation, scalar, output, **kwargs):
 
     # logger
     gt.logging_conf(**kwargs)
-    
+
     try:
         input_images = [itk.imread(fpath) for fpath in files]
     except Exception as ke:
@@ -100,7 +104,11 @@ def gt_image_arithm_main(files, operation, scalar, output, **kwargs):
                    ("max",gt.image_max),
                    ("absreldiffmax",gt.image_absolute_relative_difference_max),
                    ("divide",gt.image_divide),
-                   ("invert", gt.image_invert)])
+                   ("invert", gt.image_invert),
+                   ("mean", gt.image_mean),
+                   ("std", gt.image_std),
+                   ("sem", gt.image_sem)
+    ])
 
     prefix="\n - "
     logger.info("Compute {} of input files:{}{}".format(operation,prefix,prefix.join(files)))
