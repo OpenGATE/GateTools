@@ -23,11 +23,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--keys', '-k', help='Plot the given keys (as a str list such that "X Y Z")', default='')
 @click.option('--quantile', '-q', default=float(0), help='Restrict histogram to quantile')
 @click.option('--nb_bins', '-b', default=int(100), help='Number of bins')
+@click.option('--shuffle', '-s', default=False, is_flag=True, help='shuffle samples when loading')
 @click.option('--plot2d',
               type=(str, str),
               help='Add 2D plots (key1,key2), such as --plot2d X Ekine --plot2d X Y ', multiple=True)
 @gt.add_options(gt.common_options)
-def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, **kwargs):
+def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, shuffle, **kwargs):
     '''
     \b
     Plot histograms
@@ -49,7 +50,7 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, **kwargs):
         logger.info(filename)
 
         # load data
-        data, read_keys, m = phsp.load(filename, n)
+        data, read_keys, m = phsp.load(filename, n, shuffle)
 
         # get keys
         ckeys = phsp.str_keys_to_array_keys(keys)
