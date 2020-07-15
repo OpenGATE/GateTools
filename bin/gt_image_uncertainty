@@ -35,7 +35,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--sigma', default=False, is_flag=True, help='By default, uncertainty is normalized, unc = sigma/x. By using this option, the output is *not* normalized, sigma=sqrt(var) is computed.')
 
 @gt.add_options(gt.common_options)
-def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, sigma, verbose, scale, **kwargs):
+def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, sigma, verbose, **kwargs):
     '''
     Compute relative statistical uncertainty image for a list of
     images. Images are summed before computing the the uncertainty.
