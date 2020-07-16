@@ -17,7 +17,7 @@ import gatetools as gt
 import logging
 logger=logging.getLogger(__name__)
 
-def imageResize(input=None, newsize=None,  newsize_mm=None, pad=None, interpolation_mode=None, bspline_order=2):
+def imageResize(input=None, newsize=None,  newsize_mm=None, pad=None):
     if input is None:
         logger.error("Set the input")
         sys.exit(1)
@@ -30,8 +30,6 @@ def imageResize(input=None, newsize=None,  newsize_mm=None, pad=None, interpolat
 
     if pad is None:
         pad = 0.0
-    if interpolation_mode is None:
-        interpolation_mode : "linear"
 
     imageDimension = input.GetImageDimension()
     itkSize = itk.Size[imageDimension]()
@@ -68,7 +66,7 @@ def imageResize(input=None, newsize=None,  newsize_mm=None, pad=None, interpolat
             newSize[i] = input.GetLargestPossibleRegion().GetSize()[i]
             newTranslation[i] = 0
             newOrigin[i] = input.GetOrigin()[i]
-    outputImage = gt.applyTransformation(input, newsize = newSize, force_resample = True, translation = newTranslation, pad = pad, interpolation_mode = interpolation_mode)
+    outputImage = gt.applyTransformation(input, newsize = newSize, force_resample = True, translation = newTranslation, pad = pad)
     outputImage = gt.applyTransformation(outputImage, neworigin = newOrigin)
 
     return outputImage
