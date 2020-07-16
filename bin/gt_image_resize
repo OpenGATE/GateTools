@@ -43,13 +43,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--newsize_mm', help='Set the output size in mm', type=str)
 @click.option('--pad', '-p', help='Set the padding pixel value', default=0.0)
 
-@click.option('--interpolation_mode', '-im', help='Interpolation mode: NN for nearest neighbor, linear for linear interpolation and BSpline for BSpline interpolation', default='linear', type=click.Choice(['NN', 'linear', 'BSpline']))
-@click.option('--bspline_order', '-bo', help='For BSpline interpolator, set the interpolation bspline order', default='2', type=click.Choice(['0', '1', '2', '3', '4', '5']))
-
 @gt.add_options(gt.common_options)
 def gt_image_resize_main(input, output, newsize, newsize_mm, pad, interpolation_mode, bspline_order, **kwargs):
     '''
     Convenient method to resize an image (pad or crop) around the center.
+    If the new size is larger than before, the image is padded at the borders.
+    if not, the borders of the image are cropped.
+    The padding and the cropping are done to ensure the image is still centered dispatching the same number of voxels for the low border than the higher border. If there is an odd number of voxels to dispatch, the low border is pad/crop with one more voxel than the higer border.
 
     eg:
     gt_image_resize -i input.mhd -o output.mhd --newsize "2.0"
@@ -78,7 +78,7 @@ def gt_image_resize_main(input, output, newsize, newsize_mm, pad, interpolation_
         for i in range(imageDimension):
             itkSize_mm[i] = size_mm[i]
 
-    outputImage = gt.imageResize(inputImage, newsize = itkSize, newsize_mm = itkSize_mm, pad = pad, interpolation_mode = interpolation_mode, bspline_order = bspline_order)
+    outputImage = gt.imageResize(inputImage, newsize = itkSize, newsize_mm = itkSize_mm, pad = pad)
 
     itk.imwrite(outputImage, output)
 

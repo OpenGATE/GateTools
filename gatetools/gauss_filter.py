@@ -16,7 +16,7 @@ import math
 import logging
 logger=logging.getLogger(__name__)
 
-def gaussFilter(input=None, sigma=None, sigma_mm=None):
+def gaussFilter(input=None, sigma=None, sigma_mm=None, float=False):
 
     if input is None:
         logger.error("Set the input")
@@ -53,12 +53,13 @@ def gaussFilter(input=None, sigma=None, sigma_mm=None):
             gaussFilter.SetSigma(sigma_mm[i]) # in mm
             gaussFilter.Update()
             outputImage = gaussFilter.GetOutput()
+    if not float:
+        castImageFilter2 = itk.CastImageFilter[tempImageType, type(input)].New()
+        castImageFilter2.SetInput(outputImage)
+        castImageFilter2.Update()
+        outputImage = castImageFilter2.GetOutput()
 
-    castImageFilter2 = itk.CastImageFilter[tempImageType, type(input)].New()
-    castImageFilter2.SetInput(outputImage)
-    castImageFilter2.Update()
-
-    return castImageFilter2.GetOutput()
+    return outputImage
 
 #####################################################################################
 import unittest

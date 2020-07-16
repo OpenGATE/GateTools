@@ -30,8 +30,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
 
+@click.option('--binning', '-b', default=1, help='Binning for % Volume (default 1%)')
+@click.option('--label', '-l', default=1, help='Label of the pixels for the roi mask')
+
 @gt.add_options(gt.common_options)
-def gt_dvh_main(dose, roi, output, **kwargs):
+def gt_dvh_main(dose, roi, output, binning, label, **kwargs):
     '''
     Tool to create dose volume histogram
 
@@ -48,7 +51,7 @@ def gt_dvh_main(dose, roi, output, **kwargs):
     doseImage = itk.imread(dose)
     roiImage = itk.imread(roi)
 
-    doseValues, volumePercentage = gt.createDVH(doseImage, roiImage)
+    doseValues, volumePercentage = gt.createDVH(doseImage, roiImage, binning, label)
 
     plt.plot(doseValues, volumePercentage*100)
     plt.ylabel('Volume %')
