@@ -41,9 +41,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                               resolve_path=True, allow_dash=False, path_type=None))
 @click.option('-s', '--sigma', help='Set the sigma of the filter in pixel', type=str)
 @click.option('-m', '--sigma_mm', help='Set the sigma of the filter in mm', type=str)
+@click.option('-f', '--float', help='Keep the output to float pixel type', is_flag=True)
 
 @gt.add_options(gt.common_options)
-def gt_image_gauss_main(input, output, sigma, sigma_mm, **kwargs):
+def gt_image_gauss_main(input, output, sigma, sigma_mm, float, **kwargs):
     """
     Apply gaussian filter to the image
 
@@ -54,6 +55,7 @@ def gt_image_gauss_main(input, output, sigma, sigma_mm, **kwargs):
     gt_image_gauss -i input.mhd -o output.mhd --sigma "2.0,3.0,4.0"
 
     The script uses RecursiveGaussianImageFilter from R. Deriche, "Recursively Implementing The Gaussian and Its Derivatives", INRIA, 1993
+    The output is automatically converted to input type. So if the input is int pixel type, the gaussian filtered output image is rounded. Use float flag to avoid this rounding.
 
     """
 
@@ -68,7 +70,7 @@ def gt_image_gauss_main(input, output, sigma, sigma_mm, **kwargs):
     if sigma_mm is not None:
         sigma_mm = convertNewParameterToFloat(sigma_mm, imageDimension)
 
-    outputImage = gt.gaussFilter(inputImage, sigma, sigma_mm)
+    outputImage = gt.gaussFilter(inputImage, sigma, sigma_mm, float)
 
     itk.imwrite(outputImage, output)
 
