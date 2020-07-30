@@ -403,7 +403,7 @@ class region_of_interest(object):
             return None
 
     def from_contours(self, contours_list):
-        self.roiname = "Arficial roi created from scratch"
+        self.roiname = "Artificial roi created from scratch"
         self.roinr = 1337
         self.ncontours = len(contours_list)
         self.npoints_total = 0
