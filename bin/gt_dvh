@@ -12,6 +12,9 @@ import click
 import sys
 import csv
 import os
+import matplotlib
+matplotlib.get_backend()
+matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
 import logging
 logger=logging.getLogger(__name__)
@@ -30,11 +33,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                               writable=True, readable=False,
                               resolve_path=True, allow_dash=False, path_type=None))
 
-@click.option('--binning', '-b', default=1, help='Binning for % Volume (default 1%)')
+@click.option('--bins', '-b', default=1000, help='Number of dose bins for the histogram')
 @click.option('--label', '-l', default=1, help='Label of the pixels for the roi mask')
 
 @gt.add_options(gt.common_options)
-def gt_dvh_main(dose, roi, output, binning, label, **kwargs):
+def gt_dvh_main(dose, roi, output, bins, label, **kwargs):
     '''
     Tool to create dose volume histogram
 
@@ -51,9 +54,9 @@ def gt_dvh_main(dose, roi, output, binning, label, **kwargs):
     doseImage = itk.imread(dose)
     roiImage = itk.imread(roi)
 
-    doseValues, volumePercentage = gt.createDVH(doseImage, roiImage, binning, label)
+    doseValues, volumePercentage = gt.createDVH(doseImage, roiImage, bins, label)
 
-    plt.plot(doseValues, volumePercentage*100)
+    plt.plot(doseValues, volumePercentage)
     plt.ylabel('Volume %')
     plt.xlabel('Dose Gy')
     if output is None:
@@ -65,7 +68,7 @@ def gt_dvh_main(dose, roi, output, binning, label, **kwargs):
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
             spamwriter.writerow(['Dose Gy'] + ['Volume %'])
             for x, y in zip(doseValues, volumePercentage):
-                spamwriter.writerow([x, y*100])
+                spamwriter.writerow([x, y])
 
 
 # -----------------------------------------------------------------------------
