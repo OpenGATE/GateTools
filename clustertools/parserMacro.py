@@ -52,7 +52,7 @@ class ParserMacro:
         elif len(splitLine) > 0 and splitLine[0] == '/control/execute':
             self.getMacroFiles(splitLine)
         elif len(splitLine) > 0 and (splitLine[0] == '/control/add' or
-                                     splitLine[0] == '/control/substract' or
+                                     splitLine[0] == '/control/subtract' or
                                      splitLine[0] == '/control/multiply' or
                                      splitLine[0] == '/control/divide'):
             value = self.parseOperation(splitLine)
