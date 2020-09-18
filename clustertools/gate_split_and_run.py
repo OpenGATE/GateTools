@@ -17,7 +17,11 @@ from parserMacro import *
 
 
 def get_dns_domain():
-    return socket.getfqdn().split('.', 1)[1]
+    domain = socket.getfqdn().split('.', 1)
+    if len(domain) >= 2:
+        return domain[1]
+    else:
+        return domain[0]
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)

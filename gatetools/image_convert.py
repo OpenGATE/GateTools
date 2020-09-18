@@ -27,6 +27,55 @@ import numpy as np
 import logging
 logger=logging.getLogger(__name__)
 
+
+class dicom_properties:
+    def __init__(self):
+        self.spacing = [1.0, 1.0, 1.0]
+        self.origin = [0.0, 0.0, 0.0]
+        self.io = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+        self.rs = 1.0
+        self.ri = 0.0
+        self.image_shape = []
+
+    def read_dicom_properties(self, slice):
+        # pixel aspects, assuming all slices are the same
+
+        ps = slice.PixelSpacing
+        ss = 1.0
+        if Tag(0x18, 0x50) in slice:
+            ss = slice.SliceThickness
+        self.spacing = [ps[0], ps[1], ss]
+        if Tag(0x20, 0x32) in slice:
+            ip = slice[0x20, 0x32].value #Image Position
+        else:
+            ip = slice[0x54, 0x22][0][0x20, 0x32].value #Image Position
+        self.origin = [ip[0], ip[1], ip[2]]
+        if Tag(0x20, 0x37) in slice:
+            self.io = slice[0x20, 0x37].value #Image Orientation
+        else:
+            self.io = slice[0x54, 0x22][0][0x20, 0x37].value #Image Orientation
+        if self.io == "":
+            self.io = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+        #orientation = [io[0], io[1], io[2], io[3], io[4], io[5]]
+        if Tag(0x28, 0x1052) in slice:
+            self.ri = slice[0x28, 0x1052].value #Rescale Intercept
+            self.rs = slice[0x28, 0x1053].value #Rescale Slope
+        elif Tag(0x11, 0x103b) in slice:
+            self.rs = slice[0x11, 0x103b].value #Rescale Intercept
+            self.ri = slice[0x11, 0x103c].value #Rescale Slope
+        elif Tag(0x40, 0x9096) in slice:
+            self.ri = slice[0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
+            self.rs = slice[0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
+        elif Tag(0x3004, 0x000e) in slice:
+            self.rs = slice[0x3004, 0x000e].value #Rescale Slope
+        if hasattr(self.ri, '__len__'):
+            self.ri = self.ri[0]
+        if hasattr(self.rs, '__len__'):
+            self.rs = self.rs[0]
+
+        self.img_shape = list(slice.pixel_array.shape)
+
+
 def read_dicom(dicomFiles):
     """
 
@@ -56,57 +105,35 @@ def read_dicom(dicomFiles):
         logger.error('no file available')
         return
 
-
-    # pixel aspects, assuming all slices are the same
-    ps = slices[0].PixelSpacing
-    ss = slices[0].SliceThickness
-    spacing = [ps[0], ps[1], ss]
-    if Tag(0x20, 0x32) in slices[0]:
-        ip = slices[0][0x20, 0x32].value #Image Position
-    else:
-        ip = slices[0][0x54, 0x22][0][0x20, 0x32].value #Image Position
-    origin = [ip[0], ip[1], ip[2]]
-    if Tag(0x20, 0x37) in slices[0]:
-        io = slices[0][0x20, 0x37].value #Image Orientation
-    else:
-        io = slices[0][0x54, 0x22][0][0x20, 0x37].value #Image Orientation
-    #orientation = [io[0], io[1], io[2], io[3], io[4], io[5]]
-    if Tag(0x28, 0x1052) in slices[0]:
-        ri = slices[0][0x28, 0x1052].value #Rescale Intercept
-        rs = slices[0][0x28, 0x1053].value #Rescale Slope
-    elif Tag(0x11, 0x103b) in slices[0]:
-        rs = slices[0][0x11, 0x103b].value #Rescale Intercept
-        ri = slices[0][0x11, 0x103c].value #Rescale Slope
-    elif Tag(0x40, 0x9096) in slices[0]:
-        ri = slices[0][0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
-        rs = slices[0][0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
+    dicomProperties = dicom_properties()
+    dicomProperties.read_dicom_properties(slices[0])
 
     # create 3D array
-    img_shape = list(slices[0].pixel_array.shape)
-    img_shape[0] = len(slices)
-    img_shape.append(slices[0].pixel_array.shape[0])
-    img3d = np.zeros(img_shape)
+    dicomProperties.img_shape[0] = len(slices)
+    dicomProperties.img_shape.append(slices[0].pixel_array.shape[0])
+    img3d = np.zeros(dicomProperties.img_shape)
 
     # fill 3D array with the images from the files
     for i, s in enumerate(slices):
         img2d = s.pixel_array
         img3d[i, :, :] = img2d
-    img3d = rs*img3d+ri
+    img3d = dicomProperties.rs*img3d+dicomProperties.ri
 
     img_result = itk.image_from_array(np.float32(img3d))
-    img_result.SetSpacing(spacing)
-    img_result.SetOrigin(origin)
+    img_result.SetSpacing(dicomProperties.spacing)
+    img_result.SetOrigin(dicomProperties.origin)
     arrayDirection = np.zeros([3,3], np.float64)
-    arrayDirection[0,0] = io[0]
-    arrayDirection[0,1] = io[1]
-    arrayDirection[0,2] = io[2]
-    arrayDirection[1,0] = io[3]
-    arrayDirection[1,1] = io[4]
-    arrayDirection[1,2] = io[5]
-    arrayDirection[2,2] = 1.0
+    arrayDirection[0,0] = dicomProperties.io[0]
+    arrayDirection[0,1] = dicomProperties.io[1]
+    arrayDirection[0,2] = dicomProperties.io[2]
+    arrayDirection[1,0] = dicomProperties.io[3]
+    arrayDirection[1,1] = dicomProperties.io[4]
+    arrayDirection[1,2] = dicomProperties.io[5]
+    arrayDirection[2,:] = np.cross(arrayDirection[0,:], arrayDirection[1,:])
     matrixItk = itk.Matrix[itk.D,3,3](itk.GetVnlMatrixFromArray(arrayDirection))
     img_result.SetDirection(matrixItk)
     return img_result
+
 
 def read_3d_dicom(dicomFile):
     """
@@ -124,52 +151,32 @@ def read_3d_dicom(dicomFile):
         logger.error('no file available')
         return
 
-
-    # pixel aspects, assuming all slices are the same
-    ps = slices[0].PixelSpacing
-    ss = slices[0].SliceThickness
-    spacing = [ps[0], ps[1], ss]
-    if Tag(0x20, 0x32) in slices[0]:
-        ip = slices[0][0x20, 0x32].value #Image Position
-    else:
-        ip = slices[0][0x54, 0x22][0][0x20, 0x32].value #Image Position
-    origin = [ip[0], ip[1], ip[2]]
-    if Tag(0x20, 0x37) in slices[0]:
-        io = slices[0][0x20, 0x37].value #Image Orientation
-    else:
-        io = slices[0][0x54, 0x22][0][0x20, 0x37].value #Image Orientation
-    rs = 1.0
-    ri = 0.0
-    if Tag(0x28, 0x1052) in slices[0]:
-        ri = slices[0][0x28, 0x1052].value #Rescale Intercept
-        rs = slices[0][0x28, 0x1053].value #Rescale Slope
-    elif Tag(0x11, 0x103b) in slices[0]:
-        rs = slices[0][0x11, 0x103b].value #Pixel Scale
-        ri = slices[0][0x11, 0x103c].value #Pixel Offset
-    elif Tag(0x40, 0x9096) in slices[0]:
-        ri = slices[0][0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
-        rs = slices[0][0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
-    elif Tag(0x3004, 0x000e) in slices[0]:
-        rs = slices[0][0x3004, 0x000e].value #Rescale Slope
+    dicomProperties = dicom_properties()
+    dicomProperties.read_dicom_properties(slices[0])
 
     # create 3D array
-    img_shape = list(slices[0].pixel_array.shape)
-    img3d = np.zeros(img_shape)
+    if len(slices[0].pixel_array.shape) == 2:
+        dicomProperties.img_shape = [1] + dicomProperties.img_shape
+    img3d = np.zeros(dicomProperties.img_shape)
 
     # fill 3D array with the images from the files
-    img3d[:, :, :] = slices[0].pixel_array
-    img3d = rs*img3d+ri
+    if len(slices[0].pixel_array.shape) == 2:
+        img3d[0, :, :] = slices[0].pixel_array
+    else:
+        img3d[:, :, :] = slices[0].pixel_array
+    img3d = dicomProperties.rs*img3d+dicomProperties.ri
 
     img_result = itk.image_from_array(np.float32(img3d))
-    img_result.SetSpacing(spacing)
-    img_result.SetOrigin(origin)
+    img_result.SetSpacing(dicomProperties.spacing)
+    img_result.SetOrigin(dicomProperties.origin)
     arrayDirection = np.zeros([3,3], np.float64)
-    arrayDirection[0,0] = io[0]
-    arrayDirection[0,1] = io[1]
-    arrayDirection[0,2] = io[2]
-    arrayDirection[1,0] = io[3]
-    arrayDirection[1,1] = io[4]
-    arrayDirection[1,2] = io[5]
+    arrayDirection[0,0] = dicomProperties.io[0]
+    arrayDirection[0,1] = dicomProperties.io[1]
+    arrayDirection[0,2] = dicomProperties.io[2]
+    arrayDirection[1,0] = dicomProperties.io[3]
+    arrayDirection[1,1] = dicomProperties.io[4]
+    arrayDirection[1,2] = dicomProperties.io[5]
+    arrayDirection[2,:] = np.cross(arrayDirection[0,:], arrayDirection[1,:])
     if Tag(0x18, 0x88) in slices[0] and slices[0][0x18, 0x88].value <0:
         arrayDirection[2,2] = -1.0
     else:
