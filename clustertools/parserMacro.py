@@ -40,7 +40,8 @@ class ParserMacro:
     def checkControlCommand(self, splitLine, file, index):
         if len(splitLine) > 0 and splitLine[0] == '/control/alias':
             self.parseAlias(splitLine)
-        elif len(splitLine) > 0 and splitLine[0] == '/control/strdoif':
+        elif len(splitLine) > 0 and (splitLine[0] == '/control/strdoif' or
+                                     splitLine[0] == '/control/doif') :
             condition, newSplitLine = self.parseCondition(splitLine)
             if len(newSplitLine) > 0:
                 newLine = " ".join(newSplitLine)
@@ -83,6 +84,35 @@ class ParserMacro:
             else:
                 print(colorama.Fore.YELLOW + "WARNING: Not possible to decrypt: " + " ".join(splitLine) + colorama.Style.RESET_ALL)
             return False, []
+        elif len(splitLine) > 0 and splitLine[0] == '/control/doif':
+            #left condition
+            splitLine[1] = self.decriptAlias(splitLine[1])
+            splitLine[1] = float(" ".join(splitLine[1]))
+            #right condition
+            splitLine[3] = self.decriptAlias(splitLine[3])
+            splitLine[3] = float(" ".join(splitLine[3]))
+            if splitLine[2] == "==":
+                if splitLine[1] == splitLine[3]:
+                    return True, splitLine[4:]
+            elif splitLine[2] == "!=":
+                if splitLine[1] != splitLine[3]:
+                    return True, splitLine[4:]
+            elif splitLine[2] == ">":
+                if splitLine[1] > splitLine[3]:
+                    return True, splitLine[4:]
+            elif splitLine[2] == ">=":
+                if splitLine[1] >= splitLine[3]:
+                    return True, splitLine[4:]
+            elif splitLine[2] == "<":
+                if splitLine[1] < splitLine[3]:
+                    return True, splitLine[4:]
+            elif splitLine[2] == "<=":
+                if splitLine[1] <= splitLine[3]:
+                    return True, splitLine[4:]
+            else:
+                print(colorama.Fore.YELLOW + "WARNING: Not possible to decrypt: " + " ".join(splitLine) + colorama.Style.RESET_ALL)
+            return False, []
+
 
     def getMacroFiles(self, splitLine):
         if len(splitLine) > 0 and splitLine[0] == '/control/execute':
