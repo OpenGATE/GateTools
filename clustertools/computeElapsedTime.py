@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import sys
 import os
 import datetime
@@ -5,12 +8,12 @@ import numpy
 
 
 def usage():
-    print("Compute the enlapsed time for simulation with submitted, started and ended time")
+    print("Compute the elapsed time for simulation with submitted, started and ended time")
     print("in ParentFolderName and its subfolder and starting by FileName.")
     print("The output is in statJobs.txt.")
     print("Usage:")
-    print("python computeEnlapseTyme.py ParentFolderName FileName")
-    print("eg: python computeEnlapseTyme.py spect_phs_build gate")
+    print("python computeElapseTyme.py ParentFolderName FileName")
+    print("eg: python computeElapseTyme.py spect_phs_build gate")
     return
 
 def is_number(s):
@@ -65,7 +68,7 @@ def createDate(s):
             submittedDate = submittedDate.replace(second=int(times[2]))
     return submittedDate
 
-def computeEnlapsedTime():
+def computeElapsedTime():
     #Get the folder name ad the filename
     folderName = sys.argv[1]
     fileName = sys.argv[2]
@@ -98,6 +101,9 @@ def computeEnlapsedTime():
     computePart =computationTimeSecond / waitingTimeSecond * 100.0
 
     #Write the output
+    if len(submittedTime) == 0:
+        return
+
     with open('statJobs.txt', 'w') as output:
         output.write(str(len(filePaths)) + " run jobs\n\n")
         output.write("Starting submission at " + str(min(submittedTime)) + "\n")
@@ -126,4 +132,4 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         usage()
     else:
-        computeEnlapsedTime()
+        computeElapsedTime()

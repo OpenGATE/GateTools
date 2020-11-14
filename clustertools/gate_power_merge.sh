@@ -599,8 +599,8 @@ do
 done
 
 echo "compute job statistics"
-python computeEnlapsedTime.py ${rundir} gate
-mv "statJobs.txt" "${outputdir}/statJobs.txt"
+computeElapsedTime.py ${rundir} gate
+test -x "statJobs.txt" && mv "statJobs.txt" "${outputdir}/statJobs.txt"
 
 
 if [ -f "${rundir}/params.txt" ]
