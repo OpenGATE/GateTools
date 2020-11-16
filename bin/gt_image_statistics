@@ -47,7 +47,7 @@ def gt_image_statistics_main(input, mask, resample, **kwargs):
 
     outputStats = gt.imageStatistics(inputImage, maskImage, resample)
     
-    print("Number of voxels: " + str(outputStats["count"]))
+    print("Number of voxels: " + str(outputStats["nbPixel"]))
     print("Mean: " + str(outputStats["mean"]))
     print("Median: " + str(outputStats["median"]))
     print("Sum: " + str(outputStats["sum"]))

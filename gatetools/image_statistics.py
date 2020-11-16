@@ -23,7 +23,7 @@ def imageStatistics(input=None, mask=None, resample=False):
 
     inputArray = itk.array_from_image(input)
     outputStats = {}
-    outputStats["count"] = inputArray.size
+    outputStats["nbPixel"] = inputArray.size
     if not mask is None:
         if resample:
             mask = gt.applyTransformation(input=mask, like=input, force_resample=True)
@@ -44,14 +44,14 @@ def imageStatistics(input=None, mask=None, resample=False):
         if len(np.where(maskArray > 1)[0]) >0:
             logger.error("The mask seems to be a non-binary image")
         index = np.where(maskArray == 1)
-        outputStats["count"] = len(index[0])
+        outputStats["nbPixel"] = len(index[0])
         inputArray = inputArray[index]
 
     outputStats["minimum"] = np.amin(inputArray)
     outputStats["maximum"] = np.amax(inputArray)
     outputStats["sum"] = np.sum(inputArray)
     outputStats["median"] = np.median(inputArray)
-    outputStats["mean"] = np.mean(outputStats["sum"]/outputStats["count"])
+    outputStats["mean"] = np.mean(outputStats["sum"]/outputStats["nbPixel"])
     outputStats["variance"] = np.var(inputArray)
     outputStats["sigma"] = np.sqrt(outputStats["variance"])
 
@@ -82,7 +82,7 @@ class Test_Image_Statistics(LoggedTestCase):
         logger.info('Test_Image_Statistics test_image_statistics')
         image = createImageExample()
         outputStats = imageStatistics(input=image)
-        self.assertTrue(outputStats["count"] == 12420)
+        self.assertTrue(outputStats["nbPixel"] == 12420)
         self.assertTrue(outputStats["mean"] == -0.5)
         self.assertTrue(outputStats["median"] == -0.5)
         self.assertTrue(outputStats["sum"] == -6210)
@@ -106,7 +106,7 @@ class Test_Image_Statistics(LoggedTestCase):
         mask.SetOrigin([7, 3.4, -4.6])
         mask.SetSpacing([4, 2, 3.6])
         outputStats = imageStatistics(input=image, mask=mask)
-        self.assertTrue(outputStats["count"] == 621)
+        self.assertTrue(outputStats["nbPixel"] == 621)
         self.assertTrue(outputStats["mean"] == 1)
         self.assertTrue(outputStats["median"] == 1)
         self.assertTrue(outputStats["sum"] == 621)
@@ -130,7 +130,7 @@ class Test_Image_Statistics(LoggedTestCase):
         mask.SetOrigin([3, 3.4, -4.6])
         mask.SetSpacing([4, 2, 3.6])
         outputStats = imageStatistics(input=image, mask=mask, resample=True)
-        self.assertTrue(outputStats["count"] == 594)
+        self.assertTrue(outputStats["nbPixel"] == 594)
         self.assertTrue(outputStats["mean"] == 1)
         self.assertTrue(outputStats["median"] == 1)
         self.assertTrue(outputStats["sum"] == 594)
