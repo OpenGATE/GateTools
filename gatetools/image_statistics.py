@@ -15,7 +15,7 @@ import numpy as np
 import logging
 logger=logging.getLogger(__name__)
 
-def imageStatistics(input=None, mask=None, resample=False):
+def imageStatistics(input=None, mask=None, resample=False, histogramBins=1000):
 
     if input is None:
         logger.error("Set an input")
@@ -23,7 +23,7 @@ def imageStatistics(input=None, mask=None, resample=False):
 
     inputArray = itk.array_from_image(input)
     outputStats = {}
-    outputStats["count"] = inputArray.size
+    outputStats["nbPixel"] = inputArray.size
     if not mask is None:
         if resample:
             mask = gt.applyTransformation(input=mask, like=input, force_resample=True)
@@ -44,16 +44,17 @@ def imageStatistics(input=None, mask=None, resample=False):
         if len(np.where(maskArray > 1)[0]) >0:
             logger.error("The mask seems to be a non-binary image")
         index = np.where(maskArray == 1)
-        outputStats["count"] = len(index[0])
+        outputStats["nbPixel"] = len(index[0])
         inputArray = inputArray[index]
 
     outputStats["minimum"] = np.amin(inputArray)
     outputStats["maximum"] = np.amax(inputArray)
     outputStats["sum"] = np.sum(inputArray)
     outputStats["median"] = np.median(inputArray)
-    outputStats["mean"] = np.mean(outputStats["sum"]/outputStats["count"])
+    outputStats["mean"] = np.mean(outputStats["sum"]/outputStats["nbPixel"])
     outputStats["variance"] = np.var(inputArray)
     outputStats["sigma"] = np.sqrt(outputStats["variance"])
+    outputStats["hist"] = np.histogram(inputArray, histogramBins)
 
     return outputStats
     
@@ -81,8 +82,8 @@ class Test_Image_Statistics(LoggedTestCase):
     def test_image_statistics(self):
         logger.info('Test_Image_Statistics test_image_statistics')
         image = createImageExample()
-        outputStats = imageStatistics(input=image)
-        self.assertTrue(outputStats["count"] == 12420)
+        outputStats = imageStatistics(input=image, histogramBins=10)
+        self.assertTrue(outputStats["nbPixel"] == 12420)
         self.assertTrue(outputStats["mean"] == -0.5)
         self.assertTrue(outputStats["median"] == -0.5)
         self.assertTrue(outputStats["sum"] == -6210)
@@ -90,6 +91,8 @@ class Test_Image_Statistics(LoggedTestCase):
         self.assertTrue(outputStats["maximum"] == 9)
         self.assertTrue(outputStats["variance"] == 33.25)
         self.assertTrue(outputStats["sigma"] == 5.766281297335398)
+        self.assertTrue(np.allclose(outputStats["hist"][0], [1242, 1242, 1242, 1242, 1242, 1242, 1242, 1242, 1242, 1242]))
+        self.assertTrue(np.allclose(outputStats["hist"][1], [-10. , -8.1, -6.2, -4.3, -2.4, -0.5, 1.4, 3.3, 5.2, 7.1, 9.]))
 
     def test_image_statistics_with_mask(self):
         logger.info('Test_Image_Statistics test_image_statistics_with_mask')
@@ -105,8 +108,8 @@ class Test_Image_Statistics(LoggedTestCase):
         mask = itk.image_from_array(mask)
         mask.SetOrigin([7, 3.4, -4.6])
         mask.SetSpacing([4, 2, 3.6])
-        outputStats = imageStatistics(input=image, mask=mask)
-        self.assertTrue(outputStats["count"] == 621)
+        outputStats = imageStatistics(input=image, mask=mask, histogramBins=5)
+        self.assertTrue(outputStats["nbPixel"] == 621)
         self.assertTrue(outputStats["mean"] == 1)
         self.assertTrue(outputStats["median"] == 1)
         self.assertTrue(outputStats["sum"] == 621)
@@ -114,6 +117,8 @@ class Test_Image_Statistics(LoggedTestCase):
         self.assertTrue(outputStats["maximum"] == 1)
         self.assertTrue(outputStats["variance"] == 0)
         self.assertTrue(outputStats["sigma"] == 0)
+        self.assertTrue(np.allclose(outputStats["hist"][0], [0, 0, 621, 0, 0]))
+        self.assertTrue(np.allclose(outputStats["hist"][1], [0.5, 0.7, 0.9, 1.1, 1.3, 1.5]))
 
     def test_image_statistics_with_mask_and_resample(self):
         logger.info('Test_Image_Statistics test_image_statistics_with_mask')
@@ -129,8 +134,8 @@ class Test_Image_Statistics(LoggedTestCase):
         mask = itk.image_from_array(mask)
         mask.SetOrigin([3, 3.4, -4.6])
         mask.SetSpacing([4, 2, 3.6])
-        outputStats = imageStatistics(input=image, mask=mask, resample=True)
-        self.assertTrue(outputStats["count"] == 594)
+        outputStats = imageStatistics(input=image, mask=mask, resample=True, histogramBins=7)
+        self.assertTrue(outputStats["nbPixel"] == 594)
         self.assertTrue(outputStats["mean"] == 1)
         self.assertTrue(outputStats["median"] == 1)
         self.assertTrue(outputStats["sum"] == 594)
@@ -138,3 +143,5 @@ class Test_Image_Statistics(LoggedTestCase):
         self.assertTrue(outputStats["maximum"] == 1)
         self.assertTrue(outputStats["variance"] == 0)
         self.assertTrue(outputStats["sigma"] == 0)
+        self.assertTrue(np.allclose(outputStats["hist"][0], [0, 0, 0, 594, 0, 0, 0]))
+        self.assertTrue(np.allclose(outputStats["hist"][1], [0.5, 0.64285714, 0.78571429, 0.92857143, 1.07142857, 1.21428571, 1.35714286, 1.5]))
