@@ -137,7 +137,15 @@ def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newst
 
     dsOutput.save_as(output)
 
+def printTags(dicomFile):
+    #Add tags in pydicom dictionay
+    new_dict_items = {
+        0x00281006: ('US', '1', "Smallest Image Pixel Value", '', 'SmallestImagePixelValue'),
+        0x00281007: ('US', '1', "Largest Image Pixel Value", '', 'LargestImagePixelValue'),
+    }
+    pydicom.datadict.DicomDictionary.update(new_dict_items)
 
+    return(pydicom.dcmread(dicomFile, force=True))
 
 #####################################################################################
 import unittest
