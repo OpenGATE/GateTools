@@ -12,8 +12,8 @@ distribution in proton PBS (primarily at Skandion, but it should work for
 other clinics as well).
 Authors: David Boersma and Pierre Granger
 """
-
-from .bounding_box import *
+from bounding_box import *
+#from .bounding_box import *     #SC XX RESET THIS
 #from bounding_import bounding_box
 import logging
 logger = logging.getLogger()
@@ -483,6 +483,8 @@ class region_of_interest(object):
                 logger.debug(f'roiname {self.roiname} corner counting: icz={icz} z={z:.3f} #inclusion={ncorners_in} #exclusion={ncorners_ex}')
                 ncorners += ncorners_in + ncorners_ex
         return ncorners
+    
+    
     def get_mask(self,img,zrange=None, corrected=True,pbar=None):
         """
         For a given image, compute for every voxel whether it is inside the ROI
@@ -516,11 +518,26 @@ class region_of_interest(object):
         else:
             logger.debug("{} going to get mask with 'uncorrected' binary weights".format(self.roiname))
             aroimask = np.zeros(dims[::-1],dtype=np.uint8)
+            
+            
         roimask = itk.image_from_array(aroimask)
         roimask.CopyInformation(img)
         orig = roimask.GetOrigin()
         space = roimask.GetSpacing()
         roisize=np.array(roimask.GetLargestPossibleRegion().GetSize())
+        
+        # Define directionality of each axis
+        directions = list( roimask.GetDirection()*(1,1,1) )
+        logger.debug("Axes directionality from patient orientation = {}".format(directions)    )
+        # Find centre of minimum corner voxel
+        orig_min_corner = []
+        for o,dim,s,direction in zip(orig,dims,space,directions):
+            if direction>0:
+                orig_min_corner.append(o)
+            else:
+                orig_min_corner.append(o-(dim-1)*s)        
+
+        
         if (roisize!=dims).any():
             logger.error("roimask size {} differs from img size {}".format(roisize,dims))
             raise RuntimeError("array size error!")
@@ -528,7 +545,7 @@ class region_of_interest(object):
         # check that the bounding box of this ROI is contained within the volume of the given image #
         #############################################################################################
         contained = True
-        for o,s,d,rmin,rmax in zip(orig,space,dims,self.bb.mincorner,self.bb.maxcorner):
+        for o,s,d,rmin,rmax in zip(orig_min_corner,space,dims,self.bb.mincorner,self.bb.maxcorner):
             contained &= (int(np.round(rmin-o)/s) in range(d))
             contained &= (int(np.round(rmax-o)/s) in range(d))
         if not contained:
@@ -538,8 +555,15 @@ class region_of_interest(object):
         #logger.debug("copied infor orig={} spacing={}".format(orig,space))
         # ITK: the "origin" has the coordinates of the *center* of the corner voxel
         # zmin and zmax are the z coordinates of the boundary of the volume
-        zmin = orig[2] - 0.5*space[2]
-        zmax = orig[2] + (dims[2]-0.5)*space[2]
+        # This will depend on the patient orientation / axis directionality
+        if directions[2]>0:
+            zmin = orig[2] - 0.5*space[2]
+            zmax = orig[2] + (dims[2]-0.5)*space[2]
+        else:
+            zmin = orig[2] + (0.5-dims[2])*space[2]
+            zmax = orig[2] + 0.5*space[2]
+
+        
         eps=0.001*np.abs(self.dz)
         #logger.debug("got point mesh")
         if zmin-eps>self.bb.zmax+self.dz or zmax+eps<self.bb.zmin-self.dz:
@@ -557,9 +581,12 @@ class region_of_interest(object):
                 logger.warn("WARNING: no overlap in (restricted) z ranges")
                 return roimask
         # logger.debug("zmin={} zmax={}".format(zmin,zmax))
+        
         # xpoints and ypoints contain the x/y coordinates of the voxel centers
-        xpoints=np.linspace(orig[0],orig[0]+space[0]*dims[0],dims[0],False)
-        ypoints=np.linspace(orig[1],orig[1]+space[1]*dims[1],dims[1],False)
+        # Meshgrid must match directionality of axes
+        xpoints=np.linspace(orig[0],orig[0]+directions[0]*space[0]*dims[0],dims[0],False)
+        ypoints=np.linspace(orig[1],orig[1]+directions[1]*space[1]*dims[1],dims[1],False)
+            
         xymesh = np.meshgrid(xpoints,ypoints)
         xyflat = np.array([(x,y) for x,y in zip(xymesh[0].flat,xymesh[1].flat)])
         clayer0 = self.contour_layers[0]
@@ -568,7 +595,10 @@ class region_of_interest(object):
         #logger.debug("z0={}".format(z0))
         #logger.debug("going to loop over z planes in image")
         for iz in range(dims[2]):
-            z = orig[2]+space[2]*iz # z coordinate in image/mask
+            
+            # z coordinate in image/mask, accounting for patient orientation/axes directionality
+            z = orig[2]+directions[2]*space[2]*iz                
+            
             if z<zrange[0] or z>zrange[1]:
                 continue
             icz = int(np.round((z-z0)/self.dz)) # layer index
@@ -613,6 +643,8 @@ class region_of_interest(object):
         self.masklist.append(roimask)
         logger.debug("returning mask")
         return roimask
+    
+    
     def get_dvh(self,img,nbins=100,dmin=None,dmax=None,zrange=None,debuglabel=None):
         logger.debug("starting dvh calculation")
         dims=np.array(img.GetLargestPossibleRegion().GetSize())
@@ -772,7 +804,9 @@ import hashlib
 import wget
 import tempfile
 import shutil
-from .logging_conf import LoggedTestCase
+
+
+from logging_conf import LoggedTestCase  ## ZZ SC REVERT THIS
 
 class Test_ROI(LoggedTestCase):
     def test_roi(self):
@@ -796,3 +830,67 @@ class Test_ROI(LoggedTestCase):
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("7fc957af4cc082330cf5d430bb4d0d09a7e3be9918472580db32b5a636d8c147" == new_hash)
         shutil.rmtree(tmpdirpath)
+
+
+
+
+
+
+def get_external_name( structure_file ):
+    """Get contour name of external patient contour"""
+    contour = ""
+    contains_bolus = False
+    ss = pydicom.dcmread( structure_file )    
+    for struct in ss.RTROIObservationsSequence:
+        if struct.RTROIInterpretedType.lower() == "external":
+            contour = struct.ROIObservationLabel
+            print("Found external: {}".format(contour))
+        elif struct.RTROIInterpretedType.lower() == "bolus":
+            print("\n\nWARNING: Bolus found. It will be overriden with air.\n")
+    if contour=="":
+        raise Exception("No external structure found. Exiting.")
+        exit(1)
+    #####contour="Body"
+    return contour
+
+
+
+
+if __name__=="__main__":
+    #testing changes
+
+    img_file = "HFP_ct.mhd"
+    structure_file = "HFP_struct.dcm"
+    
+    outmask = "mask.mhd"
+    outoverride = "airoverride.mhd"
+
+    img = itk.imread( img_file )
+    ds = pydicom.dcmread( structure_file )
+    
+    contour = get_external_name( structure_file )
+  
+    aroi = region_of_interest(ds,contour)
+    mask = aroi.get_mask(img, corrected=False)
+    itk.imwrite(mask, outmask)
+        
+    pix_mask = itk.array_view_from_image(mask)
+    pix_img = itk.array_view_from_image(img) 
+    
+    if( pix_mask.shape!=pix_img.shape ):
+        print( "Inconsistent shapes of mask and image"  )
+    
+    pix_img_flat = pix_img.flatten()
+    for i,val in enumerate( pix_mask.flatten() ):
+        if val==0:
+            pix_img_flat[i] = -1000
+    pix_img = pix_img_flat.reshape( pix_img.shape )
+    img_modified = itk.image_view_from_array( pix_img )
+    
+    img_modified.CopyInformation(img)
+
+    itk.imwrite(img_modified, outoverride )
+
+
+
+
