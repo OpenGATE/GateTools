@@ -35,9 +35,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--bins', '-b', default=1000, help='Number of dose bins for the histogram')
 @click.option('--label', '-l', default=1, help='Label of the pixels for the roi mask')
+@click.option('--usecm3', '-cm3', is_flag=True, help='The volume output is in cm3 instead of %')
+@click.option('--d', type=float, help='Compute DX')
+@click.option('--v', type=float, help='Compute VX')
 
 @gt.add_options(gt.common_options)
-def gt_dvh_main(dose, roi, output, bins, label, **kwargs):
+def gt_dvh_main(dose, roi, output, bins, label, usecm3, d, v, **kwargs):
     '''
     Tool to create dose volume histogram
 
@@ -46,6 +49,8 @@ def gt_dvh_main(dose, roi, output, bins, label, **kwargs):
     gt_dvh -d dose.mhd -r roi.mhd -o output
 
     Display without output option or save the graph to csv and png formats if output is set
+    If v is set, do not display and save the graph but print the VX, ie. the volume receiving at least XGy
+    If d is set, do not display and save the graph but print the DX, ie. the dose received by at least X% (or X cm3 is the flag is set) of the volume
     '''
 
     # logger
@@ -54,21 +59,36 @@ def gt_dvh_main(dose, roi, output, bins, label, **kwargs):
     doseImage = itk.imread(dose)
     roiImage = itk.imread(roi)
 
-    doseValues, volumePercentage = gt.createDVH(doseImage, roiImage, bins, label)
+    doseValues, volumePercentage = gt.createDVH(doseImage, roiImage, bins, label, usecm3)
 
-    plt.plot(doseValues, volumePercentage)
-    plt.ylabel('Volume %')
-    plt.xlabel('Dose Gy')
-    if output is None:
-        plt.show()
+    if v is not None:
+        volume = gt.computeV(doseValues, volumePercentage, v)
+        string = "V" + str(v) + " = " + str(volume)
+        if usecm3:
+            string += " cm3"
+        else:
+            string += " %"
+        print(string)
+    elif d is not None:
+        dose = gt.computeD(doseValues, volumePercentage, d)
+        print("D" + str(d) + " = " + str(dose) + " Gy")
     else:
-        plt.savefig(output+'.png')
-        with open(output+'.csv', 'w', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=';',
+        plt.plot(doseValues, volumePercentage)
+        if usecm3:
+            plt.ylabel('Volume cm3')
+        else:
+            plt.ylabel('Volume %')
+        plt.xlabel('Dose Gy')
+        if output is None:
+            plt.show()
+        else:
+            plt.savefig(output+'.png')
+            with open(output+'.csv', 'w', newline='') as csvfile:
+                spamwriter = csv.writer(csvfile, delimiter=';',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            spamwriter.writerow(['Dose Gy'] + ['Volume %'])
-            for x, y in zip(doseValues, volumePercentage):
-                spamwriter.writerow([x, y])
+                spamwriter.writerow(['Dose Gy'] + ['Volume %'])
+                for x, y in zip(doseValues, volumePercentage):
+                    spamwriter.writerow([x, y])
 
 
 # -----------------------------------------------------------------------------

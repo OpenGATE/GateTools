@@ -28,8 +28,7 @@ def gt_dicom_info_main(input, **kwargs):
     # logger
     gt.logging_conf(**kwargs)
 
-    ds = pydicom.dcmread(input)
-    print(ds)
+    print(gt.printTags(input))
 
 
 # -----------------------------------------------------------------------------
