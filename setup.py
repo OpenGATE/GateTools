@@ -25,6 +25,7 @@ setuptools.setup(
         'matplotlib',
         'click',
         'numpy',
+        'scipy',
         'pydicom',
         'tqdm',
         'colored',

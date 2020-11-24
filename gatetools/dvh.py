@@ -14,6 +14,7 @@ import itk
 import numpy as np
 import math
 import logging
+import scipy.interpolate
 logger=logging.getLogger(__name__)
 
 def createDVH(dose=None, roi=None, bins=1000, label=1, useCm3=False):
@@ -60,6 +61,24 @@ def createDVH(dose=None, roi=None, bins=1000, label=1, useCm3=False):
         volumePercentage = volumePercentage*volumeRoi/100.0
 
     return (doseValues, volumePercentage)
+
+def computeD(doseValues, volumePercentage, D):
+    volumePercentage = np.flip(volumePercentage)
+    doseValues = np.flip(doseValues)
+    #Remove multiple values:
+    indexToRemove = []
+    for index in range(1, len(volumePercentage)):
+        if volumePercentage[index] == volumePercentage[index-1]:
+            indexToRemove += [index-1]
+    volumePercentage = np.delete(volumePercentage, indexToRemove)
+    doseValues = np.delete(doseValues, indexToRemove)
+
+    doseInterpolated = scipy.interpolate.interp1d(volumePercentage, doseValues, kind='cubic', assume_sorted=False)
+    return(doseInterpolated(D))
+
+def computeV(doseValues, volumePercentage, V):
+    volumeInterpolated = scipy.interpolate.interp1d(doseValues, volumePercentage, kind='cubic')
+    return(volumeInterpolated(V))
 
 
 #####################################################################################
@@ -111,5 +130,35 @@ class Test_DVH(LoggedTestCase):
         self.assertTrue(np.all(volumePercentage <= 115120))
         self.assertTrue(len(doseValues) == 100)
         self.assertTrue(len(volumePercentage) == 100)
+        shutil.rmtree(tmpdirpath)
+
+    def test_dvh_compute_v(self):
+        logger.info('Test_DVH test_dvh_compute_v')
+        tmpdirpath = tempfile.mkdtemp()
+        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtstruct.dcm", out=tmpdirpath, bar=None)
+        structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
+        filenameDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        doseImage = gt.read_3d_dicom([os.path.join(tmpdirpath, filenameDose)])
+        transformImage = gt.applyTransformation(input=doseImage, neworigin=[-176, -320, -235])
+
+        aroi = gt.region_of_interest(structset, "PTV")
+        mask = aroi.get_mask(transformImage, corrected=False)
+        doseValues, volumePercentage = createDVH(transformImage, mask)
+        self.assertTrue(np.isclose(computeV(doseValues, volumePercentage, 10), 75.33129165068235))
+        shutil.rmtree(tmpdirpath)
+
+    def test_dvh_compute_d(self):
+        logger.info('Test_DVH test_dvh_compute_d')
+        tmpdirpath = tempfile.mkdtemp()
+        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtstruct.dcm", out=tmpdirpath, bar=None)
+        structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
+        filenameDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        doseImage = gt.read_3d_dicom([os.path.join(tmpdirpath, filenameDose)])
+        transformImage = gt.applyTransformation(input=doseImage, neworigin=[-176, -320, -235])
+
+        aroi = gt.region_of_interest(structset, "PTV")
+        mask = aroi.get_mask(transformImage, corrected=False)
+        doseValues, volumePercentage = createDVH(transformImage, mask)
+        self.assertTrue(np.isclose(computeD(doseValues, volumePercentage, 95), 0.15428162737918327))
         shutil.rmtree(tmpdirpath)
 
