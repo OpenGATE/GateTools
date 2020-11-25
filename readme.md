@@ -30,6 +30,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_image_resize`             | Resize an image                                           |
 | `gt_image_statistics`         | Statistics of an image                                    |
 | `gt_image_uncertainty`        | Compute statistical uncertainty                           |
+| `gt_merge_root`               | Merge root files                                          |
 | `gt_phsp_convert`             | Convert a phase space file from root to npy               |
 | `gt_phsp_info`                | Display information about a phase space file              |
 | `gt_phsp_merge`               | Merge two phase space files (output in npy only)          |
