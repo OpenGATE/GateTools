@@ -449,6 +449,8 @@ class region_of_interest(object):
             vol += cvol
             logger.debug("{}. got volume = dz * area = {} * {} = {}, sum={}".format(i,self.dz,area,cvol,vol))
         return vol
+    
+    
     def get_ncorners(self,img,zrange=None):
         """
         Auxiliary method for using `get_mask` in a command line application.
@@ -464,16 +466,29 @@ class region_of_interest(object):
         if len(dims)!=3:
             logger.error("ERROR only 3d images supported")
             return 0
+        
         orig = img.GetOrigin()
         space = img.GetSpacing()
-        zmin = orig[2] - 0.5*space[2]
-        zmax = orig[2] + (dims[2]-0.5)*space[2]
+        
+        # Axes directionality due to patient orientation
+        directions = list( img.GetDirection()*(1,1,1) )
+
+        # Get min and max z coords        
+        if directions[2]>0:
+            zmin = orig[2] - 0.5*space[2]
+            zmax = orig[2] + (dims[2]-0.5)*space[2]
+        else:
+            zmin = orig[2] + (0.5-dims[2])*space[2]
+            zmax = orig[2] + 0.5*space[2]            
+        
         if zrange is None:
             zrange=(zmin,zmax)
         z0 = self.contour_layers[0].z
         ncorners=0
         for iz in range(dims[2]):
-            z = orig[2]+space[2]*iz # z coordinate in image/mask
+            
+            z = orig[2] + directions[2]*space[2]*iz # z coordinate in image/mask
+            
             if z<zrange[0] or z>zrange[1]:
                 continue
             icz = int(np.round((z-z0)/self.dz)) # layer index
@@ -871,26 +886,32 @@ if __name__=="__main__":
     contour = get_external_name( structure_file )
   
     aroi = region_of_interest(ds,contour)
-    mask = aroi.get_mask(img, corrected=False)
-    itk.imwrite(mask, outmask)
-        
-    pix_mask = itk.array_view_from_image(mask)
-    pix_img = itk.array_view_from_image(img) 
     
-    if( pix_mask.shape!=pix_img.shape ):
-        print( "Inconsistent shapes of mask and image"  )
     
-    pix_img_flat = pix_img.flatten()
-    for i,val in enumerate( pix_mask.flatten() ):
-        if val==0:
-            pix_img_flat[i] = -1000
-    pix_img = pix_img_flat.reshape( pix_img.shape )
-    img_modified = itk.image_view_from_array( pix_img )
+    print(aroi.get_ncorners(img))
     
-    img_modified.CopyInformation(img)
-
-    itk.imwrite(img_modified, outoverride )
-
+    
+#    
+#    mask = aroi.get_mask(img, corrected=False)
+#    itk.imwrite(mask, outmask)
+#        
+#    pix_mask = itk.array_view_from_image(mask)
+#    pix_img = itk.array_view_from_image(img) 
+#    
+#    if( pix_mask.shape!=pix_img.shape ):
+#        print( "Inconsistent shapes of mask and image"  )
+#    
+#    pix_img_flat = pix_img.flatten()
+#    for i,val in enumerate( pix_mask.flatten() ):
+#        if val==0:
+#            pix_img_flat[i] = -1000
+#    pix_img = pix_img_flat.reshape( pix_img.shape )
+#    img_modified = itk.image_view_from_array( pix_img )
+#    
+#    img_modified.CopyInformation(img)
+#
+#    itk.imwrite(img_modified, outoverride )
+#
 
 
 
