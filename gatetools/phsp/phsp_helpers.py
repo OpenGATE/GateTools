@@ -393,6 +393,7 @@ from gatetools.logging_conf import LoggedTestCase
 
 class Test_Phsp(LoggedTestCase):
     def test_phsp_convert(self):
+        logger.info('Test_Phsp test_phsp_convert')
         tmpdirpath = tempfile.mkdtemp()
         filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/phsp.root", out=tmpdirpath, bar=None)
         data, read_keys, m = load(os.path.join(tmpdirpath, filenameRoot), -1)
@@ -406,6 +407,7 @@ class Test_Phsp(LoggedTestCase):
         shutil.rmtree(tmpdirpath)
 
     def test_phsp_info(self):
+        logger.info('Test_Phsp test_phsp_info')
         tmpdirpath = tempfile.mkdtemp()
         filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/phsp.root", out=tmpdirpath, bar=None)
         data, read_keys, m = load(os.path.join(tmpdirpath, filenameRoot), -1)
