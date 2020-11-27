@@ -13,7 +13,7 @@ other clinics as well).
 Authors: David Boersma and Pierre Granger
 """
 
-from bounding_box import *
+from .bounding_box import *
 #from bounding_import bounding_box
 import logging
 logger = logging.getLogger()
@@ -821,7 +821,7 @@ import wget
 import tempfile
 import shutil
 
-from logging_conf import LoggedTestCase
+from .logging_conf import LoggedTestCase
 
 class Test_ROI(LoggedTestCase):
     def test_roi(self):
