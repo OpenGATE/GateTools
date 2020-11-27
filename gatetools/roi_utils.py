@@ -12,8 +12,8 @@ distribution in proton PBS (primarily at Skandion, but it should work for
 other clinics as well).
 Authors: David Boersma and Pierre Granger
 """
+
 from bounding_box import *
-#from .bounding_box import *     #SC XX RESET THIS
 #from bounding_import bounding_box
 import logging
 logger = logging.getLogger()
@@ -500,7 +500,7 @@ class region_of_interest(object):
         return ncorners
     
     
-    def get_mask(self,img,zrange=None, corrected=True,pbar=None):
+    def get_mask(self,img,zrange=None, corrected=False, pbar=None):
         """
         For a given image, compute for every voxel whether it is inside the ROI
         or not.  The `zrange` can be used to limit the z-range of the ROI.  If
@@ -621,7 +621,8 @@ class region_of_interest(object):
                 logger.debug("INSIDE roi: z index mask/image iz={} (z={}) layer index icz={} (z={})".format(iz,z,icz,self.contour_layers[icz].z))
                 flatmask = self.contour_layers[icz].contains_points(xyflat)
                 logger.debug("got {} points inside".format(np.sum(flatmask)))
-                if corrected:
+                
+                if corrected:  # What is this?
                     flatmask = flatmask.astype(float)
                     flatmask = self.contour_layers[icz].correct_mask(xymesh, flatmask, space)
                     for iflat,b in enumerate(flatmask):
@@ -629,7 +630,7 @@ class region_of_interest(object):
                             continue
                         ix = iflat % dims[0]
                         iy = iflat // dims[0]
-                        roimask[ix,iy,iz]=b
+                        roimask[ix,iy,iz]=b    # ERROR; roimask is an itk image object
                 else:
                     flatmask = flatmask.astype(int)
                     aroimask[iz,:,:] = flatmask.reshape(dims[1],dims[0])[:,:]
@@ -820,8 +821,7 @@ import wget
 import tempfile
 import shutil
 
-
-from logging_conf import LoggedTestCase  ## ZZ SC REVERT THIS
+from logging_conf import LoggedTestCase
 
 class Test_ROI(LoggedTestCase):
     def test_roi(self):
@@ -846,72 +846,6 @@ class Test_ROI(LoggedTestCase):
             self.assertTrue("7fc957af4cc082330cf5d430bb4d0d09a7e3be9918472580db32b5a636d8c147" == new_hash)
         shutil.rmtree(tmpdirpath)
 
-
-
-
-
-
-def get_external_name( structure_file ):
-    """Get contour name of external patient contour"""
-    contour = ""
-    contains_bolus = False
-    ss = pydicom.dcmread( structure_file )    
-    for struct in ss.RTROIObservationsSequence:
-        if struct.RTROIInterpretedType.lower() == "external":
-            contour = struct.ROIObservationLabel
-            print("Found external: {}".format(contour))
-        elif struct.RTROIInterpretedType.lower() == "bolus":
-            print("\n\nWARNING: Bolus found. It will be overriden with air.\n")
-    if contour=="":
-        raise Exception("No external structure found. Exiting.")
-        exit(1)
-    #####contour="Body"
-    return contour
-
-
-
-
-if __name__=="__main__":
-    #testing changes
-
-    img_file = "HFP_ct.mhd"
-    structure_file = "HFP_struct.dcm"
-    
-    outmask = "mask.mhd"
-    outoverride = "airoverride.mhd"
-
-    img = itk.imread( img_file )
-    ds = pydicom.dcmread( structure_file )
-    
-    contour = get_external_name( structure_file )
-  
-    aroi = region_of_interest(ds,contour)
-    
-    
-    print(aroi.get_ncorners(img))
-    
-    
-#    
-#    mask = aroi.get_mask(img, corrected=False)
-#    itk.imwrite(mask, outmask)
-#        
-#    pix_mask = itk.array_view_from_image(mask)
-#    pix_img = itk.array_view_from_image(img) 
-#    
-#    if( pix_mask.shape!=pix_img.shape ):
-#        print( "Inconsistent shapes of mask and image"  )
-#    
-#    pix_img_flat = pix_img.flatten()
-#    for i,val in enumerate( pix_mask.flatten() ):
-#        if val==0:
-#            pix_img_flat[i] = -1000
-#    pix_img = pix_img_flat.reshape( pix_img.shape )
-#    img_modified = itk.image_view_from_array( pix_img )
-#    
-#    img_modified.CopyInformation(img)
-#
-#    itk.imwrite(img_modified, outoverride )
-#
 
 
 
