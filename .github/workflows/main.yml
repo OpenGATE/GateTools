@@ -1,0 +1,46 @@
+
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+        ITK_VERSION: [5.1.0, pre]
+        exclude:
+          - python-version: 3.8
+            ITK_VERSION: 5.0.0
+
+
+    steps:
+    - name: Checkout github repo
+      uses: actions/checkout@v2
+      with:
+          lfs: true
+    - name: Checkout LFS objects
+      run: git lfs checkout
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+          python -m pip install --upgrade pip
+          if [ ${{ matrix.ITK_VERSION }} == 'pre' ];
+              then pip install itk --pre;
+              else pip install itk==${{ matrix.ITK_VERSION }};
+          fi
+          pip install -e .
+          pip freeze
+    - name: Run the tests
+      run: |
+          python -m unittest gatetools -v
+          python -m unittest gatetools.phsp -v
