@@ -20,7 +20,7 @@ This module provides a function to crop image
 
 
 import gatetools as gt
-import uproot
+import uproot3 as uproot
 import numpy as np
 import tqdm
 import logging
@@ -70,7 +70,7 @@ import tempfile
 import wget
 import os
 import shutil
-import uproot
+import uproot3 as uproot
 from .logging_conf import LoggedTestCase
 
 class Test_MergeRoot(LoggedTestCase):

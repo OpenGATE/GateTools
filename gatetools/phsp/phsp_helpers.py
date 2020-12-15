@@ -8,7 +8,7 @@
 import numpy as np
 import sys
 import os
-import uproot
+import uproot3 as uproot
 import time
 import tokenize
 from io import BytesIO
