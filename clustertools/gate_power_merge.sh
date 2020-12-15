@@ -102,8 +102,8 @@ print "ElementType = MET_INT";
 /name of data file/ { print "ElementDataFile = " $2; }' "${input_interfile}" >> "${output_mhd}"
 }
 
-rootMerger="clitkMergeRootFiles"
-test -x "./clitkMergeRootFiles" && rootMerger="./clitkMergeRootFiles"
+rootMerger="gt_merge_root"
+test -x "./gt_merge_root" && rootMerger="./gt_merge_root"
 
 function merge_root {
     local merged="$1"
@@ -128,7 +128,7 @@ function merge_root {
         local partial="$1"
         shift
         let count++
-        local arguments=" -i ${partial} ${arguments}"
+        local arguments=" ${partial} ${arguments}"
     done
     ${rootMerger} ${arguments} > /dev/null || error "error while calling ${rootMerger}"
     echo "  ${indent}merged ${count} files"
@@ -266,8 +266,8 @@ function merge_txt_image {
     echo "  ${indent}merged ${count} files"
 }
 
-hdrImageMerger="clitkImageArithm"
-test -x "./clitkImageArithm" && hdrImageMerger="./clitkImageArithm"
+hdrImageMerger="gt_image_arithm"
+test -x "./gt_image_arithm" && hdrImageMerger="./gt_image_arithm"
 
 function merge_hdr_image {
     local merged="$1"
@@ -294,14 +294,14 @@ function merge_hdr_image {
         fi
 
         update_bar ${count} "adding ${partial}"
-        ${hdrImageMerger} -t 0 -i "${partial}" -j "${merged}" -o "${merged}" 2> /dev/null > /dev/null || warning "error while calling ${hdrImageMerger}"
+        ${hdrImageMerger} -O sum -o "${merged}" "${partial}" "${merged}" 2> /dev/null > /dev/null || warning "error while calling ${hdrImageMerger}"
     done
     end_bar
     echo "  ${indent}merged ${count} files"
 }
 
-mhdImageMerger="clitkImageArithm"
-test -x "./clitkImageArithm" && mhdImageMerger="./clitkImageArithm"
+mhdImageMerger="gt_image_arithm"
+test -x "./gt_image_arithm" && mhdImageMerger="./gt_image_arithm"
 
 function merge_mhd_image {
     local merged="$1"
@@ -332,7 +332,7 @@ function merge_mhd_image {
         fi
 
         update_bar ${count} "adding ${partial}"
-        ${mhdImageMerger} -t 0 -i "${partial}" -j "${merged}" -o "${merged}" 2> /dev/null > /dev/null || warning "error while calling ${mhdImageMerger}"
+        ${mhdImageMerger} -O sum -o "${merged}" "${partial}" "${merged}" 2> /dev/null > /dev/null || warning "error while calling ${mhdImageMerger}"
         if test "$last_character" = "d" && test "${merged_bin}" != "${merged_bin%.*}.${partial_bin##*.}"
         then
             mv "${merged_bin}" "${merged_bin%.*}.${partial_bin##*.}"
