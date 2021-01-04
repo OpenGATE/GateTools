@@ -10,6 +10,8 @@ import platform
 import subprocess
 import pkg_resources
 import os
+import itk
+import numpy as np
 
 # -----------------------------------------------------------------------------
 def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
@@ -52,3 +54,10 @@ def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
             print('{:<19} {}'.format(g, os.environ[g]))
         except:
             print('{:<19} NOT FOUND'.format(g))
+
+
+def img_size(image):
+    return np.array(image.GetLargestPossibleRegion().GetSize())
+
+def img_spacing(image):
+    return np.array(image.GetSpacing())
