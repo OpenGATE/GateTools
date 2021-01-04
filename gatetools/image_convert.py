@@ -227,7 +227,7 @@ def read_3d_dicom(dicomFile, flip=False):
 
 def image_convert(inputImage, pixeltype=None):
     """
-    Compute relative statistical uncertainty 
+    Convert the pixelType of the image
 
     - inputImage: input itk image to convert
     - pixeltype: string representing the type of the output pixel:
@@ -244,7 +244,8 @@ def image_convert(inputImage, pixeltype=None):
         OutputType = itk.Image[itk.ctype(pixeltype), inputImage.GetImageDimension()]
         castFilter = itk.CastImageFilter[InputType, OutputType].New()
         castFilter.SetInput(inputImage)
-        return castFilter
+        castFilter.Update()
+        return castFilter.GetOutput()
 
     return inputImage
 
