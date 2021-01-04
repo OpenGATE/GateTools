@@ -44,7 +44,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--pad', '-p', help='Set the padding pixel value', default=0.0)
 
 @gt.add_options(gt.common_options)
-def gt_image_resize_main(input, output, newsize, newsize_mm, pad, interpolation_mode, bspline_order, **kwargs):
+def gt_image_resize_main(input, output, newsize, newsize_mm, pad, **kwargs):
     '''
     Convenient method to resize an image (pad or crop) around the center.
     If the new size is larger than before, the image is padded at the borders.
