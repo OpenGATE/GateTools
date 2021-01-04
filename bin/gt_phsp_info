@@ -55,7 +55,15 @@ def gt_phsp_info(filename, n, **kwargs):
     i=0
     for k in keys:
         x = data[:,i]
-        print('{:10} {:10.3f} {:10.3f} {:10.3f} {:10.3f}'.format(k, np.amin(x), np.amax(x), np.mean(x), np.std(x)))
+        try:
+            xmin = np.amin(x)
+            xmax = np.amax(x)
+            xmean = np.mean(x)
+            xstd = np.std(x)
+            print(f'{k:10} {xmin:10.3f} {xmax:10.3f} {xmean:10.3f} {xstd:10.3f}')
+        except:
+            # probably string values
+            pass
         i = i+1
 
 # --------------------------------------------------------------------------
