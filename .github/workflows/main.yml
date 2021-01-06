@@ -46,7 +46,7 @@ jobs:
     - name: Create wheel
       if: startsWith(github.ref, 'refs/tags')
       run: |
-          pip install bdist_wheel
+          pip install wheel
           python setup.py sdist bdist_wheel
     - name: Publish distribution to PyPI
       if: startsWith(github.ref, 'refs/tags')
