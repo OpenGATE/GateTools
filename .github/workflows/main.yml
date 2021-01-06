@@ -15,10 +15,6 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8]
         ITK_VERSION: [5.1.0, pre]
-        exclude:
-          - python-version: 3.8
-            ITK_VERSION: 5.0.0
-
 
     steps:
     - name: Checkout github repo
@@ -44,3 +40,13 @@ jobs:
       run: |
           python -m unittest gatetools -v
           python -m unittest gatetools.phsp -v
+    - name: Create wheel
+      if: startsWith(github.ref, 'refs/tags')
+      run: |
+          python setup.py sdist bdist_wheel
+    - name: Publish distribution to PyPI
+      if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        skip_existing: true
