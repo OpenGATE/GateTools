@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.9.6",
+    version="0.9.13",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
@@ -25,11 +25,12 @@ setuptools.setup(
         'matplotlib',
         'click',
         'numpy',
+        'scipy',
         'pydicom',
         'tqdm',
         'colored',
         'itk>=5.1.0',
-        'uproot',
+        'uproot3',
         'wget',
     ],
     scripts=[
@@ -47,6 +48,7 @@ setuptools.setup(
         'bin/gt_image_gauss',
         'bin/gt_image_resize',
         'bin/gt_dvh',
+        'bin/gt_merge_root',
 
         'bin/gt_dicom_rt_struct_to_image',
         'bin/gt_dicom_rt_pbs2gate',

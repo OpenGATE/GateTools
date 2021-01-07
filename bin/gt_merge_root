@@ -7,30 +7,40 @@
 # -----------------------------------------------------------------------------
 
 import gatetools as gt
-import pydicom
 import click
+import sys
+import os
 import logging
 logger=logging.getLogger(__name__)
+
 
 # -----------------------------------------------------------------------------
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
 
-@click.option('--input', '-i', help='Input dicom filename', required=True,
-                type=click.Path(dir_okay=False))
+@click.option('--output','-o', help='Output root filename', required=True,
+              type=click.Path(dir_okay=False))
+@click.argument('inputsroot', nargs=-1, type=click.Path(dir_okay=False))
 
 @gt.add_options(gt.common_options)
-def gt_dicom_info_main(input, **kwargs):
+def gt_merge_root_main(output, inputsroot, **kwargs):
     '''
-    Print the tag vlaues of the dicom input
+    Tool to merge root files and create a new output root file
+
+    eg:
+
+    gt_merge_root -d output.root root1.root root2.root
+
     '''
 
     # logger
     gt.logging_conf(**kwargs)
-
-    print(gt.printTags(input))
+    inputs = [x for x in inputsroot]
+    print("Merge these root files: ")
+    print(inputs)
+    gt.merge_root(inputs, output)
 
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    gt_dicom_info_main()
+    gt_merge_root_main()

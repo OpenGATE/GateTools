@@ -53,9 +53,9 @@ def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newst
     writer.Update()
 
     #Open the new dicom and change some dicom tags according dicom input or not
-    dsImage = pydicom.dcmread(output)
+    dsImage = pydicom.dcmread(output, force=True)
     if dicom is not None:
-        dsDicom = pydicom.dcmread(dicom)
+        dsDicom = pydicom.dcmread(dicom, force=True)
         dsOutput = copy.deepcopy(dsDicom)
     else:
         dsOutput = copy.deepcopy(dsImage)
@@ -85,8 +85,8 @@ def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newst
             orientation += [input.GetDirection()(i, j)]
     insertTag(dsOutput, 0x00200037, orientation, 'DS') #Image Orientation (Patient)
     insertTag(dsOutput, 0x00280030, sp, 'DS') #Pixel Spacing
-    insertTag(dsOutput, 0x00281006, 0, 'US') #Smallest Image Pixel Value
-    insertTag(dsOutput, 0x00281007, 65535, 'US') #Largest Image Pixel Value
+    insertTag(dsOutput, 0x00280106, 0, 'US') #Smallest Image Pixel Value
+    insertTag(dsOutput, 0x00280107, 65535, 'US') #Largest Image Pixel Value
     insertTag(dsOutput, 0x00281050, (max + min)/2.0, 'DS') #Window Center
     insertTag(dsOutput, 0x00281051, max - min, 'DS') #Window Width
     insertTag(dsOutput, 0x00281052, intercept, 'DS') #Rescale Intercept
@@ -137,7 +137,8 @@ def writeDicom(input, dicom=None, output="output.dcm", newseriesuid=False, newst
 
     dsOutput.save_as(output)
 
-
+def printTags(dicomFile):
+    return(pydicom.dcmread(dicomFile, force=True))
 
 #####################################################################################
 import unittest

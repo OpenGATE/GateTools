@@ -65,7 +65,7 @@ class dicom_properties:
             self.io = slice[0x20, 0x37].value #Image Orientation
         elif Tag(0x54, 0x22) in slice and Tag(0x20, 0x37) in slice[0x54, 0x22][0]:
             self.io = slice[0x54, 0x22][0][0x20, 0x37].value #Image Orientation
-        if self.io == "":
+        if self.io == "" or self.io == None:
             self.io = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
         #orientation = [io[0], io[1], io[2], io[3], io[4], io[5]]
         if Tag(0x28, 0x1052) in slice:
