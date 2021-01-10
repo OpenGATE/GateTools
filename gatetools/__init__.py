@@ -17,3 +17,5 @@ from .gauss_filter import *
 from .image_resize import *
 from .dvh import *
 from .merge_root import *
+from .pet_helpers_uproot3 import *
+from .pet_helpers import *

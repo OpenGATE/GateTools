@@ -31,6 +31,7 @@ setuptools.setup(
         'colored',
         'itk>=5.1.0',
         'uproot3',
+        'colorama',
         'wget',
     ],
     scripts=[
@@ -58,6 +59,9 @@ setuptools.setup(
         'bin/gt_phsp_merge',
         'bin/gt_phsp_plot',
         'bin/gt_phsp_peaks',
+
+        'bin/gt_pet_necr',
+        'bin/gt_pet_merge_root_output',
     ]
 )
 
