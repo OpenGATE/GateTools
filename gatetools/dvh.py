@@ -98,9 +98,9 @@ class Test_DVH(LoggedTestCase):
     def test_dvh(self):
         logger.info('Test_DVH test_dvh')
         tmpdirpath = tempfile.mkdtemp()
-        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtstruct.dcm", out=tmpdirpath, bar=None)
+        filenameStruct = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtstruct.dcm?inline=false", out=tmpdirpath, bar=None)
         structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
-        filenameDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        filenameDose = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtdose.dcm?inline=false", out=tmpdirpath, bar=None)
         doseImage = gt.read_3d_dicom([os.path.join(tmpdirpath, filenameDose)])
         transformImage = gt.applyTransformation(input=doseImage, neworigin=[-176, -320, -235])
 
@@ -117,9 +117,9 @@ class Test_DVH(LoggedTestCase):
     def test_dvh_volume(self):
         logger.info('Test_DVH test_dvh_volume')
         tmpdirpath = tempfile.mkdtemp()
-        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtstruct.dcm", out=tmpdirpath, bar=None)
+        filenameStruct = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtstruct.dcm?inline=false", out=tmpdirpath, bar=None)
         structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
-        filenameDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        filenameDose = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtdose.dcm?inline=false", out=tmpdirpath, bar=None)
         doseImage = gt.read_3d_dicom([os.path.join(tmpdirpath, filenameDose)])
         transformImage = gt.applyTransformation(input=doseImage, neworigin=[-176, -320, -235])
 
@@ -135,9 +135,9 @@ class Test_DVH(LoggedTestCase):
     def test_dvh_compute_v(self):
         logger.info('Test_DVH test_dvh_compute_v')
         tmpdirpath = tempfile.mkdtemp()
-        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtstruct.dcm", out=tmpdirpath, bar=None)
+        filenameStruct = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtstruct.dcm?inline=false", out=tmpdirpath, bar=None)
         structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
-        filenameDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        filenameDose = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtdose.dcm?inline=false", out=tmpdirpath, bar=None)
         doseImage = gt.read_3d_dicom([os.path.join(tmpdirpath, filenameDose)])
         transformImage = gt.applyTransformation(input=doseImage, neworigin=[-176, -320, -235])
 
@@ -150,9 +150,9 @@ class Test_DVH(LoggedTestCase):
     def test_dvh_compute_d(self):
         logger.info('Test_DVH test_dvh_compute_d')
         tmpdirpath = tempfile.mkdtemp()
-        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtstruct.dcm", out=tmpdirpath, bar=None)
+        filenameStruct = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtstruct.dcm?inline=false", out=tmpdirpath, bar=None)
         structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
-        filenameDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        filenameDose = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtdose.dcm?inline=false", out=tmpdirpath, bar=None)
         doseImage = gt.read_3d_dicom([os.path.join(tmpdirpath, filenameDose)])
         transformImage = gt.applyTransformation(input=doseImage, neworigin=[-176, -320, -235])
 

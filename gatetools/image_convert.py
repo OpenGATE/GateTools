@@ -302,7 +302,7 @@ class Test_Convert(LoggedTestCase):
         shutil.rmtree(tmpdirpath)
     def test_convert_rtDose(self):
         tmpdirpath = tempfile.mkdtemp()
-        filenameRTDose = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        filenameRTDose = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtdose.dcm?inline=false", out=tmpdirpath, bar=None)
         convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filenameRTDose)])
         itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
         with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
@@ -312,7 +312,7 @@ class Test_Convert(LoggedTestCase):
         shutil.rmtree(tmpdirpath)
     def test_convert_dicom(self):
         tmpdirpath = tempfile.mkdtemp()
-        filename = wget.download("https://github.com/OpenGATE/GateTools/blob/master/dataTest/tomoSPECT.dcm?raw=true", out=tmpdirpath, bar=None)
+        filename = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/tomoSPECT.dcm?inline=false", out=tmpdirpath, bar=None)
         convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filename)])
         itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
         with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
@@ -322,7 +322,7 @@ class Test_Convert(LoggedTestCase):
         shutil.rmtree(tmpdirpath)
     def test_convert_dicom_flip(self):
         tmpdirpath = tempfile.mkdtemp()
-        filename = wget.download("https://github.com/OpenGATE/GateTools/blob/master/dataTest/tomoSPECT.dcm?raw=true", out=tmpdirpath, bar=None)
+        filename = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/tomoSPECT.dcm?inline=false", out=tmpdirpath, bar=None)
         convertedImage = read_3d_dicom([os.path.join(tmpdirpath, filename)], flip=True)
         itk.imwrite(convertedImage, os.path.join(tmpdirpath, "testConvert.mha"))
         with open(os.path.join(tmpdirpath, "testConvert.mha"),"rb") as fnew:
