@@ -3,6 +3,8 @@
 
 Install with : `pip install gatetools`
 
+Clone the repository with `git clone --recusive` or `git submodule update --init`
+
 Example of usage:
 ```
 gt_gate_info
