@@ -4,7 +4,6 @@
 import uproot4
 import click
 import gatetools as gt
-from hist import Hist
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -45,13 +44,15 @@ def pet_necr(root_filename):
         exit(0)
 
     # Compute NECR (Noise Equivalent Count Rate)
-    Rt = data.trues_count / d.stop_time_sec
-    Rtot = data.prompts_count / d.stop_time_sec
-    Rsc = data.scatter_count / d.stop_time_sec
+    duration = d.stop_time_sec - d.start_time_sec
+    Rt = data.trues_count / duration
+    Rtot = data.prompts_count / duration
+    Rsc = data.scatter_count / duration
     necr = Rt ** 2 / Rtot
     sf = Rsc / (Rt + Rsc)
-    print(f'NECR             {necr}')
-    print(f'ScatterFraction  {sf}')
+    print(f'Simulation time  {duration} sec')
+    print(f'NECR             {necr} counts.s-1')
+    print(f'ScatterFraction  {sf*100.0} %')
 
 
 # --------------------------------------------------------------------------

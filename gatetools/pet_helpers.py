@@ -8,6 +8,7 @@ def get_pet_data(root_file):
         data.total_nb_primaries = data_pet['total_nb_primaries'].array(library='numpy')[0]
         data.latest_event_ID = data_pet['latest_event_ID'].array(library='numpy')[0]
         data.stop_time_sec = data_pet['stop_time_sec'].array(library='numpy')[0]
+        data.start_time_sec = data_pet['start_time_sec'].array(library='numpy')[0]
         return data
     except:
         return False
