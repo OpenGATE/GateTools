@@ -166,7 +166,7 @@ class Test_Write_Dicom(LoggedTestCase):
         image = createImageExample()
         tmpdirpath = tempfile.mkdtemp()
         itk.imwrite(image, os.path.join(tmpdirpath, "input.mhd"))
-        filenameDcm = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtdose.dcm", out=tmpdirpath, bar=None)
+        filenameDcm = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtdose.dcm?inline=false", out=tmpdirpath, bar=None)
         writeDicom(image, dicom = os.path.join(tmpdirpath, filenameDcm), output = os.path.join(tmpdirpath, "output.dcm"))
         convertedDicom = gt.read_3d_dicom([os.path.join(tmpdirpath, "output.dcm")])
         itk.imwrite(convertedDicom, os.path.join(tmpdirpath, "output.mhd"))

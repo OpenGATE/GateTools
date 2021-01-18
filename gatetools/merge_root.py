@@ -77,7 +77,7 @@ class Test_MergeRoot(LoggedTestCase):
     def test_merge_root(self):
         logger.info('Test_MergeRoot test_merge_root')
         tmpdirpath = tempfile.mkdtemp()
-        filenameRoot = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/phsp.root", out=tmpdirpath, bar=None)
+        filenameRoot = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/phsp.root?inline=false", out=tmpdirpath, bar=None)
         gt.merge_root([filenameRoot, filenameRoot],  os.path.join(tmpdirpath, "output.root"))
         input = uproot.open(filenameRoot)
         output = uproot.open(os.path.join(tmpdirpath, "output.root"))

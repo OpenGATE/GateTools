@@ -777,12 +777,12 @@ from .logging_conf import LoggedTestCase
 class Test_ROI(LoggedTestCase):
     def test_roi(self):
         tmpdirpath = tempfile.mkdtemp()
-        filenameStruct = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/rtstruct.dcm", out=tmpdirpath, bar=None)
+        filenameStruct = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtstruct.dcm?inline=false", out=tmpdirpath, bar=None)
         structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
 
         # roi names
         roi_names = list_roinames(structset)
-        filenameCT = wget.download("https://github.com/OpenGATE/GateTools/raw/master/dataTest/ct.mha", out=tmpdirpath, bar=None)
+        filenameCT = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/ct.mha?inline=false", out=tmpdirpath, bar=None)
         img = itk.imread(os.path.join(tmpdirpath, filenameCT))
         self.assertTrue(len(roi_names) == 11)
         self.assertTrue(roi_names[0] == 'External')
