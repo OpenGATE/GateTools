@@ -38,6 +38,7 @@ jobs:
               else pip install itk==${{ matrix.ITK_VERSION }};
           fi
           pip install -e .
+          pip install uproot3
           pip freeze
     - name: Run the tests
       run: |
