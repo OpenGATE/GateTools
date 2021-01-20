@@ -20,7 +20,11 @@ This module provides a function to crop image
 
 
 import gatetools as gt
-import uproot3 as uproot
+try:
+  import uproot3 as uproot
+except:
+  print("uproot3 is mandatory to merge root file. Please, do:")
+  print("pip install uproot3")
 import numpy as np
 import tqdm
 import logging
@@ -70,7 +74,11 @@ import tempfile
 import wget
 import os
 import shutil
-import uproot3 as uproot
+try:
+  import uproot3 as uproot
+except:
+  print("uproot3 is mandatory to merge root file. Please, do:")
+  print("pip install uproot3")
 from .logging_conf import LoggedTestCase
 
 class Test_MergeRoot(LoggedTestCase):

@@ -30,7 +30,7 @@ setuptools.setup(
         'tqdm',
         'colored',
         'itk>=5.1.0',
-        'uproot3',
+        'uproot',
         'wget',
     ],
     scripts=[

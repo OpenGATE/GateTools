@@ -8,7 +8,11 @@
 import numpy as np
 import sys
 import os
-import uproot3 as uproot
+try:
+  import uproot3 as uproot
+except:
+  print("uproot3 is mandatory to merge root file. Please, do:")
+  print("pip install uproot3")
 import time
 import tokenize
 from io import BytesIO
@@ -75,7 +79,7 @@ def load_root(filename, nmax=-1):
         exit()
         
     # Get keys
-    names = [k.decode('UTF-8') for k in psf.keys()]
+    names = [k for k in psf.keys()]
     n = psf.numentries
 
     # Convert to arrays (this take times)
@@ -140,12 +144,12 @@ def save_npy(filename, data, keys):
 
     dtype = []
     for k in keys:
-        dtype.append((k, 'f4'))
-    
+        dtype.append((k.decode("utf-8"), 'f4'))
+
     r = np.zeros(len(data), dtype=dtype)
     i = 0
     for k in keys:
-        r[k] = data[:,i]
+        r[k.decode("utf-8")] = data[:,i]
         i = i+1
 
     np.save(filename, r)
