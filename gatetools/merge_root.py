@@ -25,6 +25,17 @@ import tqdm
 import logging
 logger=logging.getLogger(__name__)
 
+def unicity(root_keys):
+    """
+    Return an array containing the keys of the root file only one (without the version number)
+    """
+    root_array = []
+    for key in root_keys:
+        name = key.decode("utf-8").split(";")[0]
+        if not name in root_array:
+            root_array.append(name)
+    return(root_array)
+
 def merge_root(rootfiles, outputfile):
     """
     Merge root files in output files
@@ -42,7 +53,8 @@ def merge_root(rootfiles, outputfile):
     pbar = tqdm.tqdm(total = len(rootfiles))
     for file in rootfiles:
         root = uproot.open(file)
-        for tree in root.keys():
+        root_keys = unicity(root.keys())
+        for tree in root_keys:
             if hasattr(root[tree], 'keys'):
                 if not tree in trees:
                     trees[tree] = {}
