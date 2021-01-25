@@ -37,6 +37,23 @@ class dicom_properties:
         self.ri = 0.0
         self.image_shape = []
 
+    def read_dicom_slop_intercept(self, slice):
+        if Tag(0x28, 0x1052) in slice:
+            self.ri = slice[0x28, 0x1052].value #Rescale Intercept
+            self.rs = slice[0x28, 0x1053].value #Rescale Slope
+        elif Tag(0x11, 0x103b) in slice:
+            self.rs = slice[0x11, 0x103b].value #Pixel Scale
+            self.ri = slice[0x11, 0x103c].value #Pixel Offset
+        elif Tag(0x40, 0x9096) in slice and Tag(0x40, 0x9224) in slice[0x40, 0x9096][0]:
+            self.ri = slice[0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
+            self.rs = slice[0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
+        elif Tag(0x3004, 0x000e) in slice:
+            self.rs = slice[0x3004, 0x000e].value #Rescale Slope
+        if hasattr(self.ri, '__len__'):
+            self.ri = self.ri[0]
+        if hasattr(self.rs, '__len__'):
+            self.rs = self.rs[0]
+
     def read_dicom_properties(self, slice, nextSlice=None):
         # pixel aspects, assuming all slices are the same
 
@@ -68,21 +85,8 @@ class dicom_properties:
         if self.io == "" or self.io == None:
             self.io = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
         #orientation = [io[0], io[1], io[2], io[3], io[4], io[5]]
-        if Tag(0x28, 0x1052) in slice:
-            self.ri = slice[0x28, 0x1052].value #Rescale Intercept
-            self.rs = slice[0x28, 0x1053].value #Rescale Slope
-        elif Tag(0x11, 0x103b) in slice:
-            self.rs = slice[0x11, 0x103b].value #Pixel Scale
-            self.ri = slice[0x11, 0x103c].value #Pixel Offset
-        elif Tag(0x40, 0x9096) in slice and Tag(0x40, 0x9224) in slice[0x40, 0x9096][0]:
-            self.ri = slice[0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
-            self.rs = slice[0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
-        elif Tag(0x3004, 0x000e) in slice:
-            self.rs = slice[0x3004, 0x000e].value #Rescale Slope
-        if hasattr(self.ri, '__len__'):
-            self.ri = self.ri[0]
-        if hasattr(self.rs, '__len__'):
-            self.rs = self.rs[0]
+        self.read_dicom_slop_intercept(slice)
+
 
         self.img_shape = list(slice.pixel_array.shape)
 
@@ -139,8 +143,9 @@ def read_dicom(dicomFiles):
     # fill 3D array with the images from the files
     for i, s in enumerate(slices):
         img2d = s.pixel_array
-        img3d[i, :, :] = img2d
-    img3d = dicomProperties.rs*img3d+dicomProperties.ri
+        dicomPropertiesSlice = dicom_properties()
+        dicomPropertiesSlice.read_dicom_slop_intercept(s)
+        img3d[i, :, :] = dicomPropertiesSlice.rs*img2d+dicomPropertiesSlice.ri
 
     img_result = itk.image_from_array(np.float32(img3d))
     img_result.SetSpacing(dicomProperties.spacing)
