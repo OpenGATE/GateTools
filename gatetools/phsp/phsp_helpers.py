@@ -8,11 +8,6 @@
 import numpy as np
 import sys
 import os
-try:
-  import uproot3 as uproot
-except:
-  print("uproot3 is mandatory to merge root file. Please, do:")
-  print("pip install uproot3")
 import time
 import tokenize
 from io import BytesIO
@@ -55,7 +50,12 @@ def load_root(filename, nmax=-1):
     Load a PHSP (Phase-Space) file in root format
     Output is numpy structured array
     '''
-    
+    try:
+        import uproot3 as uproot
+    except:
+        print("uproot3 is mandatory to merge root file. Please, do:")
+        print("pip install uproot3")
+
     nmax = int(nmax)
     # Check if file exist
     if (not os.path.isfile(filename)):
