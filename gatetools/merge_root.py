@@ -20,11 +20,6 @@ This module provides a function to crop image
 
 
 import gatetools as gt
-try:
-  import uproot3 as uproot
-except:
-  print("uproot3 is mandatory to merge root file. Please, do:")
-  print("pip install uproot3")
 import numpy as np
 import tqdm
 import logging
@@ -34,6 +29,12 @@ def merge_root(rootfiles, outputfile):
     """
     Merge root files in output files
     """
+    try:
+        import uproot3 as uproot
+    except:
+        print("uproot3 is mandatory to merge root file. Please, do:")
+        print("pip install uproot3")
+
     out = uproot.recreate(outputfile)
 
     #create the dict reading all input root files
@@ -74,15 +75,16 @@ import tempfile
 import wget
 import os
 import shutil
-try:
-  import uproot3 as uproot
-except:
-  print("uproot3 is mandatory to merge root file. Please, do:")
-  print("pip install uproot3")
 from .logging_conf import LoggedTestCase
 
 class Test_MergeRoot(LoggedTestCase):
     def test_merge_root(self):
+        try:
+            import uproot3 as uproot
+        except:
+            print("uproot3 is mandatory to merge root file. Please, do:")
+            print("pip install uproot3")
+
         logger.info('Test_MergeRoot test_merge_root')
         tmpdirpath = tempfile.mkdtemp()
         filenameRoot = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/phsp.root?inline=false", out=tmpdirpath, bar=None)
