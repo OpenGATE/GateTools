@@ -11,14 +11,6 @@ This module provides a function to crop image
 
 """
 
-# -----------------------------------------------------------------------------
-#   Copyright (C): OpenGATE Collaboration
-#   This software is distributed under the terms
-#   of the GNU Lesser General  Public Licence (LGPL)
-#   See LICENSE.md for further details
-# -----------------------------------------------------------------------------
-
-
 import itk
 import gatetools as gt
 import numpy as np
@@ -161,6 +153,37 @@ class Test_Crop(LoggedTestCase):
         self.assertTrue(np.allclose(autoCropSize[1], 150))
         self.assertTrue(np.allclose(autoCropSize[2], 42))
         self.assertTrue(np.allclose(itk.array_from_image(autoCrop)[0, 0, 0], 1))
+    def test_auto_crop_negative(self):
+        Dimension = 3
+        PixelType = itk.ctype('short')
+        ImageType = itk.Image[PixelType, Dimension]
+
+        image = ImageType.New()
+        start = itk.Index[Dimension]()
+        start[0] = 0
+        start[1] = 0
+        start[2] = 0
+        size = itk.Size[Dimension]()
+        size[0] = 200
+        size[1] = 200
+        size[2] = 200
+        region = itk.ImageRegion[Dimension]()
+        region.SetSize(size)
+        region.SetIndex(start)
+        image.SetRegions(region)
+        image.Allocate()
+        image.FillBuffer(0)
+        npView = itk.array_from_image(image)
+        npView[10:52, 42:192, 124:147] =1
+        npView[110:152, 42:192, 124:147] =-1
+        image = itk.image_from_array(npView)
+        autoCrop = image_auto_crop(image)
+        autoCropSize = autoCrop.GetLargestPossibleRegion().GetSize()
+        self.assertTrue(np.allclose(autoCropSize[0], 23))
+        self.assertTrue(np.allclose(autoCropSize[1], 150))
+        self.assertTrue(np.allclose(autoCropSize[2], 142))
+        self.assertTrue(np.allclose(itk.array_from_image(autoCrop)[0, 0, 0], 1))
+        self.assertTrue(np.allclose(itk.array_from_image(autoCrop)[-1, 0, 0], -1))
     def test_crop(self):
         x = np.arange(-10, 10, 0.1)
         y = np.arange(-12, 15, 0.1)
