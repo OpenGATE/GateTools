@@ -48,6 +48,9 @@ def merge_root(rootfiles, outputfile):
 
     out = uproot.recreate(outputfile)
 
+    #Previous ID values to be able to increment runIn and EventId
+    previousId = {}
+
     #create the dict reading all input root files
     trees = {}
     pbar = tqdm.tqdm(total = len(rootfiles))
@@ -60,6 +63,7 @@ def merge_root(rootfiles, outputfile):
                     trees[tree] = {}
                     trees[tree]["rootDictType"] = {}
                     trees[tree]["rootDictValue"] = {}
+                    previousId[tree] = {}
                 for branch in root[tree].keys():
                     array = root[tree].array(branch)
                     if len(array) > 0:
@@ -68,6 +72,11 @@ def merge_root(rootfiles, outputfile):
                         if not branch in trees[tree]["rootDictType"]:
                             trees[tree]["rootDictType"][branch] = type(array[0])
                             trees[tree]["rootDictValue"][branch] = np.array([])
+                        if branch.decode('utf-8').startswith('eventID') or branch.decode('utf-8').startswith('runID'):
+                            if not branch in previousId[tree]:
+                                previousId[tree][branch] = 0
+                            array += previousId[tree][branch]
+                            previousId[tree][branch] = max(array) +1
                         trees[tree]["rootDictValue"][branch] = np.append(trees[tree]["rootDictValue"][branch], array)
         pbar.update(1)
     pbar.close()
@@ -90,14 +99,14 @@ import shutil
 from .logging_conf import LoggedTestCase
 
 class Test_MergeRoot(LoggedTestCase):
-    def test_merge_root(self):
+    def test_merge_root_phsp(self):
         try:
             import uproot3 as uproot
         except:
             print("uproot3 is mandatory to merge root file. Please, do:")
             print("pip install uproot3")
 
-        logger.info('Test_MergeRoot test_merge_root')
+        logger.info('Test_MergeRoot test_merge_root_phsp')
         tmpdirpath = tempfile.mkdtemp()
         filenameRoot = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/phsp.root?inline=false", out=tmpdirpath, bar=None)
         gt.merge_root([filenameRoot, filenameRoot],  os.path.join(tmpdirpath, "output.root"))
@@ -110,4 +119,24 @@ class Test_MergeRoot(LoggedTestCase):
         inputBranch = inputTree.array(inputTree.keys()[1])
         outputBranch = outputTree.array(outputTree.keys()[1])
         self.assertTrue(2*len(inputBranch) == len(outputBranch))
+        shutil.rmtree(tmpdirpath)
+
+    def test_merge_root_pet(self):
+        try:
+            import uproot3 as uproot
+        except:
+            print("uproot3 is mandatory to merge root file. Please, do:")
+            print("pip install uproot3")
+
+        logger.info('Test_MergeRoot test_merge_root_pet')
+        tmpdirpath = tempfile.mkdtemp()
+        filenameRoot = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/pet.root?inline=false", out=tmpdirpath, bar=None)
+        gt.merge_root([filenameRoot, filenameRoot],  os.path.join(tmpdirpath, "output.root"))
+        input = uproot.open(filenameRoot)
+        output = uproot.open(os.path.join(tmpdirpath, "output.root"))
+        inputTree = input[input.keys()[0]]
+        outputTree = output[output.keys()[0]]
+        inputBranch = inputTree.array(inputTree.keys()[0])
+        outputBranch = outputTree.array(outputTree.keys()[0])
+        self.assertTrue(2*max(inputBranch)+1 == max(outputBranch))
         shutil.rmtree(tmpdirpath)
