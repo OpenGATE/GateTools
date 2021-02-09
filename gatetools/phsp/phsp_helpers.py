@@ -59,33 +59,31 @@ def load_root(filename, nmax=-1):
 
     # Check if this is a root file
     try:
-        f = uproot.open(filename)
+        with uproot.open(filename) as f:
+            k = f.keys()
+            try:
+                psf = f['PhaseSpace']
+            except Exception:
+                logger.error("This root file does not look like a PhaseSpace, keys are: ",
+                              f.keys(), ' while expecting "PhaseSpace"')
+                exit()
+
+            # Get keys
+            names = [k for k in psf.keys()]
+            n = psf.num_entries
+
+            # Convert to arrays (this take times)
+            if nmax != -1:
+                a = psf.arrays(entry_stop=nmax, library="numpy")
+            else:
+                a = psf.arrays(library="numpy")
+
+            # Concat arrays
+            d = np.column_stack([a[k] for k in psf.keys()])
+            # d = np.float64(d) # slow
     except Exception:
         logger.error("File '" + filename + "' cannot be opened, not root file ?")
         exit()
-
-    # Look for a single key named "PhaseSpace"
-    k = f.keys()
-    try:
-        psf = f['PhaseSpace']
-    except Exception:
-        logger.error("This root file does not look like a PhaseSpace, keys are: ",
-                     f.keys(), ' while expecting "PhaseSpace"')
-        exit()
-
-    # Get keys
-    names = [k for k in psf.keys()]
-    n = psf.num_entries
-
-    # Convert to arrays (this take times)
-    if nmax != -1:
-        a = psf.arrays(entry_stop=nmax, library='numpy')
-    else:
-        a = psf.arrays(library='numpy')
-
-    # Concat arrays
-    d = np.column_stack([a[k] for k in psf.keys()])
-    # d = np.float64(d) # slow
 
     return d, names, n
 
