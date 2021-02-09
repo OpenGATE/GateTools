@@ -32,6 +32,7 @@ setuptools.setup(
         'itk>=5.1.0',
         'uproot',
         'wget',
+        'python-box'
     ],
     scripts=[
         'bin/gt_gate_info',
