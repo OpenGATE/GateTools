@@ -31,6 +31,7 @@ def gt_merge_root_main(output, inputsroot, **kwargs):
 
     gt_merge_root -d output.root root1.root root2.root
 
+    Due to uproot3, it cannot merge TTree with string variables
     '''
 
     # logger
