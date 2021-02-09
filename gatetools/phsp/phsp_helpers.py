@@ -10,6 +10,7 @@ import os
 import tokenize
 from io import BytesIO
 from matplotlib import pyplot as plt
+import uproot
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,15 +46,10 @@ def load(filename, nmax=-1, shuffle=False):
 
 # -----------------------------------------------------------------------------
 def load_root(filename, nmax=-1):
-    '''
+    """
     Load a PHSP (Phase-Space) file in root format
     Output is numpy structured array
-    '''
-    try:
-        import uproot3 as uproot
-    except:
-        print("uproot3 is mandatory to merge root file. Please, do:")
-        print("pip install uproot3")
+    """
 
     nmax = int(nmax)
     # Check if file exist
@@ -79,13 +75,13 @@ def load_root(filename, nmax=-1):
 
     # Get keys
     names = [k for k in psf.keys()]
-    n = psf.numentries
+    n = psf.num_entries
 
     # Convert to arrays (this take times)
-    if (nmax != -1):
-        a = psf.arrays(entrystop=nmax)
+    if nmax != -1:
+        a = psf.arrays(entry_stop=nmax, library='numpy')
     else:
-        a = psf.arrays()
+        a = psf.arrays(library='numpy')
 
     # Concat arrays
     d = np.column_stack([a[k] for k in psf.keys()])
@@ -142,12 +138,12 @@ def save_npy(filename, data, keys):
 
     dtype = []
     for k in keys:
-        dtype.append((k.decode("utf-8"), 'f4'))
+        dtype.append((k, 'f4'))
 
     r = np.zeros(len(data), dtype=dtype)
     i = 0
     for k in keys:
-        r[k.decode("utf-8")] = data[:,i]
+        r[k] = data[:, i]
         i = i + 1
 
     np.save(filename, r)
