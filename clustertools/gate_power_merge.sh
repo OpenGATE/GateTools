@@ -536,7 +536,7 @@ function merge_dispatcher_uncertainty {
             then
                 uncerImageMerger="gt_image_uncertainty"
                 test -x "./gt_image_uncertainty" && uncerImageMerger="./gt_image_uncertainty"
-                ${uncerImageMerger} ${summed_merged_file} -o ${mergedfile} -N ${totalEvents} -s
+                ${uncerImageMerger} ${summed_merged_file} -o ${mergedfile} -n ${totalEvents} -s
             else
                 warning "${totalEvents} not positive. A at least one stat file (SimulationStatisticActor) must be provided. Error, no uncertainty computed"
                 return;
