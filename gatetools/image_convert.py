@@ -111,7 +111,7 @@ def read_dicom(dicomFiles):
     skipcount = 0
     if len(files) > 1:
         for f in files:
-            if hasattr(f, 'SliceLocation'):
+            if hasattr(f, 'SliceLocation') or hasattr(f, 'ImagePositionPatient'):
                 slices.append(f)
             else:
                 skipcount = skipcount + 1
@@ -176,7 +176,6 @@ def read_3d_dicom(dicomFile, flip=False):
         ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
         files.append(ds)
 
-    # skip files with no SliceLocation (eg scout views)
     slices = []
     if len(files) == 1:
         slices.append(files[0])
