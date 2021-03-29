@@ -156,7 +156,7 @@ def enclosed_area(vs):
     a = 0
     x0,y0 = vs[0]
     logger.debug("x0={} y0={}".format(x0,y0))
-    for [x1,y1] in vs[1:]:
+    for [x1,y1] in np.vstack((vs, vs[0]))[1:]: # NK: calculate also segment from last to first vertex. If not, area is underestimated.
         dx = x1-x0
         dy = y1-y0
         a += 0.5*(y0*dx - x0*dy)
