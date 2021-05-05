@@ -3,7 +3,9 @@
 
 Install with : `pip install gatetools`
 
-Clone the repository with `git clone --recusive` or `git submodule update --init`
+Clone the repository with `git clone --recusive https://github.com/OpenGATE/GateTools.git`
+(or `git submodule update --init` to update)
+then `cd GateTools`, then `pip install -e .`
 
 Example of usage:
 ```
