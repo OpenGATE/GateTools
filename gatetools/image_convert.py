@@ -90,11 +90,28 @@ class dicom_properties:
 
         self.img_shape = list(slice.pixel_array.shape)
 
+def separate_series(dicomFiles):
+    """
+    Read dicom and return a dictionary with the different series separated
+    """
+    files = {}
+    #Load dicom files
+    for file in dicomFiles:
+        try:
+            seriesInstanceUID = pydicom.read_file(file)[0x0020, 0x000e].value
+        except pydicom.errors.InvalidDicomError:
+            ds = pydicom.read_file(file, force=True)
+            ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+            seriesInstanceUID = ds[0x0020, 0x000e].value
+        if seriesInstanceUID not in files:
+            files[seriesInstanceUID] = []
+        files[seriesInstanceUID].append(file)
+    return files
 
 def read_dicom(dicomFiles):
     """
 
-    Read dicom files and return an float 3D image
+    Read dicom files and return a float 3D image
     """
     files = []
     #Load dicom files
@@ -119,8 +136,16 @@ def read_dicom(dicomFiles):
         if skipcount >0:
             logger.info("skipped, no SliceLocation: {}".format(skipcount))
 
+        #Remove images with same SopInstanceUID
+        noDuplicateSlices = []
+        tmpSopInstanceUID = []
+        for slice in slices:
+            if not slice[0x0008, 0x0018].value in tmpSopInstanceUID:
+                noDuplicateSlices.append(slice)
+                tmpSopInstanceUID.append(slice[0x0008, 0x0018].value)
+
         # ensure they are in the correct order. Sort according Image Position along z
-        slices = sorted(slices, key=lambda s: s[0x0020, 0x0032][2])
+        slices = sorted(noDuplicateSlices, key=lambda s: s[0x0020, 0x0032][2])
     else:
         logger.error('no file available')
         return
@@ -166,7 +191,7 @@ def read_dicom(dicomFiles):
 def read_3d_dicom(dicomFile, flip=False):
     """
 
-    Read dicom file and return an float 3D image
+    Read dicom file and return a float 3D image
     """
     files = []
     try:
