@@ -90,6 +90,23 @@ class dicom_properties:
 
         self.img_shape = list(slice.pixel_array.shape)
 
+def separate_series(dicomFiles):
+    """
+    Read dicom and return a dictionary with the different series separated
+    """
+    files = {}
+    #Load dicom files
+    for file in dicomFiles:
+        try:
+            seriesInstanceUID = pydicom.read_file(file)[0x0020, 0x000e].value
+        except pydicom.errors.InvalidDicomError:
+            ds = pydicom.read_file(file, force=True)
+            ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+            seriesInstanceUID = ds[0x0020, 0x000e].value
+        if seriesInstanceUID not in files:
+            files[seriesInstanceUID] = []
+        files[seriesInstanceUID].append(file)
+    return files
 
 def read_dicom(dicomFiles):
     """

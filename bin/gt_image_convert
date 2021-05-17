@@ -36,6 +36,7 @@ def gt_image_convert(input, output, pixeltype, flip, **kwargs):
        or
        ~/path/to/dcm/toto.dcm
     If a negative spacing is present in the dicom tag, you can set the flag flip to save the same image but without this negative spacing along z axis. The coordinates are preserved with this flip.
+    The series are automatically separated and the duplicated slices (based on sopInstanceUID) are removed.
     '''
 
     # logger
@@ -48,31 +49,45 @@ def gt_image_convert(input, output, pixeltype, flip, **kwargs):
             return
 
     #Read input
+    inputImages = []
     if len(input) == 1 and not input[0].endswith(".dcm"):
         logger.info(f'Reading input image with itk {input[0]}')
-        inputImage = itk.imread(input[0])
-    elif len(input) > 1:
-        logger.info(f'Reading input dicom {len(input)} input files')
-        inputImage = gt.read_dicom(input)
-    elif len(input) == 1 and input[0].endswith(".dcm"):
-        logger.info(f'Reading input 3D dicom {input[0]}')
-        inputImage = gt.read_3d_dicom(input, flip)
+        inputImages.append(itk.imread(input[0]))
     else:
-        logger.error('no input available')
-        return
+        series = gt.separate_series(input)
+        for serie in series.keys():
+            if len(series[serie]) > 1:
+                logger.info(f'Reading input dicom {len(series[serie])} input files')
+                inputImages.append(gt.read_dicom(series[serie]))
+            elif len(series[serie]) == 1 and series[serie][0].endswith(".dcm"):
+                logger.info(f'Reading input 3D dicom {series[serie][0]}')
+                inputImages.append(gt.read_3d_dicom(series[serie], flip))
+            else:
+                logger.error('no input available')
+                return
 
-    if inputImage == None:
-        logger.error('no image available')
-        return
+    if len(inputImages) > 1:
+        logger.info(f'Warning: more than one serie found')
+    for indexImage, inputImage in enumerate(inputImages):
+        if inputImage == None:
+            logger.error('no image available')
+            return
 
-    # convert image
-    if pixeltype != None:
-        logger.info(f'Convert pixel type to {pixeltype}')
-    outputImage = gt.image_convert(inputImage, pixeltype)
+        # convert image
+        if pixeltype != None:
+            logger.info(f'Convert pixel type to {pixeltype}')
+        outputImage = gt.image_convert(inputImage, pixeltype)
 
-    # write file
-    logger.info(f'Write {output}')
-    itk.imwrite(outputImage, output)
+        # write file
+        outputName = output
+        if len(inputImages) > 1:
+            directory = os.path.dirname(output)
+            base = os.path.basename(output)
+            name = os.path.splitext(base)[0]
+            extension = os.path.splitext(base)[1]
+            outputName = os.path.join(directory, name + "_" + str(indexImage) + extension)
+        logger.info(f'Write {outputName}')
+        itk.imwrite(outputImage, outputName)
 
 
 # -----------------------------------------------------------------------------
