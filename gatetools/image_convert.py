@@ -119,8 +119,16 @@ def read_dicom(dicomFiles):
         if skipcount >0:
             logger.info("skipped, no SliceLocation: {}".format(skipcount))
 
+        #Remove images with same SopInstanceUID
+        noDuplicateSlices = []
+        tmpSopInstanceUID = []
+        for slice in slices:
+            if not slice[0x0008, 0x0018].value in tmpSopInstanceUID:
+                noDuplicateSlices.append(slice)
+                tmpSopInstanceUID.append(slice[0x0008, 0x0018].value)
+
         # ensure they are in the correct order. Sort according Image Position along z
-        slices = sorted(slices, key=lambda s: s[0x0020, 0x0032][2])
+        slices = sorted(noDuplicateSlices, key=lambda s: s[0x0020, 0x0032][2])
     else:
         logger.error('no file available')
         return
