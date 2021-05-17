@@ -94,7 +94,7 @@ class dicom_properties:
 def read_dicom(dicomFiles):
     """
 
-    Read dicom files and return an float 3D image
+    Read dicom files and return a float 3D image
     """
     files = []
     #Load dicom files
@@ -166,7 +166,7 @@ def read_dicom(dicomFiles):
 def read_3d_dicom(dicomFile, flip=False):
     """
 
-    Read dicom file and return an float 3D image
+    Read dicom file and return a float 3D image
     """
     files = []
     try:
