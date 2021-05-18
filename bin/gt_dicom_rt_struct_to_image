@@ -22,8 +22,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--list_roi', '-l', help='List all ROI names only', is_flag=True)
 @click.option('--crop', '-c', help='Crop output mask image', is_flag=True)
 @click.option('--roi', '-r', help='Convert the ROI with this name', multiple=True)
+@click.option('--output', '-o', help='Output folder for roi image', type=click.Path(file_okay=False, dir_okay=True))
 @gt.add_options(gt.common_options)
-def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, crop,verbose,logfile):
+def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, crop,verbose,output,logfile):
     '''
     \b
     Convert Dicom RT Struct into mask images
@@ -31,6 +32,8 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
     \b
     <FILENAME_STRUCT> : input DICOM RT STRUCT
     <FILENAME_IMG>    : input ct associated image (mask will have the same size than this image)
+
+    output is the output folder where the roi images are stored. By default, they are saved in the same folder than FILENAME_IMG
     '''
 
     # logger
@@ -55,7 +58,11 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
         roi = roi_names
 
     img = itk.imread(filename_img)
-    base_filename, extension = os.path.splitext(filename_img)
+    if output is None:
+        base_filename, extension = os.path.splitext(filename_img)
+    else:
+        base_filename = os.path.abspath(os.path.join(output, "roi"))
+        extension = os.path.splitext(filename_img)[1]
 
     roi_objs=list()
     npbar=0
