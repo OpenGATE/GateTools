@@ -1,5 +1,7 @@
+[![Build status](https://github.com/OpenGATE/GateTools/actions/workflows/main.yml/badge.svg)](https://github.com/OpenGATE/GateTools/actions/workflows/main.yml)
+[![PyPI](https://img.shields.io/pypi/v/gatetools)](https://pypi.org/project/gatetools/)
+
 **Tools for [GATE](https://github.com/OpenGATE/Gate/) simulations.**
-[![Build Status](https://travis-ci.org/OpenGATE/GateTools.svg?branch=master)](https://travis-ci.org/OpenGATE/GateTools)
 
 Install with : `pip install gatetools`
 
