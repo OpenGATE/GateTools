@@ -394,7 +394,9 @@ class region_of_interest(object):
                 self.dz = 0
             else:
                 logger.warn("{} not one single z step: {}".format(self.roiname,", ".join([str(d) for d in dz])))
-                self.dz = min(dz)
+                dz = np.array(list(dz))
+                idxMin = np.abs(dz).argmin()
+                self.dz = dz[idxMin]
 
     def get_mask_from_parameters(self, img_params):
         if(img_params in self.maskparameters):
@@ -427,7 +429,9 @@ class region_of_interest(object):
                 self.dz = dz.pop()
             else:
                 logger.warn("{} not one single z step: {}".format(self.roiname,", ".join([str(d) for d in dz])))
-                self.dz = 0.
+                dz = np.array(list(dz))
+                idxMin = np.abs(dz).argmin()
+                self.dz = dz[idxMin]
         points = np.empty((0,3))
         for layer in contours_list:
             for contour in layer.inclusion:
