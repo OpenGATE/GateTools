@@ -44,7 +44,7 @@ class dicom_properties:
         elif Tag(0x11, 0x103b) in slice:
             self.rs = slice[0x11, 0x103b].value #Pixel Scale
             self.ri = slice[0x11, 0x103c].value #Pixel Offset
-        elif Tag(0x40, 0x9096) in slice and Tag(0x40, 0x9224) in slice[0x40, 0x9096][0]:
+        elif Tag(0x40, 0x9096) in slice and len(slice[0x40, 0x9096].value) > 0 and Tag(0x40, 0x9224) in slice[0x40, 0x9096][0]:
             self.ri = slice[0x40, 0x9096][0][0x40, 0x9224].value #Rescale Intercept
             self.rs = slice[0x40, 0x9096][0][0x40, 0x9225].value #Rescale Slope
         elif Tag(0x3004, 0x000e) in slice:
@@ -53,6 +53,8 @@ class dicom_properties:
             self.ri = self.ri[0]
         if hasattr(self.rs, '__len__'):
             self.rs = self.rs[0]
+        if self.ri == 0 and self.rs == 0:
+            self.rs = 1.0
 
     def read_dicom_properties(self, slice, nextSlice=None):
         # pixel aspects, assuming all slices are the same
@@ -60,6 +62,9 @@ class dicom_properties:
         ps = [1.0, 1.0]
         if Tag(0x28, 0x30) in slice:
             ps = slice.PixelSpacing
+        if ps == '' or ps is None:
+            ps = [1.0, 1.0]
+
         ss = None
         if Tag(0x18, 0x88) in slice:
             ss = abs(float(slice[(0x0018,0X0088)].value))
@@ -75,12 +80,12 @@ class dicom_properties:
         ip = [0.0, 0.0, 0.0]
         if Tag(0x20, 0x32) in slice:
             ip = slice[0x20, 0x32].value #Image Position
-        elif Tag(0x54, 0x22) in slice and Tag(0x20, 0x32) in slice[0x54, 0x22][0]:
+        elif Tag(0x54, 0x22) in slice and len(slice[0x54, 0x22].value) >0 and Tag(0x20, 0x32) in slice[0x54, 0x22][0]:
             ip = slice[0x54, 0x22][0][0x20, 0x32].value #Image Position
         self.origin = [ip[0], ip[1], ip[2]]
         if Tag(0x20, 0x37) in slice:
             self.io = slice[0x20, 0x37].value #Image Orientation
-        elif Tag(0x54, 0x22) in slice and Tag(0x20, 0x37) in slice[0x54, 0x22][0]:
+        elif Tag(0x54, 0x22) in slice and len(slice[0x54, 0x22].value) > 0 and Tag(0x20, 0x37) in slice[0x54, 0x22][0]:
             self.io = slice[0x54, 0x22][0][0x20, 0x37].value #Image Orientation
         if self.io == "" or self.io == None:
             self.io = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0]
