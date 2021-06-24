@@ -168,7 +168,7 @@ def read_dicom(dicomFiles):
     # create 3D array
     dicomProperties.img_shape[0] = len(slices)
     dicomProperties.img_shape.append(slices[0].pixel_array.shape[0])
-    img3d = np.zeros(dicomProperties.img_shape)
+    img3d = np.float32(np.zeros(dicomProperties.img_shape))
 
     # fill 3D array with the images from the files
     for i, s in enumerate(slices):
@@ -177,8 +177,7 @@ def read_dicom(dicomFiles):
         dicomPropertiesSlice.read_dicom_slop_intercept(s)
         img3d[i, :, :] = dicomPropertiesSlice.rs*img2d+dicomPropertiesSlice.ri
 
-    img3d = np.float32(img3d)
-    img_result = itk.image_from_array(img3d)
+    img_result = itk.image_view_from_array(img3d)
     img_result.SetSpacing(dicomProperties.spacing)
     img_result.SetOrigin(dicomProperties.origin)
     arrayDirection = np.zeros([3,3], np.float64)
