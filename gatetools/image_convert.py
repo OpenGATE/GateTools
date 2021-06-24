@@ -177,7 +177,8 @@ def read_dicom(dicomFiles):
         dicomPropertiesSlice.read_dicom_slop_intercept(s)
         img3d[i, :, :] = dicomPropertiesSlice.rs*img2d+dicomPropertiesSlice.ri
 
-    img_result = itk.image_from_array(np.float32(img3d))
+    img3d = np.float32(img3d)
+    img_result = itk.image_from_array(img3d)
     img_result.SetSpacing(dicomProperties.spacing)
     img_result.SetOrigin(dicomProperties.origin)
     arrayDirection = np.zeros([3,3], np.float64)
