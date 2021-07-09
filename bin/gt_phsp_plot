@@ -24,12 +24,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--keys', '-k', help='Plot the given keys (as a str list such that "X Y Z")', default='')
 @click.option('--quantile', '-q', default=float(0), help='Restrict histogram to quantile')
 @click.option('--nb_bins', '-b', default=int(100), help='Number of bins')
+@click.option('--tree', '-t', default='PhaseSpace', help='Name of the tree in the root file')
 @click.option('--shuffle', '-s', default=False, is_flag=True, help='shuffle samples when loading')
 @click.option('--plot2d',
               type=(str, str),
               help='Add 2D plots (key1,key2), such as --plot2d X Ekine --plot2d X Y ', multiple=True)
 @gt.add_options(gt.common_options)
-def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, shuffle, **kwargs):
+def gt_phsp_plot(filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, **kwargs):
     """
     \b
     Plot histograms
@@ -47,11 +48,13 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, shuffle, **kwarg
     nb_fig = 0
     q = {}
 
+    first_keys = None
+
     for filename in filenames:
         logger.info(filename)
 
         # load data
-        data, read_keys, m = phsp.load(filename, n, shuffle)
+        data, read_keys, m = phsp.load(filename, tree, n, shuffle)
 
         # get keys
         ckeys = phsp.str_keys_to_array_keys(keys)
@@ -61,6 +64,10 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, shuffle, **kwarg
         # augment data if needed
         if 'angleXY' in keys:
             data, read_keys = phsp.add_angle(data, read_keys, 'X', 'Y')
+
+        # store order for the other filename
+        if not first_keys:
+            first_keys = ckeys
 
         # 2D figs
         keys_2D = plot2d;
@@ -77,8 +84,11 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, shuffle, **kwarg
 
         # loop
         i = 0
-        for k in ckeys:
+        for k in first_keys:
             a = phsp.fig_get_sub_fig(ax, i)
+            if not k in read_keys:
+                i = i + 1
+                continue
             index = read_keys.index(k)
             x = data[:, index]
             q1 = quantile
@@ -112,8 +122,12 @@ def gt_phsp_plot(filenames, keys, n, quantile, nb_bins, plot2d, shuffle, **kwarg
 
     if n == -1:
         n = m
+    if n > m:
+        n = m
+    n = int(n)
+    m = int(m)
     # plt.subplots_adjust(top=0.7)
-    plt.suptitle('{} Values: {}/{}'.format(filenames, n, m))
+    plt.suptitle(f'Values: {n}/{m}')
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.show()
 

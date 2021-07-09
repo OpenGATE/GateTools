@@ -10,14 +10,14 @@ import os
 import tokenize
 from io import BytesIO
 from matplotlib import pyplot as plt
-import uproot
+import uproot4 as uproot
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 # -----------------------------------------------------------------------------
-def load(filename, nmax=-1, shuffle=False):
+def load(filename, treename='PhaseSpace', nmax=-1, shuffle=False):
     """ 
     Load a PHSP (Phase-Space) file
     Output is numpy structured array
@@ -30,7 +30,7 @@ def load(filename, nmax=-1, shuffle=False):
         if shuffle:
             logger.error('cannot shuffle on root file for the moment')
             exit(0)
-        return load_root(filename, nmax)
+        return load_root(filename, treename, nmax)
 
     # if extension == '.raw':
     #     return load_raw(filename)
@@ -45,7 +45,7 @@ def load(filename, nmax=-1, shuffle=False):
 
 
 # -----------------------------------------------------------------------------
-def load_root(filename, nmax=-1):
+def load_root(filename, treename, nmax=-1):
     """
     Load a PHSP (Phase-Space) file in root format
     Output is numpy structured array
@@ -61,11 +61,13 @@ def load_root(filename, nmax=-1):
     try:
         with uproot.open(filename) as f:
             k = f.keys()
+            if len(k) == 1:
+                treename = k[0]
             try:
-                psf = f['PhaseSpace']
+                psf = f[treename]
             except Exception:
-                logger.error("This root file does not look like a PhaseSpace, keys are: ",
-                              f.keys(), ' while expecting "PhaseSpace"')
+                logger.error("This root file does not look like a PhaseSpace, branches are: ",
+                             f.keys(), f' while expecting {treename}')
                 exit()
 
             # Get keys
@@ -85,7 +87,7 @@ def load_root(filename, nmax=-1):
         logger.error("File '" + filename + "' cannot be opened, not root file ?")
         exit()
 
-    return d, names, n
+    return d, names, int(n)
 
 
 # -----------------------------------------------------------------------------
