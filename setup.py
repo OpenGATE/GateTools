@@ -12,8 +12,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/OpenGATE/GateTools",
-    package_dir={ 'gatetools': 'gatetools',
-                  'gatetools.phsp': 'gatetools/phsp'},
+    package_dir={'gatetools': 'gatetools',
+                 'gatetools.phsp': 'gatetools/phsp'},
     packages=['gatetools', 'gatetools.phsp'],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -32,11 +32,13 @@ setuptools.setup(
         'itk>=5.1.0',
         'uproot',
         'wget',
-        'python-box'
+        'python-box',
+        'lz4',
+        'xxhash'
     ],
     scripts=[
         'bin/gt_gate_info',
-        
+
         'bin/gt_image_uncertainty',
         'bin/gt_image_arithm',
         'bin/gt_image_crop',
@@ -54,15 +56,16 @@ setuptools.setup(
 
         'bin/gt_dicom_rt_struct_to_image',
         'bin/gt_dicom_rt_pbs2gate',
-        
+
         'bin/gt_phsp_info',
         'bin/gt_phsp_convert',
         'bin/gt_phsp_merge',
         'bin/gt_phsp_plot',
         'bin/gt_phsp_peaks',
+
+        'clustertools/gate_split_and_run.py'
     ]
 )
-
 
 # -----------------------------------------------------------------------------
 # Uploading the package on pypi
