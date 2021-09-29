@@ -70,7 +70,7 @@ def gt_phsp_plot(filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, *
             first_keys = ckeys
 
         # 2D figs
-        keys_2D = plot2d;
+        keys_2D = plot2d
         if keys_2D == None:
             keys_2D = []
 
@@ -85,12 +85,19 @@ def gt_phsp_plot(filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, *
         # loop
         i = 0
         for k in first_keys:
-            a = phsp.fig_get_sub_fig(ax, i)
-            if not k in read_keys:
-                i = i + 1
-                continue
             index = read_keys.index(k)
             x = data[:, index]
+            try:
+                a = int(x[0])
+            except:
+                print(f'The key {k} is not numeric? x[0] = {x[0]}')
+                continue
+            # sometimes, if x is a str (from a root file), x[0] will be 'NULL'
+            # (probably not the best method ; to be changed)
+            if not k in read_keys or x[0] == 'NULL':
+                i = i + 1
+                continue
+            a = phsp.fig_get_sub_fig(ax, i)
             q1 = quantile
             q2 = 1.0 - quantile
             if filename == filenames[0]:
