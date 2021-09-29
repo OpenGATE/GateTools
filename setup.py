@@ -34,6 +34,7 @@ setuptools.setup(
         'wget',
         'python-box',
         'lz4',
+        'colorama',
         'xxhash'
     ],
     scripts=[
