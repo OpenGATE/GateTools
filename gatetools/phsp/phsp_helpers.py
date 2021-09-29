@@ -10,7 +10,7 @@ import os
 import tokenize
 from io import BytesIO
 from matplotlib import pyplot as plt
-import uproot4 as uproot
+import uproot
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,9 +31,6 @@ def load(filename, treename='PhaseSpace', nmax=-1, shuffle=False):
             logger.error('cannot shuffle on root file for the moment')
             exit(0)
         return load_root(filename, treename, nmax)
-
-    # if extension == '.raw':
-    #     return load_raw(filename)
 
     if extension == '.npy':
         return load_npy(filename, nmax, shuffle)
