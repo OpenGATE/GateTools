@@ -20,9 +20,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename')
+@click.option('--tree', '-t', default='PhaseSpace',
+              help='Name of the tree to show in the root file')
 @click.option('-n', default=float(1e5), help='Use -1 to read all data')
 @gt.add_options(gt.common_options)
-def gt_phsp_info(filename, n, **kwargs):
+def gt_phsp_info(filename, n, tree, **kwargs):
     """
     \b
     Print information about the given PHSP phase-space file
@@ -34,7 +36,7 @@ def gt_phsp_info(filename, n, **kwargs):
     # logger
     gt.logging_conf(**kwargs)
 
-    data, keys, m = phsp.load(filename, n)
+    data, keys, m = phsp.load(filename, treename=tree, nmax=n)
 
     # print info
     print(f'File:        {filename}')
@@ -64,7 +66,7 @@ def gt_phsp_info(filename, n, **kwargs):
             xstd = np.std(x)
             print(f'{k:10} {xmin:10.3f} {xmax:10.3f} {xmean:10.3f} {xstd:10.3f}')
         except:
-            # probably string values
+            # probably string values (ignored for the moment)
             pass
         i = i + 1
 
