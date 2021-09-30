@@ -75,7 +75,7 @@ def gt_phsp_plot(filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, *
             keys_2D = []
 
         # compute fig row/col
-        nb_fig = len(ckeys) + len(keys_2D)
+        nb_fig = len(first_keys) + len(keys_2D)
         nrow, ncol = phsp.fig_get_nb_row_col(nb_fig)
 
         # create fig
@@ -85,6 +85,8 @@ def gt_phsp_plot(filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, *
         # loop
         i = 0
         for k in first_keys:
+            if k not in read_keys:
+                continue
             index = read_keys.index(k)
             x = data[:, index]
             try:
