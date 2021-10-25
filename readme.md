@@ -29,12 +29,14 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_dvh`                      | Create Dose Volume Histogram                              |
 | `gt_gamma_index`              | Compute gamma index between images                        |
 | `gt_gate_info`                | Display info about current Gate/G4 version                |
+| `gt_hausdorff`                | Compute Hausdorff distance                                |
 | `gt_image_arithm`             | Pixel- or voxel-wise arithmetic operations                |
 | `gt_image_convert`            | Convert image file format (**dicom**, mhd, hdr, nii ... ) |
 | `gt_image_crop`               | Crop an image                                             |
 | `gt_image_gauss`              | Blur an image using gaussian filter                       |
 | `gt_image_resize`             | Resize an image                                           |
 | `gt_image_statistics`         | Statistics of an image                                    |
+| `gt_image_to_dicom_rt_struct` | Convert mask image to Dicom RTStruct                      |
 | `gt_image_uncertainty`        | Compute statistical uncertainty                           |
 | `gt_merge_root`               | Merge root files                                          |
 | `gt_morpho_math`              | Compute morphological operation                           |
