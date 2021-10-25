@@ -35,6 +35,7 @@ setuptools.setup(
         'python-box',
         'lz4',
         'colorama',
+        'rt-utils',
         'xxhash'
     ],
     scripts=[
@@ -51,6 +52,7 @@ setuptools.setup(
         'bin/gt_dicom_info',
         'bin/gt_image_gauss',
         'bin/gt_image_resize',
+        'bin/gt_image_to_dicom_rt_struct',
         'bin/gt_dvh',
         'bin/gt_merge_root',
         'bin/gt_morpho_math',
