@@ -1,6 +1,7 @@
 
 # general helpers
 from .gate_helpers import *
+from .hausdorff import *
 from .image_uncertainty import *
 from .image_arithm import *
 from .image_convert import *

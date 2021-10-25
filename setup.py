@@ -46,6 +46,7 @@ setuptools.setup(
         'bin/gt_image_crop',
         'bin/gt_image_convert',
         'bin/gt_image_statistics',
+        'bin/gt_hausdorff',
         'bin/gt_gamma_index',
         'bin/gt_affine_transform',
         'bin/gt_write_dicom',
