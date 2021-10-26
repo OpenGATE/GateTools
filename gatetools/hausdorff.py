@@ -11,7 +11,7 @@ import numpy as np
 import logging
 logger=logging.getLogger(__name__)
 
-def computeMaxDistance(mask1, mask2, percentile):
+def computeDistance(mask1, mask2):
   OutputPixelType = itk.ctype('float')
   OutputImageType = itk.Image[OutputPixelType, mask1.GetImageDimension()]
   caster1 = itk.CastImageFilter[type(mask1), OutputImageType].New()
@@ -44,15 +44,20 @@ def computeMaxDistance(mask1, mask2, percentile):
     if distance >= 0:
       distances.append(distance)
   distances.sort()
-  return(distances[int(percentile*(len(distances)-1))])
+  return(distances)
 
-def computeHausdorff(mask1, mask2, percentile):
-  d12 = computeMaxDistance(mask1, mask2, percentile)
-  d21 = computeMaxDistance(mask2, mask1, percentile)
+def getHausdorffPercentile(distances12, distances21, percentile):
+  d12 = distances12[int(percentile*(len(distances12)-1))]
+  d21 = distances21[int(percentile*(len(distances21)-1))]
   if d12 > d21:
     return d12
   else:
     return d21
+
+def computeHausdorff(mask1, mask2, percentile):
+  d12 = computeDistance(mask1, mask2)
+  d21 = computeDistance(mask2, mask1)
+  return(getHausdorffPercentile(d12, d21, percentile))
 
 
 #####################################################################################
@@ -90,5 +95,45 @@ class Test_HAUSDORFF(LoggedTestCase):
         mask2 = createSphereExample(10, 11, 10)
         hausdorffDistance = computeHausdorff(mask1, mask2, 1.0)
         self.assertTrue(np.isclose(hausdorffDistance, 2.0))
+    def test_hausdorff_percentile(self):
+        logger.info('Test_HAUSDORFF test_hausdorff_percentile')
+        #square image
+        size = 100 #px
+        array1 = np.zeros((size, size, size))
+        array1[10:35, 10:35, 50] = 1
+        mask1 = itk.image_from_array(np.int16(array1))
+        mask1.SetOrigin([7, 3.4, -4.6])
+        mask1.SetSpacing([1, 1, 3.6])
+        itk.imwrite(mask1, "mask1.mhd")
 
+        array2 = np.zeros((size, size, size))
+        array2[10:35, 10:35, 50] = 1
+        array2[20:21, 35:75, 50] = 1
+        mask2 = itk.image_from_array(np.int16(array2))
+        mask2.SetOrigin([7, 3.4, -4.6])
+        mask2.SetSpacing([1, 1, 3.6])
+        itk.imwrite(mask2, "mask2.mhd")
+
+        d12 = computeDistance(mask1, mask2)
+        d21 = computeDistance(mask2, mask1)
+        hausdorffDistance = getHausdorffPercentile(d12, d21, 1.0)
+        print(hausdorffDistance)
+        self.assertTrue(np.isclose(hausdorffDistance, 80.0))
+        #print(d12)
+        #print(d21)
+        hausdorffDistance = getHausdorffPercentile(d12, d21, 0.95)
+        print(hausdorffDistance)
+        #self.assertTrue(np.isclose(hausdorffDistance, 0.0, atol=1e-7))
+
+        #pymia
+        '''
+        import pymia.evaluation.metric as metric
+        import pymia.evaluation.evaluator as eval_
+        labels = {1: "ROI" }
+        metrics = [metric.HausdorffDistance(percentile=100, metric='HDmax'),metric.HausdorffDistance(percentile=95, metric='HD95')]
+        evaluator = eval_.SegmentationEvaluator(metrics, labels)
+        evaluator.evaluate(itk.array_from_image(mask1), itk.array_from_image(mask2), "T")
+        for r in evaluator.results:
+          print(r.value)
+        '''
 
