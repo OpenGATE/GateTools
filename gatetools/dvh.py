@@ -77,8 +77,13 @@ def computeD(doseValues, volumePercentage, D):
     return(doseInterpolated(D))
 
 def computeV(doseValues, volumePercentage, V):
-    volumeInterpolated = scipy.interpolate.interp1d(doseValues, volumePercentage, kind='cubic')
-    return(volumeInterpolated(V))
+     if V > max(doseValues):
+        return(0)
+    elif V < min(doseValues):
+        return(100)
+    else:
+        volumeInterpolated = scipy.interpolate.interp1d(doseValues, volumePercentage, kind='cubic')
+        return(volumeInterpolated(V))
 
 
 #####################################################################################
