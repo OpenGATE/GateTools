@@ -77,7 +77,7 @@ def computeD(doseValues, volumePercentage, D):
     return(doseInterpolated(D))
 
 def computeV(doseValues, volumePercentage, V):
-     if V > max(doseValues):
+    if V > max(doseValues):
         return(0)
     elif V < min(doseValues):
         return(100)
