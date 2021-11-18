@@ -173,9 +173,7 @@ def mergeJobs(outputs, force):
     if not len(statFiles.keys()) == 0:
         for key in statFiles:
             outputFile = os.path.join(resultDir, os.path.basename(statFiles[key][0]))
-            shutil.copyfile(statFiles[key][0], outputFile)
-            for file in statFiles[key][1:]:
-                mergeStatFile.mergeStatFileMain(outputFile, file, outputFile)
+            mergeStatFile.mergeStatFileMain(statFiles[key], outputFile)
 
     if not len(doseFiles.keys()) == 0:
         for key in doseFiles:

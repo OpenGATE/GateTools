@@ -22,20 +22,22 @@ def total_seconds(deltat):
         total += deltat.days*3600.*24.
         return total
 
-def parse_stat_file(filename):
+def parse_stat_file(filenames):
     keys = {}
-    for line in open(filename,"r").readlines():
-        match = linere.match(line)
-        #assert(match is not None)
-        if match is None:
-            continue
-        groups = match.groups()
-        if groups[0] not in mergedlines:
-            continue
-        keys[groups[0]]=groups[1]
+    for filename in filenames:
+        keys[filename] = {}
+        for line in open(filename,"r").readlines():
+            match = linere.match(line)
+            #assert(match is not None)
+            if match is None:
+                continue
+            groups = match.groups()
+            if groups[0] not in mergedlines:
+                continue
+            keys[filename] [groups[0]]=groups[1]
     return keys
 
-def merge_keys(ikeys,jkeys):
+def merge_keys(ikeys):
     mindate = None
     maxdate = None
     keys = {}
@@ -44,88 +46,90 @@ def merge_keys(ikeys,jkeys):
 
         if line == 'NumberOfMergedJobs':
             try:
-                ivalue = int(ikeys['NumberOfMergedJobs'])
-                ivalue += 1
-                value = str(ivalue)
+                value = str(len(ikeys.keys()))
             except KeyError:
                 value = str(2)
 
         if line == 'MeanPPS':
-            try:
-                NumberOfEvents = int(keys['NumberOfEvents'])
-                ElapsedTime = float(keys['ElapsedTime'])
-                pps = NumberOfEvents/ElapsedTime
-                value = str(pps)
-            except ValueError:
-                pass
+            meanPPS = 0
+            for filename in ikeys.keys():
+                try:
+                    meanPPS += int(ikeys[filename]['NumberOfEvents']) / float(ikeys[filename]['ElapsedTime'])
+                except ValueError:
+                    meanPPS = -1
+                    break
+            if not meanPPS == -1:
+                value = str(meanPPS/len(ikeys.keys()))
 
         if line == 'MeanElapsedTime':
-            try:
-                ElapsedTime = float(keys['ElapsedTime'])
-                NumberOfMergedJobs = int(keys['NumberOfMergedJobs'])
-                MeanElapsedTime = ElapsedTime/NumberOfMergedJobs
-                value = str(MeanElapsedTime)
-            except ValueError:
-                pass
+            MeanElapsedTime = 0
+            for filename in ikeys.keys():
+                try:
+                    MeanElapsedTime += float(ikeys[filename]['ElapsedTime'])
+                except ValueError:
+                    MeanElapsedTime = -1
+                    break
+            if not MeanElapsedTime == -1:
+                value = str(MeanElapsedTime/len(ikeys.keys()))
 
         if line == 'MinElapsedTime':
-            try:
-                jElapsedTime = float(jkeys['ElapsedTime'])
-                iElapsedTime = float(ikeys['MinElapsedTime'])
-                MinElapsedTime = min(iElapsedTime, jElapsedTime)
-                value = str(MinElapsedTime)
-            except KeyError:
+            MinElapsedTime = 1e20
+            for filename in ikeys.keys():
                 try:
-                  jElapsedTime = float(jkeys['ElapsedTime'])
-                  iElapsedTime = float(ikeys['ElapsedTime'])
-                  MinElapsedTime = min(iElapsedTime, jElapsedTime)
-                  value = str(MinElapsedTime)
+                    MinElapsedTime = min(float(ikeys[filename]['ElapsedTime']), MinElapsedTime)
                 except ValueError:
-                    pass
+                    MinElapsedTime = -1
+                    break
+            if not MinElapsedTime == -1:
+                value = str(MinElapsedTime)
 
         if line == 'MaxElapsedTime':
-            try:
-                jElapsedTime = float(jkeys['ElapsedTime'])
-                iElapsedTime = float(ikeys['MaxElapsedTime'])
-                MaxElapsedTime = max(iElapsedTime, jElapsedTime)
-                value = str(MaxElapsedTime)
-            except KeyError:
+            MaxElapsedTime = 0
+            for filename in ikeys.keys():
                 try:
-                  jElapsedTime = float(jkeys['ElapsedTime'])
-                  iElapsedTime = float(ikeys['ElapsedTime'])
-                  MaxElapsedTime = max(iElapsedTime, jElapsedTime)
-                  value = str(MaxElapsedTime)
+                    MaxElapsedTime = max(float(ikeys[filename]['ElapsedTime']), MaxElapsedTime)
                 except ValueError:
-                    pass
+                    MaxElapsedTime = -1
+                    break
+            if not MaxElapsedTime == -1:
+                value = str(MaxElapsedTime)
 
         if line == 'StartDate' or line == 'EndDate':
-                ivalue = datetime.datetime.strptime(ikeys[line],"%a %b %d %H:%M:%S %Y")
-                jvalue = datetime.datetime.strptime(jkeys[line],"%a %b %d %H:%M:%S %Y")
+            tmp_mindate = datetime.datetime.strptime("Tue Nov 16 1:0:0 3000", "%a %b %d %H:%M:%S %Y")
+            tmp_maxdate = datetime.datetime.strptime("Tue Nov 16 1:0:0 1000","%a %b %d %H:%M:%S %Y")
+            for filename in ikeys.keys():
+                tmp_date = datetime.datetime.strptime(ikeys[filename][line],"%a %b %d %H:%M:%S %Y")
                 if line=="StartDate":
-                    value = min(ivalue,jvalue)
-                    mindate = value
+                    value = min(tmp_date, tmp_mindate)
+                    tmp_mindate = value
+                    mindate = tmp_mindate
                 if line=="EndDate":
-                    value = max(ivalue,jvalue)
-                    maxdate = value
-                value = value.strftime("%a %b %d %H:%M:%S %Y")
+                    value = max(tmp_date, tmp_maxdate)
+                    tmp_maxdate = value
+                    maxdate = tmp_maxdate
+            value = value.strftime("%a %b %d %H:%M:%S %Y")
 
         if value is None:
-            try:
-                ivalue = int(ikeys[line])
-                jvalue = int(jkeys[line])
-                value = ivalue + jvalue
+            value = 0
+            for filename in ikeys.keys():
+                try:
+                    value += int(ikeys[filename][line])
+                except ValueError:
+                    value = None
+                    break
+            if value is not None:
                 value = str(value)
-            except ValueError:
-                pass
 
         if value is None:
-            try:
-                ivalue = float(ikeys[line])
-                jvalue = float(jkeys[line])
-                value = ivalue + jvalue
+            value = 0
+            for filename in ikeys.keys():
+                try:
+                    value += float(ikeys[filename][line])
+                except ValueError:
+                    value = None
+                    break
+            if value is not None:
                 value = str(value)
-            except ValueError:
-                pass
 
         assert(value is not None)
         keys[line] = value
@@ -142,22 +146,20 @@ def format_keys(keys):
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.option('-i', '--input1', default='', help='First input file to merge')
-@click.option('-j', '--input2', default='', help='Second input file to merge')
 @click.option('-o', '--output', default='', help='Output merged file')
-def mergeStatFile(input1, input2, output):
+@click.argument('inputs', type=click.Path(dir_okay=False), required=True, nargs=-1)
+def mergeStatFile(inputs, output):
     """
     \b
     Merge Stats file from Gate
 
     """
-    mergeStatFileMain(input1, input2, output)
+    mergeStatFileMain(inputs, output)
 
 
-def mergeStatFileMain(input1, input2, output):
-    ikeys = parse_stat_file(input1)
-    jkeys = parse_stat_file(input2)
-    keys  = merge_keys(ikeys,jkeys)
+def mergeStatFileMain(inputs, output):
+    ikeys = parse_stat_file(inputs)
+    keys  = merge_keys(ikeys)
     outputFile = format_keys(keys)
     open(output,"w").write(outputFile)
 
