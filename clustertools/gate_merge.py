@@ -125,7 +125,7 @@ def mergeJobs(outputs, force):
                             mhdUncertaintyFiles[file] += [fullPathFile]
                         else:
                             mhdUncertaintyFiles[file] = [fullPathFile]
-                    elif "-Squared" not in file:
+                    else:
                         if file in mhdFiles.keys():
                             mhdFiles[file] += [fullPathFile]
                         else:
@@ -231,10 +231,10 @@ def mergeJobs(outputs, force):
             for line in file:
                 if "NumberOfEvent" in line:
                     numberOfEvent = int(line.split(" ")[-1])
-            imageFile = mhdUncertaintyFiles[key][0][:-16] + ".mhd"
+            imageFile = os.path.basename(mhdUncertaintyFiles[key][0])[:-16] + ".mhd"
             imageFile = os.path.join(resultDir, imageFile)
             image= itk.imread(imageFile)
-            squaredFile = mhdUncertaintyFiles[key][0][:-16] + "-Squared.mhd"
+            squaredFile = os.path.basename(mhdUncertaintyFiles[key][0])[:-16] + "-Squared.mhd"
             squaredFile = os.path.join(resultDir, squaredFile)
             squared= itk.imread(squaredFile)
             temp = mergeUncertaintyImage.mergeUncertaintyImageMain(image, squared, numberOfEvent, 1.0)
