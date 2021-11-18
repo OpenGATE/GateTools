@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "gatetools"))
 from gatetools import image_arithm
 import mergeStatFile
+import mergeUncertaintyImage
 
 def isPresentInFile(file, searched):
     isInFile = False
@@ -103,6 +104,7 @@ def mergeJobs(outputs, force):
     hdrFiles = {}
     hdrInterfileFiles = {}
     mhdFiles = {}
+    mhdUncertaintyFiles = {}
     statFiles = {}
     doseFiles = {}
     resolFiles = {}
@@ -118,10 +120,16 @@ def mergeJobs(outputs, force):
                     else:
                         rootFiles[file] = [fullPathFile]
                 elif file.endswith(".mha") or file.endswith(".mhd"):
-                    if file in mhdFiles.keys():
-                        mhdFiles[file] += [fullPathFile]
-                    else:
-                        mhdFiles[file] = [fullPathFile]
+                    if "-Uncertainty" in file:
+                        if file in mhdUncertaintyFiles.keys():
+                            mhdUncertaintyFiles[file] += [fullPathFile]
+                        else:
+                            mhdUncertaintyFiles[file] = [fullPathFile]
+                    elif "-Squared" not in file:
+                        if file in mhdFiles.keys():
+                            mhdFiles[file] += [fullPathFile]
+                        else:
+                            mhdFiles[file] = [fullPathFile]
                 elif file.endswith(".txt"):
                     if isPresentInFile(fullPathFile, 'NumberOfEvent'):
                         if file in statFiles.keys():
@@ -212,6 +220,24 @@ def mergeJobs(outputs, force):
         for key in mhdFiles:
             outputFile = os.path.join(resultDir, os.path.basename(mhdFiles[key][0]))
             temp = image_arithm.image_sum(input_list=mhdFiles[key])
+            itk.imwrite(temp, outputFile)
+
+    if not len(mhdUncertaintyFiles.keys()) == 0:
+        for key in mhdUncertaintyFiles:
+            outputFile = os.path.join(resultDir, os.path.basename(mhdUncertaintyFiles[key][0]))
+            statFile = os.path.join(resultDir, os.path.basename(statFiles["stat.txt"][0]))
+            file = open(statFile, "r")
+            numberOfEvent = 1
+            for line in file:
+                if "NumberOfEvent" in line:
+                    numberOfEvent = int(line.split(" ")[-1])
+            imageFile = mhdUncertaintyFiles[key][0][:-16] + ".mhd"
+            imageFile = os.path.join(resultDir, imageFile)
+            image= itk.imread(imageFile)
+            squaredFile = mhdUncertaintyFiles[key][0][:-16] + "-Squared.mhd"
+            squaredFile = os.path.join(resultDir, squaredFile)
+            squared= itk.imread(squaredFile)
+            temp = mergeUncertaintyImage.mergeUncertaintyImageMain(image, squared, numberOfEvent, 1.0)
             itk.imwrite(temp, outputFile)
 
 if __name__ == "__main__":
