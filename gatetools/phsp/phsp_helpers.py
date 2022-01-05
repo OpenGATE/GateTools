@@ -236,22 +236,25 @@ def fig_get_nb_row_col(nfig):
 
 
 # -----------------------------------------------------------------------------
-def fig_rm_empty_plot(nfig, ax):
+def fig_rm_empty_plot(total, nfig, ax):
     """
     Remove empty plot
     """
 
-    nrow, ncol = fig_get_nb_row_col(nfig)
-    r = nrow - 1
-    i = nfig
-    while i < ncol * nrow:
-        c = i - int(i / ncol) * ncol
-        ax[r, c].set_axis_off()
-        i = i + 1
+    nrow, ncol = fig_get_nb_row_col(total)
+    i = 0
+    r = 0
+    while r < nrow:
+        c = 0
+        while c < ncol:
+            if i >= nfig:
+                ax[r, c].set_axis_off()
+            i += 1
+            c += 1
+        r += 1
 
-    # -----------------------------------------------------------------------------
 
-
+# -----------------------------------------------------------------------------
 def keys_toggle_angle(keys):
     """
     In the list of keys, toggle angleXY to XY or XY to angleXY

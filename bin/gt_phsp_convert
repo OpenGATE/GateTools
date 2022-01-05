@@ -63,7 +63,9 @@ def gt_phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle
         exit(0)
 
     # load data keys and the total nb of values (m) ; only n values are read
-    data, read_keys, m = phsp.load(input_filename, n)
+    data, read_keys, m = phsp.load(input_filename, treename='PhaseSpace', nmax=n)
+    print(n,m)
+    print(data.shape)
 
     # remove or keep keys if needed
     if len(rm_keys) > 0:

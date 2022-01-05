@@ -67,6 +67,8 @@ def gt_phsp_info(filename, n, tree, **kwargs):
             print(f'{k:10} {xmin:10.3f} {xmax:10.3f} {xmean:10.3f} {xstd:10.3f}')
         except:
             # probably string values (ignored for the moment)
+            s, cts = np.unique(x, return_counts=True)
+            print(f'{k:10} {s} {cts}')
             pass
         i = i + 1
 
