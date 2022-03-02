@@ -1,6 +1,7 @@
 
 # general helpers
 from .gate_helpers import *
+from .hausdorff import *
 from .image_uncertainty import *
 from .image_arithm import *
 from .image_convert import *
@@ -19,3 +20,4 @@ from .dvh import *
 from .merge_root import *
 from .pet_helpers import *
 from .morpho_math import *
+from .image_to_dicom_rt_struct import *

@@ -64,7 +64,8 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
     # Take the correct job file according to the cluster name and jobfile option
     if jobfile == '' or jobfile == "current":
         if get_dns_domain() == 'in2p3.fr':
-            jobFile = os.path.join(directoryJobFiles, 'gate_job_ccin2p3.job')
+            #jobFile = os.path.join(directoryJobFiles, 'gate_job_ccin2p3.job')
+            jobFile = os.path.join(directoryJobFiles, 'gate_job_ccin2p3.slurm')
         elif get_dns_domain() == 'idris.fr':
             jobFile = os.path.join(directoryJobFiles, 'gate_job_idris.slurm')
         else:
@@ -240,18 +241,20 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
                 paramtogateJob += '[' + aliasMac + ',' + str(parserMacro.aliasToGate[aliasMac][i]) + ']'
 
             if get_dns_domain() == 'in2p3.fr':
-                command = 'qsub -o ' + outputDir + \
-                          ' -e ' + outputDir + \
-                          ' -l sps=1 -N \"gate.' + runId + \
-                          '\" -v \"PARAM=\\\"' + paramtogateJob + \
-                          '\\\",INDEX=' + str(i) + \
+                tempParamFile = tempfile.NamedTemporaryFile(mode='w+t', delete=False, prefix='var.', dir=outputDir)
+                tempParamFile.write(paramtogateJob)
+                tempParamFile.close()
+                command = 'sbatch -L sps -J gate.' + runId + \
+                          ' -D ' + outputDir + \
+                          ' --export=ALL,PARAM=\"' + tempParamFile.name + \
+                          '\",INDEX=' + str(i) + \
                           ',INDEXMAX=' + str(jobs) + \
                           ',OUTPUTDIR=' + outputDir + \
                           ',RELEASEDIR=' + releasedir + \
                           ',MACROFILE=' + os.path.join(outputDir, mainMacroFile) + \
                           ',MACRODIR=' + outputDir + \
                           ',ENVCOMMAND=' + envCommand + \
-                          '\" ' + jobFile
+                          ' ' + jobFile
             elif qsub is None:
                 command = 'PARAM=\" ' + paramtogateJob + \
                         '\" INDEX=' + str(i) + \
