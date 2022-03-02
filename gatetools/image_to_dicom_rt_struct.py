@@ -13,7 +13,7 @@ import os
 import itk
 import numpy as np
 import logging
-import rt_utils
+#import rt_utils
 logger=logging.getLogger(__name__)
 
 def image_to_dicom_rt_struct(dicom, mask, name, rtstruct):

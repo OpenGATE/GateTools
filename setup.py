@@ -35,7 +35,7 @@ setuptools.setup(
         'python-box',
         'lz4',
         'colorama',
-        'rt-utils',
+        #'rt-utils',
         'xxhash'
     ],
     scripts=[
