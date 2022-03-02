@@ -32,7 +32,7 @@ def load(filename, treename='PhaseSpace', nmax=-1, shuffle=False):
             exit(0)
         return load_root(filename, treename, nmax)
 
-    if extension == '.npy':
+    if extension == '.npy'  or extension == '.npz':
         return load_npy(filename, nmax, shuffle)
 
     logger.error('dont know how to open phsp with extension ',

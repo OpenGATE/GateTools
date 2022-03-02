@@ -13,4 +13,6 @@ bin/gate_image_uncertainty_old
 
 /.idea
 
+/.idea_save
+*.swp
 

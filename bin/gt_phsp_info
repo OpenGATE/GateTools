@@ -45,7 +45,7 @@ def gt_phsp_info(filename, n, tree, **kwargs):
     b, extension = os.path.splitext(filename)
     if extension == '.root':
         t = 'root'
-    if extension == '.npy':
+    if extension == '.npy' or extension == '.npz':
         t = 'npy'
     print(f'Type:        {t} {data.dtype}')
     print(f'Nb values:   {m} ({m:.2e})')
