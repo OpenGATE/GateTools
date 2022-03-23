@@ -32,7 +32,7 @@ def load(filename, treename='PhaseSpace', nmax=-1, shuffle=False):
             exit(0)
         return load_root(filename, treename, nmax)
 
-    if extension == '.npy'  or extension == '.npz':
+    if extension == '.npy' or extension == '.npz':
         return load_npy(filename, nmax, shuffle)
 
     logger.error('dont know how to open phsp with extension ',
@@ -175,6 +175,8 @@ def str_keys_to_array_keys(keys):
     """
     Convert string of keys to arrays of key
     """
+    if not isinstance(keys, str):
+        return keys
 
     if keys is None:
         return []

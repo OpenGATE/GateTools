@@ -24,10 +24,11 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--output', '-o', default='AUTO', help='If AUTO, use input_filename.npy')
 @click.option('--rm_keys', '-r', help='Remove the given keys (as a str list such that "X Y Z")', default='')
 @click.option('--keys', '-k', help='Set the kept keys (as a str list such that "X Y Z")', default='')
+@click.option('--mod_key', '-m', type=(str,str), multiple=True, help='Modify the name of a key, for example: --mod_key X Y    will change the key X to Y')
 @click.option('--overwrite', '-f', is_flag=True, default=False, help='Overwrite file if already exist')
 @click.option('--shuffle', '-s', is_flag=True, default=False, help='Shuffle the data')
 @gt.add_options(gt.common_options)
-def gt_phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle, **kwargs):
+def gt_phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle, mod_key, **kwargs):
     """
     \b
     Convert to npy
@@ -64,8 +65,6 @@ def gt_phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle
 
     # load data keys and the total nb of values (m) ; only n values are read
     data, read_keys, m = phsp.load(input_filename, treename='PhaseSpace', nmax=n)
-    print(n,m)
-    print(data.shape)
 
     # remove or keep keys if needed
     if len(rm_keys) > 0:
@@ -75,6 +74,10 @@ def gt_phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle
         data = phsp.select_keys(data, read_keys, keys)
     else:
         keys = read_keys
+
+    for mod in mod_key:
+        i = keys.index(mod[0])
+        keys[i] = mod[1]
 
     # shuffle
     if shuffle:
