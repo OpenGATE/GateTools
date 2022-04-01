@@ -222,21 +222,22 @@ def _get_angles_and_isoCs(rp,verbose):
         beamname = str(i) if not hasattr(ion_beam,"BeamName") else str(ion_beam.BeamName)
         icp0 = ion_beam.IonControlPointSequence[0]
         # check isocenter
-        if "IsocenterPosition" in icp0 and len(icp0.IsocenterPosition)==3:
-            iso_center_list.append(np.array([float(icp0.IsocenterPosition[j]) for j in range(3)]))
+        if "IsocenterPosition" in icp0 and icp0.IsocenterPosition is not None:
+            if len(icp0.IsocenterPosition)==3:
+                iso_center_list.append(np.array([float(icp0.IsocenterPosition[j]) for j in range(3)]))
         else:
             logger.warning("absent/corrupted isocenter for beam '{}'; assuming [0,0,0] for now, please fix this manually.".format(beamname))
             iso_center_list.append(np.zeros(3,dtype=float))
             dubious = True
         # check gantry angle
-        if "GantryAngle" in icp0:
+        if "GantryAngle" in icp0 and icp0.GantryAngle is not None:
             gantry_angle_list.append(float(icp0.GantryAngle))
         else:
             logger.warning("no gantry angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
             gantry_angle_list.append(0.)
             dubious = True
         # check couch angle
-        if "PatientSupportAngle" in icp0:
+        if "PatientSupportAngle" in icp0 and icp0.PatientSupportAngle is not None:
             patient_angle_list.append(float(icp0.PatientSupportAngle))
         else:
             logger.warning("no patient support angle specified for beam '{}' in treatment plan; assuming 0. for now, please fix this manually.".format(beamname))
