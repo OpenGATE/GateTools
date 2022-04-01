@@ -26,7 +26,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--keys', '-k', help='Set the kept keys (as a str list such that "X Y Z")', default='')
 @click.option('--mod_key', '-m', type=(str,str), multiple=True, help='Modify the name of a key, for example: --mod_key X Y    will change the key X to Y')
 @click.option('--overwrite', '-f', is_flag=True, default=False, help='Overwrite file if already exist')
-@click.option('--shuffle', '-s', is_flag=True, default=False, help='Shuffle the data')
+@click.option('--shuffle', '-s', is_flag=True, default=False, help='Shuffle the (output) data')
 @gt.add_options(gt.common_options)
 def gt_phsp_convert(input_filename, output, keys, rm_keys, n, overwrite, shuffle, mod_key, **kwargs):
     """

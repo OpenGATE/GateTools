@@ -65,6 +65,7 @@ setuptools.setup(
         'bin/gt_phsp_convert',
         'bin/gt_phsp_merge',
         'bin/gt_phsp_plot',
+        'bin/gt_phsp_compare',
         'bin/gt_phsp_peaks',
 
         'clustertools/gate_split_and_run.py'
