@@ -12,6 +12,7 @@ import gatetools as gt
 import click
 import os
 import logging
+import uproot
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,8 @@ def gt_phsp_info(filename, n, tree, **kwargs):
     b, extension = os.path.splitext(filename)
     if extension == '.root':
         t = 'root'
+        f = uproot.open(filename)
+        print(f'Branches:    {f.keys()}')
     if extension == '.npy' or extension == '.npz':
         t = 'npy'
     print(f'Type:        {t} {data.dtype}')

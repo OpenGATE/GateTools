@@ -17,10 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 # -----------------------------------------------------------------------------
-def load(filename, treename='PhaseSpace', nmax=-1, shuffle=False):
+def load(filename, treename='PhaseSpace', nmax=-1, nstart=0, shuffle=False):
     """ 
     Load a PHSP (Phase-Space) file
     Output is numpy structured array
+
     """
 
     b, extension = os.path.splitext(filename)
@@ -30,10 +31,10 @@ def load(filename, treename='PhaseSpace', nmax=-1, shuffle=False):
         if shuffle:
             logger.error('cannot shuffle on root file for the moment')
             exit(0)
-        return load_root(filename, treename, nmax)
+        return load_root(filename, treename, nmax=nmax, nstart=nstart)
 
     if extension == '.npy' or extension == '.npz':
-        return load_npy(filename, nmax, shuffle)
+        return load_npy(filename, nmax=nmax, nstart=nstart, shuffle=shuffle)
 
     logger.error('dont know how to open phsp with extension ',
                  extension,
@@ -42,7 +43,7 @@ def load(filename, treename='PhaseSpace', nmax=-1, shuffle=False):
 
 
 # -----------------------------------------------------------------------------
-def load_root(filename, treename, nmax=-1):
+def load_root(filename, treename, nmax=-1, nstart=0):
     """
     Load a PHSP (Phase-Space) file in root format
     Output is numpy structured array
@@ -73,7 +74,7 @@ def load_root(filename, treename, nmax=-1):
 
             # Convert to arrays (this take times)
             if nmax != -1:
-                a = psf.arrays(entry_stop=nmax, library="numpy")
+                a = psf.arrays(entry_start=nstart, entry_stop=nmax, library="numpy")
             else:
                 a = psf.arrays(library="numpy")
 
@@ -88,7 +89,7 @@ def load_root(filename, treename, nmax=-1):
 
 
 # -----------------------------------------------------------------------------
-def load_npy(filename, nmax=-1, shuffle=False):
+def load_npy(filename, nmax=-1, nstart=0, shuffle=False):
     """
     Load a PHSP (Phase-Space) file in npy
     Output is numpy structured array
@@ -105,7 +106,7 @@ def load_npy(filename, nmax=-1, shuffle=False):
         if shuffle:
             x = np.random.choice(x, nmax, replace=False)
         else:
-            x = x[:nmax]
+            x = x[nstart:nmax]
 
     data = x.view(np.float32).reshape(x.shape + (-1,))
     # data = np.float64(data) # slow
