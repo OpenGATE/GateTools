@@ -11,7 +11,6 @@ function transferJobData {
     mkdir "${OUTPUTDIR}/output.${SLURM_JOB_ID%%.*}"
     rsync -av --remove-source-files output/ "${OUTPUTDIR}/output.${SLURM_JOB_ID%%.*}"
     echo "Cleanup"
-    unlink "${LOCALMACRODIR}"/data
     rm -r ${LOCALMACRODIR}
 }
 
@@ -61,8 +60,7 @@ LOCALMACRODIR=$(mktemp -d -p .)
 echo "coucou2"
 trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
-cp -r -L "${MACRODIR}"/mac .
-ln -s "${MACRODIR}"/data ./data
+cp -r -L "${MACRODIR}"/* .
 mkdir output
 
 # Enforce one thread

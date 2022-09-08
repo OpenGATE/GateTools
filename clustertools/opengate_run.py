@@ -25,7 +25,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-j', '--jobs', default=1, help='Number of jobs/core')
 @click.option('-o', '--output', default='', help='Output folder path (default: run.XXX)')
 @click.option('-p', '--param', default='', help='click parameter to pass to the python script (-p " --angle 10 --nbParticles 1e8"')
-@click.option('-nd', '--no_detach', is_flag=True, help='Do not detach Gate, just 1 job in local and print in the shell')
 @click.option('--copydata', is_flag=True, help='Hard copy data into run.XXX folder (default: symbolic link)')
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 @click.option('--env', default='', help='Bash script to set environment variables during job. This file is source at the beginning.')
@@ -102,15 +101,6 @@ def runJobs(script, jobs, env, output, param, copydata, dry, jobfile):
         if qsub is None:
             print('No qsub, run Gate on multiple cores.')
 
-    if no_detach:
-        #Be sure to be local and to run 1 job
-        if not qsub is None:
-          print(colorama.Fore.RED + 'ERROR: no_detach mode is available locally only' + colorama.Style.RESET_ALL)
-          exit(1)
-        if jobs != 1:
-          print(colorama.Fore.RED + 'ERROR: The number of jobs has to be 1' + colorama.Style.RESET_ALL)
-          exit(1)
-
     # Parameter files
     paramFileName = os.path.join(outputDir, 'run.log')
     paramFile = open(paramFileName, "w")
@@ -124,7 +114,7 @@ def runJobs(script, jobs, env, output, param, copydata, dry, jobfile):
     # Run jobs
     for i in range(0, jobs):
         #Set paramtogate with param for each job
-        paramtogateJob = ' str(i) ' + param
+        paramtogateJob = param
 
         if get_dns_domain() == 'in2p3.fr':
             tempParamFile = tempfile.NamedTemporaryFile(mode='w+t', delete=False, prefix='var.', dir=outputDir)
@@ -137,7 +127,7 @@ def runJobs(script, jobs, env, output, param, copydata, dry, jobfile):
                       ',INDEXMAX=' + str(jobs) + \
                       ',OUTPUTDIR=' + outputDir + \
                       ',MACROFILE=' + fullScriptFile + \
-                      ',MACRODIR=' + outputDir + \
+                      ',MACRODIR=' + os.path.dirname(fullScriptFile) + \
                       ',ENVCOMMAND=' + envCommand + \
                       ' ' + jobFile
         paramFile.write(command)
