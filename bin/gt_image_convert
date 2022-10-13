@@ -18,9 +18,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-o', '--output', type=str, required=True, help='Output image name')
 @click.option('-p', '--pixeltype', type=str, help='Pixel type conversion')
 @click.option('-f', '--flip', is_flag=True, help='If a negative spacing is present in 3D Dicom tags, flip the image to have a positive spacing and identity matrix')
+@click.option('-an', '--accessionnumber', is_flag=True, help='For dicoms with multiple accession number, create a 4D image')
 @click.argument('input', type=str, required=True, nargs=-1)
 @gt.add_options(gt.common_options)
-def gt_image_convert(input, output, pixeltype, flip, **kwargs):
+def gt_image_convert(input, output, pixeltype, flip, accessionnumber, **kwargs):
     '''
     Convert the input to the output with pixeltype. If pixeltype is
     not set, the output has the same pixel type than the input.
@@ -55,6 +56,8 @@ def gt_image_convert(input, output, pixeltype, flip, **kwargs):
         inputImages.append(itk.imread(input[0]))
     else:
         series = gt.separate_series(input)
+        if accessionnumber:
+            series = gt.separate_accessionNumber_series(series)
         for serie in series.keys():
             if len(series[serie]) > 1:
                 logger.info(f'Reading input dicom {len(series[serie])} input files')

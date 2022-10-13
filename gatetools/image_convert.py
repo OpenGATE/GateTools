@@ -113,6 +113,26 @@ def separate_series(dicomFiles):
         files[seriesInstanceUID].append(file)
     return files
 
+def separate_accessionNumber_series(series):
+    """
+    Read dicom and return a dictionary with the different series separated
+    """
+    files = {}
+    #Load dicom files
+    for serie in series.keys():
+        for file in series[serie]:
+            try:
+                accessionNumber = pydicom.read_file(file)[0x0020, 0x0012].value
+            except pydicom.errors.InvalidDicomError:
+                ds = pydicom.read_file(file, force=True)
+                ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+                accessionNumber = ds[0x0020, 0x0012].value
+            new_key = str(serie) + "_" + str(accessionNumber)
+            if new_key  not in files:
+                files[new_key] = []
+            files[new_key].append(file)
+    return files
+
 def read_dicom(dicomFiles):
     """
 
