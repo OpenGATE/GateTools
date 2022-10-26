@@ -163,7 +163,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
     os.makedirs(os.path.join(outputDir, 'mac'), exist_ok=True)
     parserMacro = ParserMacro()
     for a in alias:
-        paramFile.write('    ' a[0] + ' : ' + a[1] + '\n')
+        paramFile.write('    ' + a[0] + ' : ' + a[1] + '\n')
         if ',' in a[1]:
             parserMacro.setAlias((a[0], a[1].split(",")), jobs)
         else:
