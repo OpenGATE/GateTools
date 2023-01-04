@@ -1,5 +1,5 @@
 #!/bin/bash -x
-#SBATCH --mem=12000              # Memory in MB per default
+#SBATCH --mem=5000               # Memory in MB per default
 #SBATCH --output=Seq%j.out       # nom du fichier de sortie
 #SBATCH --error=Seq%j.out        # nom du fichier d'erreur (ici en commun avec la sortie)
 
@@ -11,7 +11,6 @@ function transferJobData {
     mkdir "${OUTPUTDIR}/output.${SLURM_JOB_ID%%.*}"
     rsync -av --remove-source-files output/ "${OUTPUTDIR}/output.${SLURM_JOB_ID%%.*}"
     echo "Cleanup"
-    unlink "${LOCALMACRODIR}"/data
     rm -r ${LOCALMACRODIR}
 }
 
@@ -32,7 +31,6 @@ echo "Checking"
 uname -a
 echo "MACRODIR=${MACRODIR:?"unknown MACRODIR"}"
 echo "MACROFILE=${MACROFILE:?"unknown MACROFILE"}"
-echo "RELEASEDIR=${RELEASEDIR:?"unknown RELEASEDIR"}"
 echo "OUTPUTDIR=${OUTPUTDIR:?"unknown OUTPUTDIR"}"
 echo "ENVCOMMAND=${ENVCOMMAND:?"unknown ENVCOMMAND"}"
 echo "JOB_ID=$SLURM_JOB_ID"
@@ -50,16 +48,8 @@ else
   source "$ENVCOMMAND"
 fi
 
-if test "$RELEASEDIR" = "NONE"
-then
-	  echo Using $(which Gate)
-	  ldd $(which Gate)
-else
-	  test -d "${RELEASEDIR}" || error "can't find release"
-	  md5sum ${RELEASEDIR}/Gate
-          ldd ${RELEASEDIR}/Gate
-fi
-test -d "${MACRODIR}" && test -d "${MACRODIR}/mac" || error "invalid macro"
+echo Using $(which python)
+test -d "${MACRODIR}"  || error "invalid macro"
 
 
 echo "Copying inputs"
@@ -70,8 +60,7 @@ LOCALMACRODIR=$(mktemp -d -p .)
 echo "coucou2"
 trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
-cp -r -L "${MACRODIR}"/mac .
-ln -s "${MACRODIR}"/data ./data
+cp -r -L "${MACRODIR}"/* .
 mkdir output
 
 # Enforce one thread
@@ -79,13 +68,7 @@ ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
 
 echo "Lauching macro"
 date
-if test "$RELEASEDIR" = "NONE"
-then
-	  Gate ${PARAM} ${MACROFILE} || error "gate failed"
-else
-	 ${RELEASEDIR}/Gate ${PARAM} ${MACROFILE} || error "gate failed"
-fi
-
+python ${MACROFILE} ${PARAM} || error "gate failed"
 date
 rm $PARAMFILE
 transferJobData

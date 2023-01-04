@@ -66,7 +66,7 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
                     previousId[tree] = {}
                 for branch in root[tree].keys():
                     array = root[tree].array(branch)
-                    if len(array) > 0:
+                    if len(array) > 0 and not (type(array[0]) is type(np.ndarray(2,))):
                         if type(array[0]) is type(b'c'):
                             array = np.array([0 for xi in array])
                         if not branch in trees[tree]["rootDictType"]:

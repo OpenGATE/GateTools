@@ -38,9 +38,6 @@ echo "ENVCOMMAND=${ENVCOMMAND:?"unknown ENVCOMMAND"}"
 echo "JOB_ID=$SLURM_JOB_ID"
 echo "INDEX=${INDEX}"
 echo "INDEXMAX=${INDEX}"
-PARAMFILE=${PARAM}
-PARAM=`cat ${PARAMFILE}`
-echo "PARAM= ${PARAM}"
 
 if test "$ENVCOMMAND" = "NONE"
 then
@@ -52,25 +49,19 @@ fi
 
 if test "$RELEASEDIR" = "NONE"
 then
-	  echo Using $(which Gate)
-	  ldd $(which Gate)
+	  echo Using $(which python)
+	  ldd $(which python)
 else
 	  test -d "${RELEASEDIR}" || error "can't find release"
-	  md5sum ${RELEASEDIR}/Gate
-          ldd ${RELEASEDIR}/Gate
+	  md5sum ${RELEASEDIR}/python
+          ldd ${RELEASEDIR}/python
 fi
-test -d "${MACRODIR}" && test -d "${MACRODIR}/mac" || error "invalid macro"
-
 
 echo "Copying inputs"
-echo "coucou0"
 cd $TMPDIR
-echo "coucou1"
 LOCALMACRODIR=$(mktemp -d -p .)
-echo "coucou2"
 trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
-cp -r -L "${MACRODIR}"/mac .
 ln -s "${MACRODIR}"/data ./data
 mkdir output
 
@@ -81,13 +72,12 @@ echo "Lauching macro"
 date
 if test "$RELEASEDIR" = "NONE"
 then
-	  Gate ${PARAM} ${MACROFILE} || error "gate failed"
+	  python ${MACROFILE} || error "gam_gate failed"
 else
-	 ${RELEASEDIR}/Gate ${PARAM} ${MACROFILE} || error "gate failed"
+	 ${RELEASEDIR}/python ${MACROFILE} || error "gam_gate failed"
 fi
 
 date
-rm $PARAMFILE
 transferJobData
 date
 

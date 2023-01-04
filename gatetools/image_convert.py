@@ -113,6 +113,26 @@ def separate_series(dicomFiles):
         files[seriesInstanceUID].append(file)
     return files
 
+def separate_accessionNumber_series(series):
+    """
+    Read dicom and return a dictionary with the different series separated
+    """
+    files = {}
+    #Load dicom files
+    for serie in series.keys():
+        for file in series[serie]:
+            try:
+                accessionNumber = pydicom.read_file(file)[0x0020, 0x0012].value
+            except pydicom.errors.InvalidDicomError:
+                ds = pydicom.read_file(file, force=True)
+                ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+                accessionNumber = ds[0x0020, 0x0012].value
+            new_key = str(serie) + "_" + str(accessionNumber)
+            if new_key  not in files:
+                files[new_key] = []
+            files[new_key].append(file)
+    return files
+
 def read_dicom(dicomFiles):
     """
 
@@ -233,17 +253,16 @@ def read_3d_dicom(dicomFile, flip=False):
     img_result.SetOrigin(dicomProperties.origin)
     arrayDirection = np.zeros([3,3], np.float64)
     arrayDirection[0,0] = dicomProperties.io[0]
-    arrayDirection[0,1] = dicomProperties.io[1]
-    arrayDirection[0,2] = dicomProperties.io[2]
-    arrayDirection[1,0] = dicomProperties.io[3]
+    arrayDirection[1,0] = dicomProperties.io[1]
+    arrayDirection[2,0] = dicomProperties.io[2]
+    arrayDirection[0,1] = dicomProperties.io[3]
     arrayDirection[1,1] = dicomProperties.io[4]
-    arrayDirection[1,2] = dicomProperties.io[5]
-    arrayDirection[2,:] = np.cross(arrayDirection[0,:], arrayDirection[1,:])
+    arrayDirection[2,1] = dicomProperties.io[5]
+    arrayDirection[:,2] = np.cross(arrayDirection[:,0], arrayDirection[:,1])
     if Tag(0x18, 0x88) in slices[0] and slices[0][0x18, 0x88].value <0:
-        arrayDirection[2,2] = -1.0
+        arrayDirection[2,2] = -arrayDirection[2,2]
     else:
         flip = False
-        arrayDirection[2,2] = 1.0
     matrixItk = itk.Matrix[itk.D,3,3](itk.GetVnlMatrixFromArray(arrayDirection))
     img_result.SetDirection(matrixItk)
     if flip:

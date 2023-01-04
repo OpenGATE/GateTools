@@ -44,6 +44,8 @@ def computeMaxDistance(mask1, mask2, percentile):
     if distance >= 0:
       distances.append(distance)
   distances.sort()
+  if len(distances) == 0:
+      distances.append(0.0)
   return(distances[int(percentile*(len(distances)-1))])
 
 def computeHausdorff(mask1, mask2, percentile):
