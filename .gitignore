@@ -16,3 +16,5 @@ bin/gate_image_uncertainty_old
 /.idea_save
 *.swp
 
+
+.DS_Store

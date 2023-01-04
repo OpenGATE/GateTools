@@ -114,6 +114,9 @@ def gt_phsp_plot(filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, s
                 continue
 
             # check validity
+            if type(x[0]) == str:
+                print(f'Skip key {k} : str')
+                continue
             try:
                 a = int(x[0])
             except:
