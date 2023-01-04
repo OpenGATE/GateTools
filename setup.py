@@ -20,7 +20,7 @@ setuptools.setup(
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     install_requires=[
         'matplotlib',
         'click',
@@ -29,7 +29,7 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk>=5.1.0',
+        'itk>=5.2.0',
         'uproot',
         'wget',
         'python-box',
