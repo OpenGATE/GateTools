@@ -20,7 +20,7 @@ setuptools.setup(
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     install_requires=[
         'matplotlib',
         'click',
@@ -29,7 +29,7 @@ setuptools.setup(
         'pydicom',
         'tqdm',
         'colored',
-        'itk>=5.1.0',
+        'itk>=5.2.0',
         'uproot',
         'wget',
         'python-box',
@@ -65,6 +65,7 @@ setuptools.setup(
         'bin/gt_phsp_convert',
         'bin/gt_phsp_merge',
         'bin/gt_phsp_plot',
+        'bin/gt_phsp_compare',
         'bin/gt_phsp_peaks',
 
         'clustertools/gate_split_and_run.py'
