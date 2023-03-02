@@ -46,6 +46,7 @@ Use the flag `-h` to get print the help of each tool. Here is the current list o
 | `gt_phps_peaks`               | Try to detect photopeaks (experimental)                   |
 | `gt_phsp_plot`                | Plot marginal distributions form a phase space file       |
 | `gt_write_dicom`              | Convert image (mhd, nii, ...) to dicom                    |
+| `gt_digi_mac_converter`       | Convert old digitizer macros to the new commands (Gate9.3)|
 
 All tools are also available to be use within your own Python script with, for example:
 ```
