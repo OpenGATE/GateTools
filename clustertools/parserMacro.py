@@ -41,7 +41,8 @@ class ParserMacro:
         if len(splitLine) > 0 and splitLine[0] == '/control/alias':
             self.parseAlias(splitLine)
         elif len(splitLine) > 0 and (splitLine[0] == '/control/strdoif' or
-                                     splitLine[0] == '/control/doif') :
+                                     splitLine[0] == '/control/doif' or
+                                     splitLine[0] == '/control/loop') :
             condition, newSplitLine = self.parseCondition(splitLine)
             if len(newSplitLine) > 0:
                 newLine = " ".join(newSplitLine)
@@ -112,6 +113,8 @@ class ParserMacro:
             else:
                 print(colorama.Fore.YELLOW + "WARNING: Not possible to decrypt: " + " ".join(splitLine) + colorama.Style.RESET_ALL)
             return False, []
+        elif len(splitLine) > 0 and splitLine[0] == '/control/loop':
+            return True, splitLine[1:]
 
 
     def getMacroFiles(self, splitLine):
