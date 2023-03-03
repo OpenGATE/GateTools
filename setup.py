@@ -68,6 +68,8 @@ setuptools.setup(
         'bin/gt_phsp_compare',
         'bin/gt_phsp_peaks',
 
+        'bin/gt_digi_mac_converter',
+
         'clustertools/gate_split_and_run.py'
     ]
 )
