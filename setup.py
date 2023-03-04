@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.11.3",
+    version="0.12.0",
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
@@ -67,6 +67,8 @@ setuptools.setup(
         'bin/gt_phsp_plot',
         'bin/gt_phsp_compare',
         'bin/gt_phsp_peaks',
+
+        'bin/gt_digi_mac_converter',
 
         'clustertools/gate_split_and_run.py'
     ]
