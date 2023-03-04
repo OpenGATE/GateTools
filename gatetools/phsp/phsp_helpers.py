@@ -250,8 +250,10 @@ def fig_rm_empty_plot(total, nfig, ax):
     while r < nrow:
         c = 0
         while c < ncol:
-            if i >= nfig:
+            if i >= nfig and nrow > 1:
                 ax[r, c].set_axis_off()
+            if i >= nfig and nrow == 1:
+                ax[c].set_axis_off()
             i += 1
             c += 1
         r += 1
