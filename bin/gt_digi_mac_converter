@@ -65,17 +65,21 @@ def convert_macro(i, o, sd, multi):
             
         if '/gate/digitizerMgr/name' in line:
             if(multi=='SinglesDigitizer'):
-                x = line.split(" ")
-                name2 = x[1][:-1]
+                x_non=line.replace('\n', '')
+                x_tmp=x_non.replace('\t', '') 
+                x = x_tmp.split(' ')
+                name2 = x[len(x)-1]
                 singles_tmp_name='/'+name2+'/'
                 line =line.replace(line,line+'/gate/digitizerMgr/chooseSD '+sd+'\n')
                 flagThres=0
                 flagUp=0
                 #print(singles_tmp_name)    
                 
-            elif (multi=='CoincidenceSorter'):   
-                x = line.split(" ")
-                name2 = x[1][:-1]
+            elif (multi=='CoincidenceSorter'):
+                x_non=line.replace('\n', '')
+                x_tmp=x_non.replace('\t', '') 
+                x = x_tmp.split(" ")
+                name2 = x[len(x)-1]
                 coin_tmp_name='/'+name2+'/'
                 #print(tmp_name)
                 #print(line)
@@ -118,6 +122,10 @@ def convert_macro(i, o, sd, multi):
         #####################################
         if ' blurring' in line:
             line =line.replace(' blurring',' energyResolution')
+        if '/blurring/setResolution' in line:
+            line =line.replace('/blurring/setResolution','/energyResolution/fwhm')
+        if '/blurring/setEnergyOfReference' in line:
+            line =line.replace('/blurring/setEnergyOfReference','/energyResolution/energyOfReference')    
         if '/blurring/setLaw' in line:
             line =line.replace(line,'')
 
