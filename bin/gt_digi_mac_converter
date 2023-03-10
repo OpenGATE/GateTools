@@ -40,8 +40,8 @@ def convert_macro(i, o, sd, multi):
     fout = open(o, "wt")
 
     x=[]
-    singles_tmp_name='-1'
-    coin_tmp_name='-1'
+    singles_tmp_name='-NULL'
+    coin_tmp_name='-NULL'
     flagThres=0
     flagUp=0
     newColl=0
