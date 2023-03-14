@@ -12,9 +12,9 @@ then `cd GateTools`, then `pip install -e .`
 Example of usage:
 ```
 gt_gate_info
-gt_image_convert -i input.dcm -o output.mhd
-gt_image_convert -i input.mhd -o output_float.mhd -p float
-gt_image_arithm -i *.mhd -o output.mhd -O sum
+gt_image_convert input.dcm -o output.mhd
+gt_image_convert input.mhd -o output_float.mhd -p float
+gt_image_arithm *.mhd -o output.mhd -O sum
 gt_gamma_index dose.mhd gate-DoseToWater.mhd -o gamma.mhd --dd 2 --dta 2.5 -u "%" -T 0.2
 ```
 
