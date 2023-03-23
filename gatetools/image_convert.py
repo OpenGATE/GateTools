@@ -108,6 +108,7 @@ def separate_series(dicomFiles):
             ds = pydicom.read_file(file, force=True)
             ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
             seriesInstanceUID = ds[0x0020, 0x000e].value
+            print(seriesInstanceUID)
         if seriesInstanceUID not in files:
             files[seriesInstanceUID] = []
         files[seriesInstanceUID].append(file)

@@ -51,7 +51,7 @@ def gt_image_convert(input, output, pixeltype, flip, accessionnumber, **kwargs):
 
     #Read input
     inputImages = []
-    if len(input) == 1 and not input[0].endswith(".dcm"):
+    if len(input) == 1 and not (input[0].endswith(".dcm") or input[0].endswith(".IMA")):
         logger.info(f'Reading input image with itk {input[0]}')
         inputImages.append(itk.imread(input[0]))
     else:
@@ -62,7 +62,7 @@ def gt_image_convert(input, output, pixeltype, flip, accessionnumber, **kwargs):
             if len(series[serie]) > 1:
                 logger.info(f'Reading input dicom {len(series[serie])} input files')
                 inputImages.append(gt.read_dicom(series[serie]))
-            elif len(series[serie]) == 1 and series[serie][0].endswith(".dcm"):
+            elif len(series[serie]) == 1 and (series[serie][0].endswith(".dcm") or series[serie][0].endswith(".IMA")):
                 logger.info(f'Reading input 3D dicom {series[serie][0]}')
                 inputImages.append(gt.read_3d_dicom(series[serie], flip))
             else:
