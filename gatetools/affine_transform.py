@@ -165,6 +165,7 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     preTranslateFilter = itk.ChangeInformationImageFilter.New(Input=input)
     preTranslateFilter.CenterImageOn()
     preTranslateFilter.Update()
+    itk.imwrite("preTranslateFilter.mhd", preTranslateFilter.GetOutput())
 
     cornersIndex = [itk.ContinuousIndex[itk.D, imageDimension]() for i in range(2**imageDimension)]
     if imageDimension == 2 or imageDimension == 3:
@@ -222,6 +223,7 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     castImageFilter = itk.CastImageFilter[type(input), tempImageType].New()
     castImageFilter.SetInput(preTranslateFilter.GetOutput())
     castImageFilter.Update()
+    itk.imwrite("castImageFilter.mhd", castImageFilter.GetOutput())
     
     resampleFilter = itk.ResampleImageFilter.New(Input=castImageFilter.GetOutput())
     resampleFilter.SetOutputSpacing(newspacing)
@@ -240,11 +242,13 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     resampleFilter.SetInterpolator(interpolator)
     resampleFilter.SetDefaultPixelValue(pad)
     resampleFilter.Update()
+    itk.imwrite("resampleFilter.mhd", resampleFilter.GetOutput())
 
     postTranslateFilter = itk.ChangeInformationImageFilter.New(Input=resampleFilter.GetOutput())
     postTranslateFilter.SetOutputOrigin(originAfterRotation + centerImagePoint + translationMatrix)
     postTranslateFilter.ChangeOriginOn()
     postTranslateFilter.Update()
+    itk.imwrite("postTranslateFilter.mhd", postTranslateFilter.GetOutput())
 
     if neworigin is None and not (itk.array_from_matrix(input.GetDirection()) == np.eye(imageDimension)).all():
         neworigin = postTranslateFilter.GetOutput().GetOrigin()
@@ -279,10 +283,12 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
     resampleFilterCanvas.SetInterpolator(interpolator)
     resampleFilterCanvas.SetDefaultPixelValue(pad)
     resampleFilterCanvas.Update()
+    itk.imwrite("resampleFilterCanvas.mhd", resampleFilterCanvas.GetOutput())
         
     castImageFilter2 = itk.CastImageFilter[tempImageType, type(input)].New()
     castImageFilter2.SetInput(resampleFilterCanvas.GetOutput())
     castImageFilter2.Update()
+    itk.imwrite("castImageFilter2.mhd", castImageFilter2.GetOutput())
     
     return castImageFilter2.GetOutput()
 

@@ -1,5 +1,7 @@
 #!/bin/bash -x
 #SBATCH --mem=5000               # Memory in MB per default
+#SBATCH --time=1-00:00:00
+#SBATCH --ntasks=1
 #SBATCH --output=Seq%j.out       # nom du fichier de sortie
 #SBATCH --error=Seq%j.out        # nom du fichier d'erreur (ici en commun avec la sortie)
 

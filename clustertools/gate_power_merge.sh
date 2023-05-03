@@ -615,4 +615,10 @@ then
     cp -r "${rundir}/mac" "${outputdir}/mac"
 fi
 
+if [ -f "${rundir}/run.log" ]
+then
+    echo "copying run.log file"
+    cp "${rundir}/run.log" "${outputdir}/run.log"
+fi
+
 echo "these was ${warning_count} warning(s)"
