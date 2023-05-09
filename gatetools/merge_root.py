@@ -31,7 +31,7 @@ def unicity(root_keys):
     """
     root_array = []
     for key in root_keys:
-        name = key.decode("utf-8").split(";")[0]
+        name = key.split(";")[0]
         if not name in root_array:
             root_array.append(name)
     return(root_array)
@@ -41,10 +41,12 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
     Merge root files in output files
     """
     try:
-        import uproot3 as uproot
+        import uproot
     except:
-        print("uproot3 is mandatory to merge root file. Please, do:")
-        print("pip install uproot3")
+        print("uproot4 is mandatory to merge root file. Please, do:")
+        print("pip install uproot")
+
+    uproot.default_library = "np"
 
     out = uproot.recreate(outputfile)
 
@@ -52,8 +54,8 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
     previousId = {}
 
     #create the dict reading all input root files
-    trees = {}
-    hists = {}
+    trees = {} #TTree with TBranch
+    hists = {} #Directory with THist
     pbar = tqdm.tqdm(total = len(rootfiles))
     for file in rootfiles:
         root = uproot.open(file)
@@ -69,29 +71,30 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
                     hists[tree]["rootDictValue"] = {}
                     previousId[tree] = {}
                 for branch in root[tree].keys():
-                    if hasattr(root[tree], 'classes'):
-                        array = root[tree][branch].values
+                    if isinstance(root[tree],uproot.reading.ReadOnlyDirectory):
+                        array = root[tree][branch].values()
                         if len(array) > 0:
-                            if type(array[0]) is type(b'c'):
+                            branchName = tree + "/" + branch
+                            if type(array[0]) is type('c'):
                                 array = np.array([0 for xi in array])
-                            if not branch in hists[tree]["rootDictType"]:
-                                hists[tree]["rootDictType"][branch] = root[tree][branch]
-                                hists[tree]["rootDictValue"][branch] = np.zeros(array.shape)
-                            if (not incrementRunId and branch.decode('utf-8').startswith('eventID')) or (incrementRunId and branch.decode('utf-8').startswith('runID')):
-                                if not branch in previousId[tree]:
-                                    previousId[tree][branch] = 0
-                                array += previousId[tree][branch]
-                                previousId[tree][branch] = max(array) +1
-                            hists[tree]["rootDictValue"][branch] += array
+                            if not branchName in hists[tree]["rootDictType"]:
+                                hists[tree]["rootDictType"][branchName] = root[tree][branch]
+                                hists[tree]["rootDictValue"][branchName] = np.zeros(array.shape)
+                            if (not incrementRunId and branch.startswith('eventID')) or (incrementRunId and branch.startswith('runID')):
+                                if not branchName in previousId[tree]:
+                                    previousId[tree][branchName] = 0
+                                array += previousId[tree][branchName]
+                                previousId[tree][branchName] = max(array) +1
+                            hists[tree]["rootDictValue"][branchName] += array
                     else:
-                        array = root[tree].array(branch)
+                        array = root[tree][branch].array(library="np")
                         if len(array) > 0 and not (type(array[0]) is type(np.ndarray(2,))):
-                            if type(array[0]) is type(b'c'):
+                            if type(array[0]) is type('c'):
                                 array = np.array([0 for xi in array])
                             if not branch in trees[tree]["rootDictType"]:
                                 trees[tree]["rootDictType"][branch] = type(array[0])
                                 trees[tree]["rootDictValue"][branch] = np.array([])
-                            if (not incrementRunId and branch.decode('utf-8').startswith('eventID')) or (incrementRunId and branch.decode('utf-8').startswith('runID')):
+                            if (not incrementRunId and branch.startswith('eventID')) or (incrementRunId and branch.startswith('runID')):
                                 if not branch in previousId[tree]:
                                     previousId[tree][branch] = 0
                                 array += previousId[tree][branch]
@@ -103,17 +106,13 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
     #Set the dict in the output root file
     for tree in trees:
         if not trees[tree]["rootDictValue"] == {} or not trees[tree]["rootDictType"] == {}:
-            out[tree] = uproot.newtree(trees[tree]["rootDictType"])
-            out[tree].extend(trees[tree]["rootDictValue"])
+            #out.mktree(tree, trees[tree]["rootDictType"])
+            out[tree] = trees[tree]["rootDictValue"]
     for hist in hists:
         if not hists[hist]["rootDictValue"] == {} or not hists[hist]["rootDictType"] == {}:
             for branch in hists[hist]["rootDictValue"]:
-                if not (type(hists[tree]["rootDictValue"][branch][0]) is type(np.ndarray(2,))):
-                    for i in range(len(hists[tree]["rootDictValue"][branch])):
-                        hists[tree]["rootDictType"][branch][i] = hists[tree]["rootDictValue"][branch][i]
-                else:
-                    for i in range(len(hists[tree]["rootDictValue"][branch])):
-                        hists[tree]["rootDictType"][branch].values[i] = hists[tree]["rootDictValue"][branch][i]
+                for i in range(len(hists[tree]["rootDictValue"][branch])):
+                    hists[tree]["rootDictType"][branch].values()[i] = hists[tree]["rootDictValue"][branch][i]
                 out[branch] = hists[tree]["rootDictType"][branch]
 
 
