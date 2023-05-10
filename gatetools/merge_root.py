@@ -84,11 +84,6 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
                             if not branchName in hists[tree]["rootDictType"]:
                                 hists[tree]["rootDictType"][branchName] = root[tree][branch].to_numpy()
                                 hists[tree]["rootDictValue"][branchName] = np.zeros(array.shape)
-                            if (not incrementRunId and branch.startswith('eventID')) or (incrementRunId and branch.startswith('runID')):
-                                if not branchName in previousId[tree]:
-                                    previousId[tree][branchName] = 0
-                                array += previousId[tree][branchName]
-                                previousId[tree][branchName] = max(array) +1
                             hists[tree]["rootDictValue"][branchName] += array
                     else:
                         array = root[tree][branch].array(library="np")
@@ -126,6 +121,7 @@ import tempfile
 import wget
 import os
 import shutil
+import numpy as np
 from .logging_conf import LoggedTestCase
 
 class Test_MergeRoot(LoggedTestCase):
@@ -134,7 +130,7 @@ class Test_MergeRoot(LoggedTestCase):
             import uproot
         except:
             print("uproot4 is mandatory to merge root file. Please, do:")
-            print("pip install uproot4")
+            print("pip install uproot")
 
         logger.info('Test_MergeRoot test_merge_root_phsp')
         tmpdirpath = tempfile.mkdtemp()
@@ -146,17 +142,17 @@ class Test_MergeRoot(LoggedTestCase):
         inputTree = input[input.keys()[0]]
         outputTree = output[output.keys()[0]]
         self.assertTrue(outputTree.keys() == inputTree.keys())
-        inputBranch = inputTree.array(inputTree.keys()[1])
-        outputBranch = outputTree.array(outputTree.keys()[1])
+        inputBranch = inputTree[inputTree.keys()[1]].array(library="np")
+        outputBranch = outputTree[outputTree.keys()[1]].array(library="np")
         self.assertTrue(2*len(inputBranch) == len(outputBranch))
         shutil.rmtree(tmpdirpath)
 
     def test_merge_root_pet_incrementEvent(self):
         try:
-            import uproot3 as uproot
+            import uproot
         except:
-            print("uproot3 is mandatory to merge root file. Please, do:")
-            print("pip install uproot3")
+            print("uproot4 is mandatory to merge root file. Please, do:")
+            print("pip install uproot")
 
         logger.info('Test_MergeRoot test_merge_root_pet')
         tmpdirpath = tempfile.mkdtemp()
@@ -166,22 +162,22 @@ class Test_MergeRoot(LoggedTestCase):
         output = uproot.open(os.path.join(tmpdirpath, "output.root"))
         inputTree = input[input.keys()[0]]
         outputTree = output[output.keys()[0]]
-        inputRunBranch = inputTree.array(inputTree.keys()[0])
-        outputRunBranch = outputTree.array(outputTree.keys()[0])
+        inputRunBranch = inputTree[inputTree.keys()[0]].array(library="np")
+        outputRunBranch = outputTree[outputTree.keys()[0]].array(library="np")
         self.assertTrue(max(inputRunBranch) == max(outputRunBranch))
         self.assertTrue(2*len(inputRunBranch) == len(outputRunBranch))
-        inputEventBranch = inputTree.array(inputTree.keys()[1])
-        outputEventBranch = outputTree.array(outputTree.keys()[1])
+        inputEventBranch = inputTree[inputTree.keys()[1]].array(library="np")
+        outputEventBranch = outputTree[outputTree.keys()[1]].array(library="np")
         self.assertTrue(2*max(inputEventBranch)+1 == max(outputEventBranch))
         self.assertTrue(2*len(inputEventBranch) == len(outputEventBranch))
         shutil.rmtree(tmpdirpath)
 
     def test_merge_root_pet_incrementRun(self):
         try:
-            import uproot3 as uproot
+            import uproot
         except:
-            print("uproot3 is mandatory to merge root file. Please, do:")
-            print("pip install uproot3")
+            print("uproot4 is mandatory to merge root file. Please, do:")
+            print("pip install uproot")
 
         logger.info('Test_MergeRoot test_merge_root_pet')
         tmpdirpath = tempfile.mkdtemp()
@@ -192,12 +188,12 @@ class Test_MergeRoot(LoggedTestCase):
         output = uproot.open(os.path.join(tmpdirpath, "output.root"))
         inputTree = input[input.keys()[0]]
         outputTree = output[output.keys()[0]]
-        inputRunBranch = inputTree.array(inputTree.keys()[0])
-        outputRunBranch = outputTree.array(outputTree.keys()[0])
+        inputRunBranch = inputTree[inputTree.keys()[0]].array(library="np")
+        outputRunBranch = outputTree[outputTree.keys()[0]].array(library="np")
         self.assertTrue(2*max(inputRunBranch)+1 == max(outputRunBranch))
         self.assertTrue(2*len(inputRunBranch) == len(outputRunBranch))
-        inputEventBranch = inputTree.array(inputTree.keys()[1])
-        outputEventBranch = outputTree.array(outputTree.keys()[1])
+        inputEventBranch = inputTree[inputTree.keys()[1]].array(library="np")
+        outputEventBranch = outputTree[outputTree.keys()[1]].array(library="np")
         self.assertTrue(max(inputEventBranch) == max(outputEventBranch))
         self.assertTrue(2*len(inputEventBranch) == len(outputEventBranch))
         #shutil.rmtree(tmpdirpath)
