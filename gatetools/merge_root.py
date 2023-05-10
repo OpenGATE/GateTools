@@ -31,7 +31,11 @@ def unicity(root_keys):
     """
     root_array = []
     for key in root_keys:
-        name = key.split(";")[0]
+        name = key.split(";")
+        if len(name) > 2:
+            name = ";".join(name)
+        else:
+            name = name[0]
         if not name in root_array:
             root_array.append(name)
     return(root_array)
@@ -78,7 +82,7 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
                             if type(array[0]) is type('c'):
                                 array = np.array([0 for xi in array])
                             if not branchName in hists[tree]["rootDictType"]:
-                                hists[tree]["rootDictType"][branchName] = root[tree][branch]
+                                hists[tree]["rootDictType"][branchName] = root[tree][branch].to_numpy()
                                 hists[tree]["rootDictValue"][branchName] = np.zeros(array.shape)
                             if (not incrementRunId and branch.startswith('eventID')) or (incrementRunId and branch.startswith('runID')):
                                 if not branchName in previousId[tree]:
@@ -111,10 +115,9 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
     for hist in hists:
         if not hists[hist]["rootDictValue"] == {} or not hists[hist]["rootDictType"] == {}:
             for branch in hists[hist]["rootDictValue"]:
-                for i in range(len(hists[tree]["rootDictValue"][branch])):
-                    hists[tree]["rootDictType"][branch].values()[i] = hists[tree]["rootDictValue"][branch][i]
-                out[branch] = hists[tree]["rootDictType"][branch]
-
+                for i in range(len(hists[hist]["rootDictValue"][branch])):
+                    hists[hist]["rootDictType"][branch][0][i] = hists[hist]["rootDictValue"][branch][i]
+                out[branch] = hists[hist]["rootDictType"][branch]
 
 
 #####################################################################################
@@ -128,10 +131,10 @@ from .logging_conf import LoggedTestCase
 class Test_MergeRoot(LoggedTestCase):
     def test_merge_root_phsp(self):
         try:
-            import uproot3 as uproot
+            import uproot
         except:
-            print("uproot3 is mandatory to merge root file. Please, do:")
-            print("pip install uproot3")
+            print("uproot4 is mandatory to merge root file. Please, do:")
+            print("pip install uproot4")
 
         logger.info('Test_MergeRoot test_merge_root_phsp')
         tmpdirpath = tempfile.mkdtemp()
