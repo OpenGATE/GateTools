@@ -112,7 +112,7 @@ def merge_root(rootfiles, outputfile, incrementRunId=False):
             for branch in hists[hist]["rootDictValue"]:
                 for i in range(len(hists[hist]["rootDictValue"][branch])):
                     hists[hist]["rootDictType"][branch][0][i] = hists[hist]["rootDictValue"][branch][i]
-                out[branch] = hists[hist]["rootDictType"][branch]
+                out[branch[:-2]] = hists[hist]["rootDictType"][branch]
 
 
 #####################################################################################
