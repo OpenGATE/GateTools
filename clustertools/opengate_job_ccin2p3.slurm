@@ -55,14 +55,12 @@ test -d "${MACRODIR}"  || error "invalid macro"
 
 
 echo "Copying inputs"
-echo "coucou0"
 cd $TMPDIR
-echo "coucou1"
 LOCALMACRODIR=$(mktemp -d -p .)
-echo "coucou2"
 trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
 cp -r -L "${MACRODIR}"/* .
+rm -rf output
 mkdir output
 
 # Enforce one thread

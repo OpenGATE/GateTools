@@ -29,7 +29,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('-d', '--dry', is_flag=True, help='If dry is set, copy all files, write the submission command lines but do not execute them')
 @click.option('--env', default='', help='Bash script to set environment variables during job. This file is source at the beginning.')
 @click.option('--jobfile', default='', help='Job file for the cluster allowing to modify submission parameters (--jobfile="current" display the path of the current job file and exit)')
-def runJobs(script, jobs, env, output, param, copydata, dry, jobfile):
+def runJobs_click(script, jobs, env, output, param, copydata, dry, jobfile):
     """
     \b
     Run python Gate jobs
@@ -37,7 +37,11 @@ def runJobs(script, jobs, env, output, param, copydata, dry, jobfile):
     script: input python script filename
 
     """
+    runJobs_opengate(script, jobs, env, output, param, copydata, dry, jobfile)
 
+
+
+def runJobs_opengate(script, jobs=1, env='', output='', param='', copydata=False, dry=False, jobfile=''):
     directoryJobFiles = os.path.dirname(os.path.realpath(__file__))
 
     # Source env file
@@ -146,4 +150,4 @@ def runJobs(script, jobs, env, output, param, copydata, dry, jobfile):
 
 if __name__ == "__main__":
     colorama.init()
-    runJobs()
+    runJobs_click()
