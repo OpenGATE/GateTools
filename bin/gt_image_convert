@@ -56,6 +56,7 @@ def gt_image_convert(input, output, pixeltype, flip, accessionnumber, **kwargs):
         inputImages.append(itk.imread(input[0]))
     else:
         series = gt.separate_series(input)
+        series = gt.separate_sequenceName_series(series)
         if accessionnumber:
             series = gt.separate_accessionNumber_series(series)
         for serie in series.keys():

@@ -363,20 +363,21 @@ class region_of_interest(object):
         for contour in roi.ContourSequence:
             ref = contour.ContourImageSequence[0].ReferencedSOPInstanceUID
             npoints = int(contour.NumberOfContourPoints)
-            # check assumption on number of contour coordinates
-            assert(len(contour.ContourData)==3*npoints)
-            points = np.array([float(coord) for coord in contour.ContourData]).reshape(npoints,3)
-            zvalues = set(points[:,2])
-            # check assumption that all points are in the same xy plane (constant z)
-            assert(len(zvalues)==1)
-            zvalue = zvalues.pop()
-            if zvalue in self.zlist:
-                ic = self.zlist.index(zvalue)
-                self.contour_layers[ic].add_contour(points,ref)
-            else:
-                self.contour_layers.append(contour_layer(points,ref))
-                self.zlist.append(zvalue)
-            self.bb.should_contain_all(points)
+            if npoints > 2:
+                # check assumption on number of contour coordinates
+                assert(len(contour.ContourData)==3*npoints)
+                points = np.array([float(coord) for coord in contour.ContourData]).reshape(npoints,3)
+                zvalues = set(points[:,2])
+                # check assumption that all points are in the same xy plane (constant z)
+                assert(len(zvalues)==1)
+                zvalue = zvalues.pop()
+                if zvalue in self.zlist:
+                    ic = self.zlist.index(zvalue)
+                    self.contour_layers[ic].add_contour(points,ref)
+                else:
+                    self.contour_layers.append(contour_layer(points,ref))
+                    self.zlist.append(zvalue)
+                self.bb.should_contain_all(points)
         if verbose:
             logger.info("roi {}={} has {} points on {} contours with z range [{},{}]".format(
                     self.roinr,self.roiname,self.npoints_total,self.ncontours,self.bb.zmin,self.bb.zmax))

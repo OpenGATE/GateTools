@@ -82,6 +82,8 @@ class dicom_properties:
             ip = slice[0x20, 0x32].value #Image Position
         elif Tag(0x54, 0x22) in slice and len(slice[0x54, 0x22].value) >0 and Tag(0x20, 0x32) in slice[0x54, 0x22][0]:
             ip = slice[0x54, 0x22][0][0x20, 0x32].value #Image Position
+        if ip == None:
+            ip = [0.0, 0.0, 0.0]
         self.origin = [ip[0], ip[1], ip[2]]
         if Tag(0x20, 0x37) in slice:
             self.io = slice[0x20, 0x37].value #Image Orientation
@@ -129,6 +131,26 @@ def separate_accessionNumber_series(series):
                 ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
                 accessionNumber = ds[0x0020, 0x0012].value
             new_key = str(serie) + "_" + str(accessionNumber)
+            if new_key  not in files:
+                files[new_key] = []
+            files[new_key].append(file)
+    return files
+
+def separate_sequenceName_series(series):
+    """
+    Read dicom and return a dictionary with the different series separated
+    """
+    files = {}
+    #Load dicom files
+    for serie in series.keys():
+        for file in series[serie]:
+            try:
+                sequenceName = pydicom.read_file(file)[0x0018, 0x0024].value
+            except pydicom.errors.InvalidDicomError:
+                ds = pydicom.read_file(file, force=True)
+                ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+                sequenceName = ds[0x0018, 0x0024].value
+            new_key = str(serie) + "_" + str(sequenceName)
             if new_key  not in files:
                 files[new_key] = []
             files[new_key].append(file)
@@ -187,8 +209,7 @@ def read_dicom(dicomFiles):
         dicomProperties.read_dicom_properties(slices[0])
 
     # create 3D array
-    dicomProperties.img_shape[0] = len(slices)
-    dicomProperties.img_shape.append(slices[0].pixel_array.shape[0])
+    dicomProperties.img_shape = [len(slices)] + dicomProperties.img_shape
     img3d = np.float32(np.zeros(dicomProperties.img_shape))
 
     # fill 3D array with the images from the files
