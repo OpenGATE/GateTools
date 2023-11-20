@@ -52,7 +52,7 @@ def load_root(filename, treename, nmax=-1, nstart=0):
     nmax = int(nmax)
     # Check if file exist
     if not os.path.isfile(filename):
-        logger.error("File '" + filename + "' does not exist.")
+        logger.error(f"File '{filename}' does not exist.")
         exit()
 
     # Check if this is a root file
@@ -82,7 +82,7 @@ def load_root(filename, treename, nmax=-1, nstart=0):
             d = np.column_stack([a[k] for k in psf.keys()])
             # d = np.float64(d) # slow
     except Exception:
-        logger.error("File '" + filename + "' cannot be opened, not root file ?")
+        logger.error(f"File '{filename}' cannot be opened, not root file ?")
         exit()
 
     return d, names, int(n)
@@ -97,7 +97,7 @@ def load_npy(filename, nmax=-1, nstart=0, shuffle=False):
 
     # Check if file exist
     if not os.path.isfile(filename):
-        logger.error("File '" + filename + "' does not exist.")
+        logger.error(f"File '{filename}' does not exist.")
         exit()
 
     x = np.load(filename, mmap_mode='r')
