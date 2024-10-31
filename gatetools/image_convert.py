@@ -105,9 +105,9 @@ def separate_series(dicomFiles):
     #Load dicom files
     for file in dicomFiles:
         try:
-            seriesInstanceUID = pydicom.read_file(file)[0x0020, 0x000e].value
+            seriesInstanceUID = pydicom.dcmread(file)[0x0020, 0x000e].value
         except pydicom.errors.InvalidDicomError:
-            ds = pydicom.read_file(file, force=True)
+            ds = pydicom.dcmread(file, force=True)
             ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
             seriesInstanceUID = ds[0x0020, 0x000e].value
             print(seriesInstanceUID)
@@ -125,9 +125,9 @@ def separate_accessionNumber_series(series):
     for serie in series.keys():
         for file in series[serie]:
             try:
-                accessionNumber = pydicom.read_file(file)[0x0020, 0x0012].value
+                accessionNumber = pydicom.dcmread(file)[0x0020, 0x0012].value
             except pydicom.errors.InvalidDicomError:
-                ds = pydicom.read_file(file, force=True)
+                ds = pydicom.dcmread(file, force=True)
                 ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
                 accessionNumber = ds[0x0020, 0x0012].value
             new_key = str(serie) + "_" + str(accessionNumber)
@@ -145,9 +145,9 @@ def separate_sequenceName_series(series):
     for serie in series.keys():
         for file in series[serie]:
             try:
-                sequenceName = pydicom.read_file(file)[0x0018, 0x0024].value
+                sequenceName = pydicom.dcmread(file)[0x0018, 0x0024].value
             except pydicom.errors.InvalidDicomError:
-                ds = pydicom.read_file(file, force=True)
+                ds = pydicom.dcmread(file, force=True)
                 ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
                 sequenceName = ds[0x0018, 0x0024].value
             new_key = str(serie) + "_" + str(sequenceName)
@@ -165,9 +165,9 @@ def read_dicom(dicomFiles):
     #Load dicom files
     for file in dicomFiles:
         try:
-            files.append(pydicom.read_file(file))
+            files.append(pydicom.dcmread(file))
         except pydicom.errors.InvalidDicomError:
-            ds = pydicom.read_file(file, force=True)
+            ds = pydicom.dcmread(file, force=True)
             ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
             files.append(ds)
 
@@ -242,9 +242,9 @@ def read_3d_dicom(dicomFile, flip=False):
     """
     files = []
     try:
-        files.append(pydicom.read_file(dicomFile[0]))
+        files.append(pydicom.dcmread(dicomFile[0]))
     except pydicom.errors.InvalidDicomError:
-        ds = pydicom.read_file(dicomFile[0], force=True)
+        ds = pydicom.dcmread(dicomFile[0], force=True)
         ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
         files.append(ds)
 

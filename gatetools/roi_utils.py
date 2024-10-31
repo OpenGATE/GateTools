@@ -783,7 +783,7 @@ class Test_ROI(LoggedTestCase):
     def test_roi(self):
         tmpdirpath = tempfile.mkdtemp()
         filenameStruct = wget.download("https://gitlab.in2p3.fr/opengate/gatetools_data/-/raw/master/rtstruct.dcm?inline=false", out=tmpdirpath, bar=None)
-        structset = pydicom.read_file(os.path.join(tmpdirpath, filenameStruct))
+        structset = pydicom.dcmread(os.path.join(tmpdirpath, filenameStruct))
 
         # roi names
         roi_names = list_roinames(structset)

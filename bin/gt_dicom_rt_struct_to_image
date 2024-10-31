@@ -40,7 +40,7 @@ def gt_dicom_rt_struct_to_image(list_roi, filename_struct, filename_img, roi, cr
     gt.logging_conf(verbose=(verbose or list_roi),logfile=logfile)
 
     # read dicom struct
-    structset = pydicom.read_file(filename_struct, force=True)
+    structset = pydicom.dcmread(filename_struct, force=True)
 
     # print roi names
     roi_names = gt.list_roinames(structset)
