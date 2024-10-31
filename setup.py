@@ -26,7 +26,7 @@ setuptools.setup(
         'click',
         'numpy',
         'scipy',
-        'pydicom>=3.0.0',
+        'pydicom',
         'tqdm',
         'colored',
         'itk>=5.2.0',
