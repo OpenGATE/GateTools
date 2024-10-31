@@ -202,9 +202,9 @@ class Test_Uncertainty(LoggedTestCase):
         xx, yy, zz = np.meshgrid(x, y, z)
         npImage = 10*xx+4.5
         npsImage = 10*xx**2+9*xx+2.85
-        image = itk.image_from_array(np.float32(npImage))
+        image = itk.image_from_array(np.float64(npImage))
         images = [image]
-        simage = itk.image_from_array(np.float32(npsImage))
+        simage = itk.image_from_array(np.float64(npsImage))
         simages = [simage]
         uncertainty = image_uncertainty(images, simages, N=1000000000000)
         tmpdirpath = tempfile.mkdtemp()
@@ -212,8 +212,8 @@ class Test_Uncertainty(LoggedTestCase):
         with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            self.assertTrue("0a2dc7a0e28509c569cecde6b6252507936b29365cb4db0c75ab3c0fab3b2bc4" == new_hash)
-        shutil.rmtree(tmpdirpath)
+            self.assertTrue("0e1f8e0f0d7d7d3921c726dc33409345e6d9b8bfcc53b797d67f8b48997fa1a5" == new_hash)
+        print(tmpdirpath)
     def test_image_uncertainty_by_slice(self):
         x = np.arange(0, 1, 0.01)
         y = np.arange(0, 1, 0.01)
@@ -221,9 +221,9 @@ class Test_Uncertainty(LoggedTestCase):
         xx, yy, zz = np.meshgrid(x, y, z)
         npImage = 10*xx+4.5
         npsImage = 10*xx**2+9*xx+2.85
-        image = itk.image_from_array(np.float32(npImage))
+        image = itk.image_from_array(np.float64(npImage))
         images = [image]
-        simage = itk.image_from_array(np.float32(npsImage))
+        simage = itk.image_from_array(np.float64(npsImage))
         simages = [simage]
         uncertainty, mean, nb = image_uncertainty_by_slice(images, simages, N=1000000000000)
         tmpdirpath = tempfile.mkdtemp()
@@ -234,7 +234,7 @@ class Test_Uncertainty(LoggedTestCase):
         with open(os.path.join(tmpdirpath, "uncertainty.mha"),"rb") as fnew:
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
-            self.assertTrue("0a2dc7a0e28509c569cecde6b6252507936b29365cb4db0c75ab3c0fab3b2bc4" == new_hash)
+            self.assertTrue("0e1f8e0f0d7d7d3921c726dc33409345e6d9b8bfcc53b797d67f8b48997fa1a5" == new_hash)
         shutil.rmtree(tmpdirpath)
     def test_image_uncertainty_Poisson(self):
         x = np.arange(0, 1, 0.01)
