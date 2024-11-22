@@ -6,6 +6,7 @@ with open("readme.md", "r") as fh:
 setuptools.setup(
     name="gatetools",
     version="0.12.2",
+    include_package_data=True,
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",
     description="Python tools for GATE, see https://github.com/OpenGATE/Gate",
@@ -70,7 +71,10 @@ setuptools.setup(
 
         'bin/gt_digi_mac_converter',
 
-        'clustertools/gate_split_and_run.py'
+        'gatetools/clustertools/gate_split_and_run.py',
+        'gatetools/clustertools/opengate_run.py',
+        'gatetools/clustertools/opengate_power_merge.sh',
+        'gatetools/clustertools/gate_power_merge.sh',
     ]
 )
 

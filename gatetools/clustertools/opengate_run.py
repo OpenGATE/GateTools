@@ -42,7 +42,7 @@ def runJobs_click(script, jobs, env, output, param, copydata, dry, jobfile):
 
 
 def runJobs_opengate(script, jobs=1, env='', output='', param='', copydata=False, dry=False, jobfile=''):
-    directoryJobFiles = os.path.dirname(os.path.realpath(__file__))
+    directoryJobFiles = os.path.join(os.path.dirname(os.path.realpath(gatetools.__file__)), "clustertools")
 
     # Source env file
     envCommand = ''

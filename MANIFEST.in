@@ -1,0 +1,2 @@
+recursive-include gatetools/clustertools *.mac *.py *.sh *.job *.slurm
+
