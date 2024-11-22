@@ -144,12 +144,16 @@ def separate_sequenceName_series(series):
     #Load dicom files
     for serie in series.keys():
         for file in series[serie]:
+            sequenceName = ""
             try:
-                sequenceName = pydicom.dcmread(file)[0x0018, 0x0024].value
+                ds = pydicom.dcmread(file)
+                if Tag(0x18, 0x24) in ds:
+                    sequenceName = ds[0x0018, 0x0024].value
             except pydicom.errors.InvalidDicomError:
                 ds = pydicom.dcmread(file, force=True)
                 ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
-                sequenceName = ds[0x0018, 0x0024].value
+                if Tag(0x18, 0x24) in ds:
+                    sequenceName = ds[0x0018, 0x0024].value
             new_key = str(serie) + "_" + str(sequenceName)
             if new_key  not in files:
                 files[new_key] = []
