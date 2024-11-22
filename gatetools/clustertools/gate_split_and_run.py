@@ -45,7 +45,7 @@ def runJobs(mac, jobs, env, splittime, output, alias, copydata, dry, qt, jobfile
 
     """
 
-    directoryJobFiles = os.path.dirname(os.path.realpath(__file__))
+    directoryJobFiles = os.path.join(os.path.dirname(os.path.realpath(gatetools.__file__)), "clustertools")
 
     # Source env file
     envCommand = ''
