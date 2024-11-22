@@ -10,8 +10,9 @@ import colorama
 import numpy as np
 import sys
 import time
+import gatetools
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(gatetools.__file__)), "clustertools"))
 
 from parserMacro import *
 

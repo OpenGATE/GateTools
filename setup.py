@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="gatetools",
-    version="0.12.3",
+    version="0.12.4",
     include_package_data=True,
     author="OpenGate collaboration",
     author_email="david.sarrut@creatis.insa-lyon.fr",

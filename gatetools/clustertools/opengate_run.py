@@ -10,7 +10,7 @@ import colorama
 import numpy as np
 import sys
 import time
-
+import gatetools
 
 def get_dns_domain():
     domain = socket.getfqdn().split('.', 1)
