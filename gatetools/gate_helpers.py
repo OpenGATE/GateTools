@@ -8,7 +8,7 @@
 import shutil
 import platform
 import subprocess
-import pkg_resources
+import importlib.metadata
 import os
 import itk
 import numpy as np
@@ -35,7 +35,7 @@ def print_gate_info(short_verbose, cmd_gate_name = 'Gate'):
         return
 
     # get gatetools version
-    gtv = pkg_resources.get_distribution("gatetools").version
+    gtv = importlib.metadata.version("gatetools")
 
     # get G4 env variables
     g4_list = ['G4ABLADATA', 'G4ENSDFSTATEDATA', 'G4INCLDATA', 'G4LEDATA', 'G4LEVELGAMMADATA', 'G4NEUTRONHPDATA', 'G4PARTICLEXSDATA', 'G4PIIDATA', 'G4RADIOACTIVEDATA', 'G4REALSURFACEDATA', 'G4SAIDXSDATA']
