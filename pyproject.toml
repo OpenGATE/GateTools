@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=67"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+script-files = [
+        'gatetools/clustertools/opengate_power_merge.sh',
+        'gatetools/clustertools/gate_power_merge.sh',
+]
+
+[tool.setuptools.dynamic]
+version = { file = "VERSION" }
+readme = { file = "readme.md", content-type = "text/markdown"}
+
+[tool.setuptools.packages]
+find = { }  # Scanning implicit namespaces is active by default
+
+[project]
+name = "gatetools"
+version = "0.12.5"
+dynamic = ["readme"]
+authors = [{ name = "Opengate collaboration", email = "david.sarrut@creatis.insa-lyon.fr" }]
+description = "Python tools for GATE, see https://github.com/OpenGATE/Gate"
+license = { file = "LICENSE.md" }
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.7"
+dependencies = [
+        'matplotlib',
+        'click',
+        'numpy',
+        'scipy',
+        'pydicom',
+        'tqdm',
+        'colored',
+        'itk>=5.2.0',
+        'uproot',
+        'wget',
+        'python-box',
+        'lz4',
+        'colorama',
+        #'rt-utils',
+        'xxhash'
+]
+
+[project.scripts]
+gt_gate_info = "gatetools.bin.gt_gate_info:gt_gate_info"
+
+gt_image_uncertainty = "gatetools.bin.gt_image_uncertainty:gt_image_uncertainty"
+gt_image_arithm = "gatetools.bin.gt_image_arithm:gt_image_arithm_main"
+gt_image_crop = "gatetools.bin.gt_image_crop:gt_image_crop"
+gt_image_convert = "gatetools.bin.gt_image_convert:gt_image_convert"
+gt_image_statistics = "gatetools.bin.gt_image_statistics:gt_image_statistics_main"
+gt_hausdorff = "gatetools.bin.gt_hausdorff:gt_hausdorff_main"
+gt_gamma_index = "gatetools.bin.gt_gamma_index:gt_gamma_index_main"
+gt_affine_transform = "gatetools.bin.gt_affine_transform:gt_affine_transform_main"
+gt_write_dicom = "gatetools.bin.gt_write_dicom:gt_write_dicom_main"
+gt_dicom_info = "gatetools.bin.gt_dicom_info:gt_dicom_info_main"
+gt_image_gauss = "gatetools.bin.gt_image_gauss:gt_image_gauss_main"
+gt_image_resize = "gatetools.bin.gt_image_resize:gt_image_resize_main"
+gt_image_to_dicom_rt_struct = "gatetools.bin.gt_image_to_dicom_rt_struct:gt_image_to_dicom_rt_struct_main"
+gt_dvh = "gatetools.bin.gt_dvh:gt_dvh_main"
+gt_merge_root = "gatetools.bin.gt_merge_root:gt_merge_root_main"
+gt_morpho_math = "gatetools.bin.gt_morpho_math:gt_morpho_math"
+
+gt_dicom_rt_struct_to_image = "gatetools.bin.gt_dicom_rt_struct_to_image:gt_dicom_rt_struct_to_image"
+gt_dicom_rt_pbs2gate = "gatetools.bin.gt_dicom_rt_pbs2gate:gt_pbs_dicom2gate_main"
+
+gt_phsp_info = "gatetools.bin.gt_phsp_info:gt_phsp_info"
+gt_phsp_convert = "gatetools.bin.gt_phsp_convert:gt_phsp_convert"
+gt_phsp_merge = "gatetools.bin.gt_phsp_merge:gt_phsp_merge"
+gt_phsp_plot = "gatetools.bin.gt_phsp_plot:gt_phsp_plot"
+gt_phsp_compare = "gatetools.bin.gt_phsp_compare:gt_phsp_plot"
+gt_phsp_peaks = "gatetools.bin.gt_phsp_peaks:gt_phsp_peaks"
+
+gt_digi_mac_converter = "gatetools.bin.gt_digi_mac_converter:convert_macro"
+
+gate_split_and_run = "gatetools.gatetools.clustertools.gate_split_and_run:runJobs"
+opengate_run = "gatetools.gatetools.clustertools.opengate_run:runJobs_click"
+
+
