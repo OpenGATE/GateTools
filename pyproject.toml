@@ -19,7 +19,7 @@ find = { }  # Scanning implicit namespaces is active by default
 
 [project]
 name = "gatetools"
-version = "0.12.5"
+version = "0.12.6"
 dynamic = ["readme"]
 authors = [{ name = "Opengate collaboration", email = "david.sarrut@creatis.insa-lyon.fr" }]
 description = "Python tools for GATE, see https://github.com/OpenGATE/Gate"
