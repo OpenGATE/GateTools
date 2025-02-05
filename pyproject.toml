@@ -86,5 +86,5 @@ gt_digi_mac_converter = "gatetools.bin.gt_digi_mac_converter:convert_macro"
 
 gate_split_and_run = "gatetools.clustertools.gate_split_and_run:runJobs"
 opengate_run = "gatetools.clustertools.opengate_run:runJobs_click"
-
+computeElapsedTime = "gatetools.clustertools.computeElapsedTime:computeElapsedTime"
 
