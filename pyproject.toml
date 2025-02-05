@@ -84,7 +84,7 @@ gt_phsp_peaks = "gatetools.bin.gt_phsp_peaks:gt_phsp_peaks"
 
 gt_digi_mac_converter = "gatetools.bin.gt_digi_mac_converter:convert_macro"
 
-gate_split_and_run = "gatetools.gatetools.clustertools.gate_split_and_run:runJobs"
-opengate_run = "gatetools.gatetools.clustertools.opengate_run:runJobs_click"
+gate_split_and_run = "gatetools.clustertools.gate_split_and_run:runJobs"
+opengate_run = "gatetools.clustertools.opengate_run:runJobs_click"
 
 
