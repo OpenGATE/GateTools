@@ -599,7 +599,7 @@ do
 done
 
 echo "compute job statistics"
-computeElapsedTime.py ${rundir} gate
+computeElapsedTime ${rundir} gate
 test -x "statJobs.txt" && mv "statJobs.txt" "${outputdir}/statJobs.txt"
 
 
