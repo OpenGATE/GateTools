@@ -34,8 +34,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.option('--sigma', default=False, is_flag=True, help='By default, uncertainty is normalized, unc = sigma/x. By using this option, the output is *not* normalized, sigma=sqrt(var) is computed.')
 
+@click.option('--label','-l', help='label map filename to compute uncertainty by region')
+
 @gt.add_options(gt.common_options)
-def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, sigma, verbose, **kwargs):
+def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold, efficiency, sigma, label, verbose, **kwargs):
     '''
     Compute relative statistical uncertainty image for a list of
     images. Images are summed before computing the the uncertainty.
@@ -55,6 +57,10 @@ def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold
     Option '-s' and '-t': display slice by slice mean relative
     uncertainty. Only consider pixel values greater than threshold %
     of the max value in the image.
+
+    Option '-l' with the path to a label map will compute the
+    uncertainty by region. Each region is represented by one label
+    in the label map.
 
     Example1:
     gt_image_uncertainty run.XYZ/output_*/dose-Edep.mhd -o u.mhd -N 100000000
@@ -113,6 +119,9 @@ def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold
         # compute uncertainty history by hitory
         if by_slice:
             uncertainty, m, nb = gt.image_uncertainty_by_slice(filenames, sfilenames, nevents, sigma_flag, threshold)
+        elif label is not None:
+            label_image = itk.imread(label)
+            uncertainty = gt.image_uncertainty_per_region(filenames, sfilenames, label_image, nevents, sigma_flag, threshold)
         else:
             uncertainty = gt.image_uncertainty(filenames, sfilenames, nevents, sigma_flag, threshold)
     else:
