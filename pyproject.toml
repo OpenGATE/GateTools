@@ -11,7 +11,6 @@ script-files = [
 ]
 
 [tool.setuptools.dynamic]
-version = { file = "VERSION" }
 readme = { file = "readme.md", content-type = "text/markdown"}
 
 [tool.setuptools.packages]
@@ -19,7 +18,7 @@ find = { }  # Scanning implicit namespaces is active by default
 
 [project]
 name = "gatetools"
-version = "0.12.6"
+version = "0.12.7"
 dynamic = ["readme"]
 authors = [{ name = "Opengate collaboration", email = "david.sarrut@creatis.insa-lyon.fr" }]
 description = "Python tools for GATE, see https://github.com/OpenGATE/Gate"
