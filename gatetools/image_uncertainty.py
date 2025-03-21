@@ -116,6 +116,37 @@ def image_uncertainty(img_list=[], img_squared_list=[], N=0, sigma_flag=False, t
     img_uncertainty.CopyInformation(img_sum)
     return img_uncertainty
 
+def image_uncertainty_per_region(img_list=[], img_squared_list=[], img_label=None, N=0, sigma_flag=False, threshold=0):
+    check_N(N)
+
+    # Check label image
+    if img_label is None:
+        image_uncertainty(img_list, img_squared_list, N, sigma_flag, threshold)
+        return
+
+    # Get the sums
+    img_sum = gt.image_sum(img_list)
+    img_sq_sum = gt.image_sum(img_squared_list)
+
+    # View as np
+    np_sum = itk.array_view_from_image(img_sum)
+    np_sq_sum = itk.array_view_from_image(img_sq_sum)
+    np_label = itk.array_from_image(img_label).astype(int)
+
+    # Group values by label
+    max_label = np.max(np_label)
+    np_sum_by_label = np.bincount(np_label.ravel(), weights=np_sum.ravel(), minlength=max_label + 1)
+    np_sq_sum_by_label = np.bincount(np_label.ravel(), weights=np_sq_sum.ravel(), minlength=max_label + 1)
+
+        # Compute relative uncertainty [Chetty 2006]
+    t = np.max(np_sum_by_label)*threshold
+    uncertainty = relative_uncertainty(np_sum_by_label, np_sq_sum_by_label, N, t)
+
+    # create a text file to save uncertainty by region
+    with open('uncertainty_by_region.txt', 'w') as f:
+        for i, value in enumerate(uncertainty):
+            f.write(f"{i}\t{value}\n")
+    return uncertainty
 
 def image_uncertainty_by_slice(img_list=[], img_squared_list=[], N=0, sigma_flag=False, threshold=0):
     check_N(N)
@@ -213,7 +244,7 @@ class Test_Uncertainty(LoggedTestCase):
             bytesNew = fnew.read()
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("0e1f8e0f0d7d7d3921c726dc33409345e6d9b8bfcc53b797d67f8b48997fa1a5" == new_hash)
-        print(tmpdirpath)
+        shutil.rmtree(tmpdirpath)
     def test_image_uncertainty_by_slice(self):
         x = np.arange(0, 1, 0.01)
         y = np.arange(0, 1, 0.01)
@@ -270,3 +301,20 @@ class Test_Uncertainty(LoggedTestCase):
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("cb58fb2f5490546bb83b9e0e51ce1d87b13eab2f0f4ebddc4e9c767c8b98e57b" == new_hash)
         shutil.rmtree(tmpdirpath)
+    def test_image_uncertainty_per_region(self):
+        x = np.arange(0, 1, 0.01)
+        y = np.arange(0, 1, 0.01)
+        z = np.arange(0, 1, 0.01)
+        xx, yy, zz = np.meshgrid(x, y, z)
+        npImage = 10*xx+4.5
+        npsImage = 10*xx**2+9*xx+2.85
+        pattern = np.arange(9)
+        pattern_array = np.tile(pattern, npImage.size // pattern.size + 1)[:npImage.size]
+        pattern_array = pattern_array.reshape(npImage.shape)
+        image = itk.image_from_array(np.float64(npImage))
+        images = [image]
+        simage = itk.image_from_array(np.float64(npsImage))
+        simages = [simage]
+        limage = itk.image_from_array(np.float64(pattern_array))
+        uncertainty = image_uncertainty_per_region(images, simages, limage, N=1000000000000)
+        self.assertTrue(np.allclose(uncertainty, np.array([0.00103301, 0.00103302, 0.00103302, 0.00103302, 0.00103302, 0.00103301, 0.00103301, 0.00103301, 0.00103301])))
