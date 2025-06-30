@@ -145,7 +145,7 @@ def gt_phsp_plot(filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, s
             if k not in q:
                 q[k] = (np.quantile(x, q1), np.quantile(x, q2))
 
-            label = ' {} $\mu$={:.2f} $\sigma$={:.2f}'.format(k, np.mean(x), np.std(x))
+            label = ' {} $\\mu$={:.2f} $\\sigma$={:.2f}'.format(k, np.mean(x), np.std(x))
             a.hist(x, nb_bins,
                    # density=True,
                    histtype='stepfilled',
