@@ -64,8 +64,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--interpolation_mode', '-im', help='Interpolation mode: NN for nearest neighbor, linear for linear interpolation and BSpline for BSpline interpolation', default='linear', type=click.Choice(['NN', 'linear', 'BSpline']))
 @click.option('--bspline_order', '-bo', help='For BSpline interpolator, set the interpolation bspline order', default='2', type=click.Choice(['0', '1', '2', '3', '4', '5']))
 
+@click.option('--gaussian', '-g', help='Run a gaussian filter before the downsampling', default='False', is_flag=True))
+
 @gt.add_options(gt.common_options)
-def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newdirection, like, spacinglike, force_resample, keep_original_canvas, adaptive, matrix, rotation, center, translation, pad, interpolation_mode, bspline_order, **kwargs):
+def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newdirection, like, spacinglike, force_resample, keep_original_canvas, adaptive, matrix, rotation, center, translation, pad, interpolation_mode, bspline_order, gaussian, **kwargs):
     '''
     Basic affine transfomation and resampling of images
     
@@ -90,6 +92,9 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
         gt_affine_transform -i input.mhd -o output.mhd -fr
 
     --adaptive flag (in combination with force_resample flag) allows the users to set the newspacing (or spacinglike) and the newsize is automatically computed and vice versa.
+
+    --gaussian run a gaussian filter before the downsampling. The sigma is set to 0.5s in mm with s the ratio of the old resolution by the new resolution.
+    https://dsp.stackexchange.com/a/76015
 
     '''
 
@@ -144,7 +149,7 @@ def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newd
             sys.exit(1)
         matrixParameter = itk.matrix_from_array(np.array(readMatrix))
 
-    outputImage = gt.applyTransformation(inputImage, likeImage, spacingLikeImage, matrixParameter, newsize = itkSize, neworigin = itkOrigin, newspacing = itkSpacing, newdirection = itkDirection, force_resample = force_resample, keep_original_canvas = keep_original_canvas, adaptive = adaptive, rotation = rotationParameter, rotation_center = rotationCenterParameter, translation = translationParameter, pad = pad, interpolation_mode = interpolation_mode, bspline_order=int(bspline_order))
+    outputImage = gt.applyTransformation(inputImage, likeImage, spacingLikeImage, matrixParameter, newsize = itkSize, neworigin = itkOrigin, newspacing = itkSpacing, newdirection = itkDirection, force_resample = force_resample, keep_original_canvas = keep_original_canvas, adaptive = adaptive, rotation = rotationParameter, rotation_center = rotationCenterParameter, translation = translationParameter, pad = pad, interpolation_mode = interpolation_mode, bspline_order=int(bspline_order), gaussian=gaussian)
     
     itk.imwrite(outputImage, output)
     
