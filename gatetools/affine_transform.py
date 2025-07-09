@@ -13,6 +13,7 @@ import os
 import itk
 import numpy as np
 import math
+import gatetools as gt
 import logging
 logger=logging.getLogger(__name__)
 
@@ -78,8 +79,9 @@ def applyTransformation(input=None, like=None, spacinglike=None, matrix=None, ne
         interpolation_mode : "linear"
 
     if gaussian:
-        oldspacing = input.GetSpacing()
-        input = gt.gaussFilter(input, sigma_mm=0.5*oldspacing/newspacing, float=True)
+        oldspacing = np.array(input.GetSpacing())
+        newspacing_tmp = np.array(newspacing)
+        input = gt.gaussFilter(input, sigma_mm=oldspacing*0.5/newspacing_tmp, float=True)
 
     if not force_resample and not keep_original_canvas:
         if neworigin is None:
