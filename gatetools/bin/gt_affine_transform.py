@@ -64,7 +64,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--interpolation_mode', '-im', help='Interpolation mode: NN for nearest neighbor, linear for linear interpolation and BSpline for BSpline interpolation', default='linear', type=click.Choice(['NN', 'linear', 'BSpline']))
 @click.option('--bspline_order', '-bo', help='For BSpline interpolator, set the interpolation bspline order', default='2', type=click.Choice(['0', '1', '2', '3', '4', '5']))
 
-@click.option('--gaussian', '-g', help='Run a gaussian filter before the downsampling', default='False', is_flag=True))
+@click.option('--gaussian', '-g', help='Run a gaussian filter before the downsampling', default='False', is_flag=True)
 
 @gt.add_options(gt.common_options)
 def gt_affine_transform_main(input, output, newsize, neworigin, newspacing, newdirection, like, spacinglike, force_resample, keep_original_canvas, adaptive, matrix, rotation, center, translation, pad, interpolation_mode, bspline_order, gaussian, **kwargs):

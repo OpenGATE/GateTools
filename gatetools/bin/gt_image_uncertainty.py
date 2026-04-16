@@ -145,9 +145,10 @@ def gt_image_uncertainty(filenames, nevents, output, counts, by_slice, threshold
 
 
     # write file
-    if verbose:
-        logger.info('Write {}'.format(output))
-    itk.imwrite(uncertainty, output)
+    if label is None:
+        if verbose:
+            logger.info('Write {}'.format(output))
+        itk.imwrite(uncertainty, output)
 
 
 # -----------------------------------------------------------------------------
