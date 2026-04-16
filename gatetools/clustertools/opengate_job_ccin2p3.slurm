@@ -59,7 +59,7 @@ cd $TMPDIR
 LOCALMACRODIR=$(mktemp -d -p .)
 trap "wait ; transferJobData ; exit 1" 1 2 3 15
 cd ${LOCALMACRODIR}
-cp -r -L "${MACRODIR}"/* .
+ln -s "${MACRODIR}"/* .
 rm -rf output
 mkdir output
 
