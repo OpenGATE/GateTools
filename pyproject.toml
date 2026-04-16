@@ -18,7 +18,7 @@ find = { }  # Scanning implicit namespaces is active by default
 
 [project]
 name = "gatetools"
-version = "0.12.8"
+version = "0.12.7"
 dynamic = ["readme"]
 authors = [{ name = "Opengate collaboration", email = "david.sarrut@creatis.insa-lyon.fr" }]
 description = "Python tools for GATE, see https://github.com/OpenGATE/Gate"
@@ -41,7 +41,7 @@ dependencies = [
         'tqdm',
         'colored',
         'itk>=5.2.0',
-        'uproot<5.7.0',
+        'uproot',
         'wget',
         'python-box',
         'lz4',
@@ -85,4 +85,3 @@ gt_digi_mac_converter = "gatetools.bin.gt_digi_mac_converter:convert_macro"
 gate_split_and_run = "gatetools.clustertools.gate_split_and_run:runJobs"
 opengate_run = "gatetools.clustertools.opengate_run:runJobs_click"
 computeElapsedTime = "gatetools.clustertools.computeElapsedTime:computeElapsedTime"
-
