@@ -25,14 +25,13 @@ description = "Python tools for GATE, see https://github.com/OpenGATE/Gate"
 license = { file = "LICENSE.md" }
 classifiers = [
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = [
         'matplotlib',
         'click',
