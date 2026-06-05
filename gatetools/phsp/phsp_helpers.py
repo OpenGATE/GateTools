@@ -369,6 +369,29 @@ def fig_histo2D(ax, data, keys, k, nbins, color='g'):
     x = data[:, i1]
     i2 = keys.index(k[1])
     y = data[:, i2]
+
+    # Convert to float arrays to support object arrays and detect NaNs cleanly
+    try:
+        x = x.astype(float)
+    except (ValueError, TypeError):
+        pass
+    try:
+        y = y.astype(float)
+    except (ValueError, TypeError):
+        pass
+
+    # Filter out NaNs from both variables alignment-wise
+    try:
+        mask = ~np.isnan(x) & ~np.isnan(y)
+        x = x[mask]
+        y = y[mask]
+    except TypeError:
+        pass
+
+    if len(x) < 1 or len(y) < 1:
+        print(f"Skip 2D plot of {k} because data is empty (all NaN)")
+        return
+
     if color == 'g':
         cmap = plt.cm.Greens
     if color == 'r':
