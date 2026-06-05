@@ -55,9 +55,15 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="Add 2D plots (key1,key2), such as --plot2d X Ekine --plot2d X Y ",
     multiple=True,
 )
+@click.option(
+    "--ui",
+    "-ui",
+    is_flag=True,
+    help="Launch the interactive Streamlit dashboard UI",
+)
 @gt.add_options(gt.common_options)
 def gt_phsp_plot(
-    filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, skip, output, **kwargs
+    filenames, keys, n, quantile, tree, nb_bins, plot2d, shuffle, skip, output, ui, **kwargs
 ):
     """
     \b
@@ -68,6 +74,22 @@ def gt_phsp_plot(
 
     WARNING: if several filenames, they must have the same keys
     """
+
+    if ui:
+        import subprocess
+        import sys
+        import os
+        try:
+            import streamlit
+        except ImportError:
+            print("Error: streamlit is not installed in the current environment.")
+            print("Please install it with: pip install streamlit plotly pandas")
+            return
+            
+        ui_script = os.path.join(os.path.dirname(__file__), "..", "phsp", "phsp_plot_ui.py")
+        cmd = [sys.executable, "-m", "streamlit", "run", ui_script, "--"] + list(filenames)
+        subprocess.run(cmd)
+        return
 
     # logger
     gt.logging_conf(**kwargs)

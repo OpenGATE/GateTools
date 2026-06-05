@@ -50,6 +50,13 @@ dependencies = [
         'xxhash'
 ]
 
+[project.optional-dependencies]
+ui = [
+    "streamlit",
+    "plotly",
+    "pandas"
+]
+
 [project.scripts]
 gt_gate_info = "gatetools.bin.gt_gate_info:gt_gate_info"
 
