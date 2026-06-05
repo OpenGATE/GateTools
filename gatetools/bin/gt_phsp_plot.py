@@ -134,35 +134,9 @@ def gt_phsp_plot(
             index = read_keys.index(k)
             x = data[:, index]
 
-            # Try to convert to float (handles object arrays containing numeric values and nan)
-            try:
-                x = x.astype(float)
-            except (ValueError, TypeError):
-                pass
-
-            # Filter out NaN values
-            try:
-                x = x[~np.isnan(x)]
-            except TypeError:
-                pass
-
-            if len(x) < 1:
-                print(f"Skip key {k}: empty (or all NaN)")
-                continue
-
-            # check validity
-            if type(x[0]) == str:
-                print(f"Skip key {k} : str")
-                continue
-            try:
-                a = int(x[0])
-            except:
-                print(f"Skip key {k}: not numeric? x[0] = {x[0]}")
-                continue
-            # sometimes, if x is a str (from a root file), x[0] will be 'NULL'
-            # (probably not the best method ; to be changed)
-            if x[0] == "NULL":
-                print(f"Skip key {k} : not numeric? x[0] = NUL")
+            # clean data
+            x = phsp.clean_column(x, k)
+            if x is None:
                 continue
 
             # get mean to check if nan
@@ -174,30 +148,17 @@ def gt_phsp_plot(
                 print(f"Skip key {k} : nan ?")
                 continue
 
-            a = phsp.fig_get_sub_fig(ax, i)
-            q1 = quantile
-            q2 = 1.0 - quantile
-            if filename == filenames[0]:
-                q[k] = (np.quantile(x, q1), np.quantile(x, q2))
-            if k not in q:
-                q[k] = (np.quantile(x, q1), np.quantile(x, q2))
-
-            label = " {} $\\mu$={:.2f} $\\sigma$={:.2f}".format(
-                k, np.mean(x), np.std(x)
-            )
-            a.hist(
+            # plot
+            q = phsp.plot_column_histogram(
+                ax,
+                i,
                 x,
+                k,
                 nb_bins,
-                # density=True,
-                histtype="stepfilled",
-                range=q[k],
-                # facecolor='g',
-                alpha=0.5,
-                label=label,
+                quantile,
+                filename == filenames[0],
+                q,
             )
-            # a.set_ylabel('Probability')
-            a.set_ylabel("Counts")
-            a.legend()
             i = i + 1
             nfig += 1
 

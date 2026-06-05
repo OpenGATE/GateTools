@@ -383,6 +383,74 @@ def fig_histo2D(ax, data, keys, k, nbins, color='g'):
     ax.set_ylabel(k[1])
 
 
+# -----------------------------------------------------------------------------
+def clean_column(x, key_name):
+    """
+    Clean a column from PhaseSpace data:
+    - Try to convert to float (handles object arrays containing numeric values and nan)
+    - Filter out NaN values
+    - Check validity (non-strings, numeric first element, not "NULL")
+    Returns cleaned numpy array, or None if invalid/skipped.
+    """
+    try:
+        x = x.astype(float)
+    except (ValueError, TypeError):
+        pass
+
+    try:
+        x = x[~np.isnan(x)]
+    except TypeError:
+        pass
+
+    if len(x) < 1:
+        print(f"Skip key {key_name}: empty (or all NaN)")
+        return None
+
+    if type(x[0]) == str:
+        print(f"Skip key {key_name} : str")
+        return None
+
+    try:
+        a = int(x[0])
+    except:
+        print(f"Skip key {key_name}: not numeric? x[0] = {x[0]}")
+        return None
+
+    if x[0] == "NULL":
+        print(f"Skip key {key_name} : not numeric? x[0] = NUL")
+        return None
+
+    return x
+
+
+# -----------------------------------------------------------------------------
+def plot_column_histogram(ax, i, x, k, nb_bins, quantile, is_first_file, q):
+    """
+    Retrieve the sub-figure and plot a histogram for the cleaned column x.
+    Updates and returns the quantiles dictionary q.
+    """
+    a = fig_get_sub_fig(ax, i)
+    q1 = quantile
+    q2 = 1.0 - quantile
+    if is_first_file or k not in q:
+        q[k] = (np.quantile(x, q1), np.quantile(x, q2))
+
+    label = " {} $\\mu$={:.2f} $\\sigma$={:.2f}".format(
+        k, np.mean(x), np.std(x)
+    )
+    a.hist(
+        x,
+        nb_bins,
+        histtype="stepfilled",
+        range=q[k],
+        alpha=0.5,
+        label=label,
+    )
+    a.set_ylabel("Counts")
+    a.legend()
+    return q
+
+
 #####################################################################################
 import unittest
 import hashlib
