@@ -242,13 +242,17 @@ def read_dicom(dicomFiles):
     else:
         dicomProperties.read_dicom_properties(slices[0])
 
-    # spacing between slices from the whole series (first and last positions): the tag
-    # Spacing Between Slices and the distance between the first two slices can be rounded
+    # Spacing between slices. Without the tags Spacing Between Slices or Grid Frame Offset
+    # Vector, use the whole series (first and last positions): the distance between the
+    # first two slices can be rounded. With a tag, keep it and report a disagreement.
     ss = series_slice_spacing(slices, dicomProperties.io)
     if ss is not None:
-        if abs(ss - dicomProperties.spacing[2]) > 1e-6:
-            logger.info("spacing between slices: {} from the first and last slice positions (instead of {})".format(ss, dicomProperties.spacing[2]))
-        dicomProperties.spacing[2] = ss
+        if Tag(0x18, 0x88) in slices[0] or Tag(0x3004, 0x000c) in slices[0]:
+            lastSliceShift = abs(ss - dicomProperties.spacing[2]) * (len(slices) - 1)
+            if lastSliceShift > 0.1 * ss:
+                logger.warning("spacing between slices from the dicom tag ({}) differs from the slice positions ({:.5f}): the last slice is {:.2f} mm away from its position".format(dicomProperties.spacing[2], ss, lastSliceShift))
+        else:
+            dicomProperties.spacing[2] = ss
 
     # create 3D array
     dicomProperties.img_shape = [len(slices)] + dicomProperties.img_shape
@@ -494,14 +498,14 @@ class Test_Convert(LoggedTestCase):
             self.assertTrue("87c7eee6e29172289407e2739c2618418a38718c09e94ebee9a390a73433d236" == new_hash)
         shutil.rmtree(tmpdirpath)
     def test_convert_dicom_series_spacing(self):
-        # Slice positions rounded to 2 or 3 decimals, with or without the tag Spacing
-        # Between Slices: the spacing must be the one of the whole series, so that the
-        # last slice is at its position.
+        # Slice positions rounded to 2, 3 or 6 decimals, without the tag Spacing Between
+        # Slices: the spacing must be the one of the whole series, so that the last slice
+        # is at its position.
         pitch = 1.64557
         nbSlices = 400
-        for decimals, tag, zTop in [(2, None, 812.341), (2, None, 812.346), (3, None, 812.341), (2, "1.645", 812.341), (6, None, 812.341)]:
+        for decimals, zTop in [(2, 812.341), (2, 812.346), (3, 812.341), (6, 812.341)]:
             tmpdirpath = tempfile.mkdtemp()
-            files = createDicomSeries(tmpdirpath, pitch, nbSlices, decimals, tag, zTop)
+            files = createDicomSeries(tmpdirpath, pitch, nbSlices, decimals, None, zTop)
             convertedImage = read_dicom(files)
             spacing = tuple(convertedImage.GetSpacing())
             origin = tuple(convertedImage.GetOrigin())
@@ -517,6 +521,22 @@ class Test_Convert(LoggedTestCase):
             # slices are sorted feet first: the first slice holds the value of the last file
             self.assertEqual(itk.array_view_from_image(convertedImage)[0, 0, 0], nbSlices - 1)
             shutil.rmtree(tmpdirpath)
+    def test_convert_dicom_series_spacing_tag(self):
+        # the tag Spacing Between Slices is kept when present; a warning is logged when
+        # it does not agree with the slice positions
+        tmpdirpath = tempfile.mkdtemp()
+        files = createDicomSeries(tmpdirpath, 1.64557, 400, 2, "1.645")
+        with self.assertLogs(logger, level="WARNING") as cm:
+            convertedImage = read_dicom(files)
+        self.assertTrue(any("differs from the slice positions" in m for m in cm.output))
+        self.assertAlmostEqual(tuple(convertedImage.GetSpacing())[2], 1.645)
+        shutil.rmtree(tmpdirpath)
+        tmpdirpath = tempfile.mkdtemp()
+        files = createDicomSeries(tmpdirpath, 2.0, 50, 2, "2.0")
+        with self.assertNoLogs(logger, level="WARNING"):
+            convertedImage = read_dicom(files)
+        self.assertAlmostEqual(tuple(convertedImage.GetSpacing())[2], 2.0)
+        shutil.rmtree(tmpdirpath)
     def test_convert_dicom_series_missing_slice(self):
         # a missing slice is reported, the spacing stays the one of the whole series
         tmpdirpath = tempfile.mkdtemp()
