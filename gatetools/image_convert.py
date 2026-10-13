@@ -160,6 +160,36 @@ def separate_sequenceName_series(series):
             files[new_key].append(file)
     return files
 
+def series_slice_spacing(slices, io):
+    """
+    Spacing between the slices of a series sorted along the slice direction, from the
+    Image Position (Patient) of the first and of the last slice:
+
+        distance(first, last) along the slice normal / (number of slices - 1)
+
+    The positions of a file may be rounded (e.g. 2 decimals). The distance between two
+    neighbouring slices is then rounded too (1.64 or 1.65 mm for a 1.6456 mm pitch) and,
+    multiplied by the number of slices, shifts the last slice by several mm. Over the
+    whole series the rounding error stays below one rounding step.
+
+    Return None if the spacing cannot be computed (less than 2 slices, no position, slices
+    at the same position). A warning is logged if the slices are not evenly spaced.
+    """
+    if len(slices) < 2:
+        return None
+    if not all(Tag(0x0020, 0x0032) in s for s in slices):
+        return None
+    normal = np.cross(np.array(io[0:3], dtype=np.float64), np.array(io[3:6], dtype=np.float64))
+    positions = np.array([[float(v) for v in s[0x0020, 0x0032].value] for s in slices])
+    along = positions @ normal
+    ss = abs(along[-1] - along[0]) / (len(slices) - 1)
+    if ss == 0:
+        return None
+    gaps = np.abs(np.diff(along))
+    if np.max(np.abs(gaps - ss)) > 0.1 * ss:
+        logger.warning("slices are not evenly spaced (missing slices?): distance between slices from {:.4f} to {:.4f}, {:.4f} used".format(np.min(gaps), np.max(gaps), ss))
+    return float(ss)
+
 def read_dicom(dicomFiles):
     """
 
@@ -211,6 +241,18 @@ def read_dicom(dicomFiles):
         dicomProperties.read_dicom_properties(slices[0], slices[1])
     else:
         dicomProperties.read_dicom_properties(slices[0])
+
+    # Spacing between slices. Without the tags Spacing Between Slices or Grid Frame Offset
+    # Vector, use the whole series (first and last positions): the distance between the
+    # first two slices can be rounded. With a tag, keep it and report a disagreement.
+    ss = series_slice_spacing(slices, dicomProperties.io)
+    if ss is not None:
+        if Tag(0x18, 0x88) in slices[0] or Tag(0x3004, 0x000c) in slices[0]:
+            lastSliceShift = abs(ss - dicomProperties.spacing[2]) * (len(slices) - 1)
+            if lastSliceShift > 0.1 * ss:
+                logger.warning("spacing between slices from the dicom tag ({}) differs from the slice positions ({:.5f}): the last slice is {:.2f} mm away from its position".format(dicomProperties.spacing[2], ss, lastSliceShift))
+        else:
+            dicomProperties.spacing[2] = ss
 
     # create 3D array
     dicomProperties.img_shape = [len(slices)] + dicomProperties.img_shape
@@ -332,6 +374,51 @@ import shutil
 import wget
 from .logging_conf import LoggedTestCase
 
+def createDicomSeries(folder, pitch, nbSlices, decimals, spacingBetweenSlices=None, zTop=812.341, skip=()):
+    """
+    Write a PET-like dicom series (one file per slice, head first) with a known pitch and
+    Image Position (Patient) rounded to 'decimals'. Return the list of files.
+    """
+    from pydicom.dataset import FileDataset, FileMetaDataset
+    from pydicom.uid import generate_uid, ExplicitVRLittleEndian, PositronEmissionTomographyImageStorage
+    seriesUID = generate_uid()
+    studyUID = generate_uid()
+    files = []
+    for k in range(nbSlices):
+        if k in skip:
+            continue
+        meta = FileMetaDataset()
+        meta.MediaStorageSOPClassUID = PositronEmissionTomographyImageStorage
+        meta.MediaStorageSOPInstanceUID = generate_uid()
+        meta.TransferSyntaxUID = ExplicitVRLittleEndian
+        filename = os.path.join(folder, "slice{:04d}.dcm".format(k))
+        ds = FileDataset(filename, {}, file_meta=meta, preamble=b"\0" * 128)
+        ds.SOPClassUID = meta.MediaStorageSOPClassUID
+        ds.SOPInstanceUID = meta.MediaStorageSOPInstanceUID
+        ds.SeriesInstanceUID = seriesUID
+        ds.StudyInstanceUID = studyUID
+        ds.Modality = "PT"
+        ds.InstanceNumber = k + 1
+        ds.Rows = 4
+        ds.Columns = 5
+        ds.BitsAllocated = 16
+        ds.BitsStored = 16
+        ds.HighBit = 15
+        ds.PixelRepresentation = 0
+        ds.SamplesPerPixel = 1
+        ds.PhotometricInterpretation = "MONOCHROME2"
+        ds.PixelSpacing = [1.65, 1.65]
+        ds.RescaleSlope = 1
+        ds.RescaleIntercept = 0
+        ds.ImageOrientationPatient = [1, 0, 0, 0, 1, 0]
+        ds.ImagePositionPatient = ["-360", "-470", "{:.{}f}".format(zTop - k * pitch, decimals)]
+        if spacingBetweenSlices is not None:
+            ds.SpacingBetweenSlices = spacingBetweenSlices
+        ds.PixelData = np.full((4, 5), k, np.uint16).tobytes()
+        ds.save_as(filename)
+        files.append(filename)
+    return files
+
 def createImage():
     x = np.arange(-10, 10, 1)
     y = np.arange(-12, 15, 1)
@@ -410,4 +497,57 @@ class Test_Convert(LoggedTestCase):
             new_hash = hashlib.sha256(bytesNew).hexdigest()
             self.assertTrue("87c7eee6e29172289407e2739c2618418a38718c09e94ebee9a390a73433d236" == new_hash)
         shutil.rmtree(tmpdirpath)
-
+    def test_convert_dicom_series_spacing(self):
+        # Slice positions rounded to 2, 3 or 6 decimals, without the tag Spacing Between
+        # Slices: the spacing must be the one of the whole series, so that the last slice
+        # is at its position.
+        pitch = 1.64557
+        nbSlices = 400
+        for decimals, zTop in [(2, 812.341), (2, 812.346), (3, 812.341), (6, 812.341)]:
+            tmpdirpath = tempfile.mkdtemp()
+            files = createDicomSeries(tmpdirpath, pitch, nbSlices, decimals, None, zTop)
+            convertedImage = read_dicom(files)
+            spacing = tuple(convertedImage.GetSpacing())
+            origin = tuple(convertedImage.GetOrigin())
+            size = tuple(itk.size(convertedImage))
+            self.assertEqual(size, (5, 4, nbSlices))
+            self.assertAlmostEqual(spacing[0], 1.65)
+            self.assertAlmostEqual(spacing[1], 1.65)
+            # position of the last slice: within the rounding of the positions
+            zLast = origin[2] + (nbSlices - 1) * spacing[2]
+            self.assertTrue(abs(zLast - zTop) < 0.011)
+            self.assertTrue(abs(spacing[2] - pitch) < 1e-4)
+            self.assertTrue(abs(origin[2] - (zTop - (nbSlices - 1) * pitch)) < 0.006)
+            # slices are sorted feet first: the first slice holds the value of the last file
+            self.assertEqual(itk.array_view_from_image(convertedImage)[0, 0, 0], nbSlices - 1)
+            shutil.rmtree(tmpdirpath)
+    def test_convert_dicom_series_spacing_tag(self):
+        # the tag Spacing Between Slices is kept when present; a warning is logged when
+        # it does not agree with the slice positions
+        tmpdirpath = tempfile.mkdtemp()
+        files = createDicomSeries(tmpdirpath, 1.64557, 400, 2, "1.645")
+        with self.assertLogs(logger, level="WARNING") as cm:
+            convertedImage = read_dicom(files)
+        self.assertTrue(any("differs from the slice positions" in m for m in cm.output))
+        self.assertAlmostEqual(tuple(convertedImage.GetSpacing())[2], 1.645)
+        shutil.rmtree(tmpdirpath)
+        tmpdirpath = tempfile.mkdtemp()
+        files = createDicomSeries(tmpdirpath, 2.0, 50, 2, "2.0")
+        with self.assertNoLogs(logger, level="WARNING"):
+            convertedImage = read_dicom(files)
+        self.assertAlmostEqual(tuple(convertedImage.GetSpacing())[2], 2.0)
+        shutil.rmtree(tmpdirpath)
+    def test_convert_dicom_series_missing_slice(self):
+        # a missing slice is reported, the spacing stays the one of the whole series
+        tmpdirpath = tempfile.mkdtemp()
+        files = createDicomSeries(tmpdirpath, 2.0, 20, 2, skip=(7,))
+        with self.assertLogs(logger, level="WARNING") as cm:
+            convertedImage = read_dicom(files)
+        self.assertTrue(any("not evenly spaced" in m for m in cm.output))
+        self.assertAlmostEqual(tuple(convertedImage.GetSpacing())[2], 2.0 * 19 / 18)
+        shutil.rmtree(tmpdirpath)
+    def test_series_slice_spacing_single_slice(self):
+        tmpdirpath = tempfile.mkdtemp()
+        files = createDicomSeries(tmpdirpath, 2.0, 1, 2)
+        self.assertIsNone(series_slice_spacing([pydicom.dcmread(files[0])], [1, 0, 0, 0, 1, 0]))
+        shutil.rmtree(tmpdirpath)
